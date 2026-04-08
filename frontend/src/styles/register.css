@@ -1,0 +1,275 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  padding: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.register-card {
+  width: 100%;
+  max-width: 720px;
+  padding: 32px;
+  background: #ffffff;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.step.active .step-number {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.step.active .step-label {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.step-number.inactive {
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.step-label {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 12px;
+}
+
+.register-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 680px; 
+  padding: 20px;
+  box-sizing: border-box;
+  border: 1px solid rgba(15,23,42,0.06);
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(16,24,40,0.08), 0 2px 6px rgba(16,24,40,0.04);
+}
+
+.auth-brand {
+  text-align: center;
+  font-size: 30px;
+  color: #1C3D90;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.auth-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.form-row.two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.required {
+  color: #ef4444;
+  margin-right: 2px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-icon {
+  color: #94a3b8;
+  font-size: 15px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.input-wrapper input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  font-family: inherit;
+  padding: 2px 0;
+  line-height: 1.4;
+}
+
+.input-wrapper input::placeholder {
+  color: #94a3b8;
+}
+
+.toggle-password {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 15px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  transition: color 0.2s;
+}
+
+.toggle-password:hover {
+  color: #64748b;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1e40af;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+
+.submit-btn:hover {
+  background: #1e3a8a;
+}
+
+.submit-btn:active {
+  background: #1e40af;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 8px;
+  min-height: 18px;
+}
+
+.form-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.footer-text {
+  color: #64748b;
+}
+
+.login-link {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+
+.login-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .register-card {
+    padding: 24px 20px;
+  }
+
+  .form-row.two-cols {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stepper {
+    margin-bottom: 20px;
+  }
+
+  .step-label {
+    font-size: 13px;
+  }
+
+  .step-number {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .input-wrapper {
+    padding: 8px 10px;
+  }
+}
