@@ -18,10 +18,15 @@ const LoginPage = () => {
       if (data.token) localStorage.setItem('token', data.token);
       notification.success({ message: 'Đăng nhập thành công' });
 
-      const user = { email };
+      if (data.role) localStorage.setItem('role', data.role);
+      const user = { email, role: data.role, name: data.name || '' };
       localStorage.setItem('user', JSON.stringify(user));
-
-      navigate('/home');
+      const role = (data.role || '').toUpperCase();
+      if (role.includes('ADMIN')) {
+        navigate('/admin');
+      } else {
+        navigate('/user');
+      }
     } catch (err: any) {
       const msg = err.response?.data || err.message || 'Vui lòng kiểm tra lại thông tin';
       notification.error({ message: 'Đăng nhập thất bại', description: msg });

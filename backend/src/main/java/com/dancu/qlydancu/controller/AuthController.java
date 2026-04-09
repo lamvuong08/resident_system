@@ -37,8 +37,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequests.LoginRequest req) {
-        String token = authService.login(req);
-        return ResponseEntity.ok(new AuthResponses.AuthResponse(token, req.email));
+        AuthResponses.AuthResponse resp = authService.login(req);
+        return ResponseEntity.ok(resp);
     }
 
     @PostMapping("/forgot")

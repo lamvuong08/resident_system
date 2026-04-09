@@ -1,6 +1,7 @@
 package com.dancu.qlydancu.service;
 
 import com.dancu.qlydancu.dto.AuthRequests;
+import com.dancu.qlydancu.dto.AuthResponses;
 import com.dancu.qlydancu.model.User;
 import com.dancu.qlydancu.repo.UserRepository;
 import com.dancu.qlydancu.security.JwtUtil;
@@ -50,10 +51,11 @@ public class AuthService {
         return userRepository.save(u);
     }
 
-    public String login(AuthRequests.LoginRequest req) {
+    public AuthResponses.AuthResponse login(AuthRequests.LoginRequest req) {
         Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email, req.password));
         String token = jwtUtil.generateToken(req.email);
-        return token;
+        User user = userRepository.findByEmail(req.email).orElseThrow(() -> new RuntimeException("No user found"));
+        return new AuthResponses.AuthResponse(token, req.email, user.getRoles(), user.getName());
     }
 
     public String forgotPassword(AuthRequests.ForgotRequest req) {
