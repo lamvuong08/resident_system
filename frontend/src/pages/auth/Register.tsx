@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UserOutlined, MailOutlined, PhoneOutlined, LockOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons'
 import { notification } from 'antd'
-import '../styles/register.css'
-import api from '../utils/api'
+import '../../styles/register.css'
+import api from '../../utils/api'
 
 export default function Register() {
   const [firstName, setFirstName] = useState('')
@@ -21,11 +21,11 @@ export default function Register() {
     try {
       const fullName = `${lastName} ${firstName}`.trim()
       await api.post('/auth/send-register-otp', { email, name: fullName, purpose: 'REGISTER' })
-      notification.success({ message: 'OTP đã gửi', description: 'Vui lòng kiểm tra email để nhận mã OTP' })
+      notification.success({ title: 'OTP đã gửi', description: 'Vui lòng kiểm tra email để nhận mã OTP' })
       navigate('/confirm-register', { state: { name: fullName, email, password } })
     } catch (err: any) {
       const m = err.response?.data || err.message || 'Có lỗi xảy ra'
-      notification.error({ message: 'Đăng ký thất bại', description: m })
+      notification.error({ title: 'Đăng ký thất bại', description: m })
     }
   }
 
@@ -34,7 +34,6 @@ export default function Register() {
       <div className="register-card">
         <div className="auth-brand">TCONS RESIDENT</div>
         <div className="auth-subtitle">Đăng ký tài khoản mới</div>
-        {/* Stepper */}
         <div className="stepper">
           <div className="step active">
             <div className="step-number">1</div>
@@ -48,7 +47,6 @@ export default function Register() {
         </div>
 
         <form onSubmit={sendOtp} className="register-form">
-          {/* Row 1: Họ và Tên */}
           <div className="form-row two-cols">
             <div className="form-group">
               <label className="form-label">
@@ -81,8 +79,6 @@ export default function Register() {
               </div>
             </div>
           </div>
-
-          {/* Row 2: Email và Số điện thoại */}
           <div className="form-row two-cols">
             <div className="form-group">
               <label className="form-label">
@@ -115,8 +111,6 @@ export default function Register() {
               </div>
             </div>
           </div>
-
-          {/* Row 3: Mật khẩu và Xác nhận mật khẩu */}
           <div className="form-row two-cols">
             <div className="form-group">
               <label className="form-label">
@@ -163,15 +157,10 @@ export default function Register() {
               </div>
             </div>
           </div>
-
-          {/* Submit Button */}
           <button type="submit" className="submit-btn">
             Tiếp tục
           </button>
         </form>
-
-        {/* Error Message (moved to notifications) */}
-        {/* Footer */}
         <div className="form-footer">
           <span className="footer-text">Đã có tài khoản? </span>
           <button type="button" className="login-link" onClick={() => navigate('/login')}>

@@ -2,9 +2,9 @@ import React from 'react';
 import { Button, Divider, Form, Input, notification } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { MailOutlined, LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import api from '../utils/api';
+import api from '../../utils/api';
 
-import '../styles/login.css';
+import '../../styles/login.css';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ const LoginPage = () => {
       const data = res.data || {};
 
       if (data.token) localStorage.setItem('token', data.token);
-      notification.success({ message: 'Đăng nhập thành công' });
+      notification.success({ title: 'Đăng nhập thành công' });
 
       if (data.role) localStorage.setItem('role', data.role);
       const user = { email, role: data.role, name: data.name || '' };
@@ -29,7 +29,7 @@ const LoginPage = () => {
       }
     } catch (err: any) {
       const msg = err.response?.data || err.message || 'Vui lòng kiểm tra lại thông tin';
-      notification.error({ message: 'Đăng nhập thất bại', description: msg });
+      notification.error({ title: 'Đăng nhập thất bại', description: msg });
     }
   };
 

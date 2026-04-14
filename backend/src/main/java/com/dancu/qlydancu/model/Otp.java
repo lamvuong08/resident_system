@@ -27,14 +27,43 @@ public class Otp {
         this.purpose = purpose;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
-    public Long getExpiry() { return expiry; }
-    public void setExpiry(Long expiry) { this.expiry = expiry; }
-    public String getPurpose() { return purpose; }
-    public void setPurpose(String purpose) { this.purpose = purpose; }
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public Long getExpiry() {
+        return expiry;
+    }
+
+    public void setExpiry(Long expiry) {
+        this.expiry = expiry;
+    }
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
 }

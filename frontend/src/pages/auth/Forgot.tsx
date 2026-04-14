@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MailOutlined } from '@ant-design/icons'
-import '../styles/forgot.css'
-import api from '../utils/api'
+import '../../styles/forgot.css'
+import api from '../../utils/api'
 
 export default function Forgot() {
   const [email, setEmail] = useState('')

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons'
-import '../styles/forgot.css'
-import api from '../utils/api'
+import '../../styles/forgot.css'
+import api from '../../utils/api'
 
 export default function Reset() {
   const loc = useLocation()

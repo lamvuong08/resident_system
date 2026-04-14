@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { notification } from 'antd'
-import api from '../utils/api'
+import api from '../../utils/api'
 
 export default function ConfirmRegister() {
   const [otp, setOtp] = useState('')
@@ -14,11 +14,11 @@ export default function ConfirmRegister() {
     try {
       const payload = { name: state.name, email: state.email, password: state.password, otp }
       await api.post('/auth/confirm-register', payload)
-      notification.success({ message: 'Đăng ký thành công', description: 'Bạn có thể đăng nhập ngay bây giờ' })
+      notification.success({ title: 'Đăng ký thành công', description: 'Bạn có thể đăng nhập ngay bây giờ' })
       setTimeout(() => navigate('/login'), 800)
     } catch (err: any) {
       const m = err.response?.data || err.message || 'Có lỗi xảy ra'
-      notification.error({ message: 'Xác thực thất bại', description: m })
+      notification.error({ title: 'Xác thực thất bại', description: m })
     }
   }
 
@@ -26,10 +26,10 @@ export default function ConfirmRegister() {
     e?.preventDefault()
     try {
       await api.post('/auth/send-register-otp', { email: state.email, name: state.name, purpose: 'REGISTER' })
-      notification.success({ message: 'Mã OTP đã được gửi lại', description: `Đã gửi tới ${state.email}` })
+      notification.success({ title: 'Mã OTP đã được gửi lại', description: `Đã gửi tới ${state.email}` })
     } catch (err: any) {
       const m = err.response?.data || err.message || 'Có lỗi xảy ra'
-      notification.error({ message: 'Gửi lại OTP thất bại', description: m })
+      notification.error({ title: 'Gửi lại OTP thất bại', description: m })
     }
   }
 

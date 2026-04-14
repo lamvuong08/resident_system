@@ -123,19 +123,6 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside className={`app-sidebar ${collapsed ? 'collapsed' : ''}`}>
-      <div className="sidebar-top">
-        <div className="brand" onClick={() => navigate(rawRole === 'ADMIN' ? '/admin' : '/user')}>
-          <div className="brand-logo">TR</div>
-          {!collapsed && <div className="brand-name">Tcons Resident</div>}
-        </div>
-
-        <Button
-          type="text"
-          className="collapse-btn"
-          onClick={() => setCollapsed((s) => !s)}
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        />
-      </div>
 
       <nav className="sidebar-menu">
         <Menu
@@ -159,15 +146,26 @@ const Sidebar: React.FC = () => {
           )}
         </div>
 
-        <div className="logout-wrap">
-          <Tooltip title="Đăng xuất">
+        <div className="footer-actions">
+          <Tooltip title="Thu gọn sidebar">
             <Button
               type="text"
-              className="logout-btn"
-              onClick={handleLogout}
-              icon={<LogoutOutlined />}
+              className="collapse-btn-bottom"
+              onClick={() => setCollapsed((s) => !s)}
+              icon={collapsed ? <MenuUnfoldOutlined style={{ fontSize: 18 }} /> : <MenuFoldOutlined style={{ fontSize: 18 }} />}
             />
           </Tooltip>
+
+          <div className="logout-wrap">
+            <Tooltip title="Đăng xuất">
+              <Button
+                type="text"
+                className="logout-btn"
+                onClick={handleLogout}
+                icon={<LogoutOutlined style={{ fontSize: 18 }} />}
+              />
+            </Tooltip>
+          </div>
         </div>
       </div>
     </aside>

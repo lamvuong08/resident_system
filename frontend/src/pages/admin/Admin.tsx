@@ -1,9 +1,9 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from '../components/Sidebar'
-import '../styles/sidebar.css'
+import Sidebar from '../../components/Sidebar'
+import '../../styles/sidebar.css'
 
-const UserPage = () => {
+const AdminPage = () => {
   return (
     <div className="admin-root">
       <Sidebar />
@@ -14,4 +14,4 @@ const UserPage = () => {
   )
 }
 
-export default UserPage
+export default AdminPage
