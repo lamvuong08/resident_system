@@ -6,7 +6,7 @@ const ApartmentGrid: React.FC<{ apartments: any[]; buildingId: string }> = ({ ap
   const navigate = useNavigate()
   const statusClass = (s: string) => {
     if (s === 'OCCUPIED') return 'apt-occupied'
-    if (s === 'VACANT') return 'apt-vacant'
+    if (s === 'EMPTY') return 'apt-vacant'
     if (s === 'PENDING') return 'apt-pending'
     return ''
   }
@@ -22,7 +22,7 @@ const ApartmentGrid: React.FC<{ apartments: any[]; buildingId: string }> = ({ ap
 
           <div className="apt-owner">{ap.owner || '---'}</div>
           <div className="apt-people">{ap.people} người</div>
-          <div className="apt-status">{ap.status === 'OCCUPIED' ? 'Đã ở' : ap.status === 'VACANT' ? 'Trống' : 'Đang chờ'}</div>
+          <div className="apt-status">{ap.status === 'OCCUPIED' ? 'Đã ở' : ap.status === 'EMPTY' ? 'Trống' : 'Đang chờ'}</div>
         </div>
       ))}
     </div>

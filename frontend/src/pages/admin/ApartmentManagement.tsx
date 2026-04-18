@@ -1,50 +1,243 @@
 import React, { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Tabs, Button, Card, Select, Space, Empty, Typography, Alert, Spin } from 'antd'
+import ApartmentDetail from '../../components/ApartmentDetail'
 import api from '../../utils/api'
+
+const { Text } = Typography
+const LAST_APARTMENT_CODE_KEY = 'admin.lastSelectedApartmentCode'
+
+const parseApartmentPayload = (payload: unknown) => {
+  let parsedPayload = payload
+
+  while (typeof parsedPayload === 'string') {
+    try {
+      parsedPayload = JSON.parse(parsedPayload)
+    } catch {
+      break
+    }
+  }
+
+  if (!parsedPayload || typeof parsedPayload !== 'object') {
+    return null
+  }
+
+  const source = parsedPayload as Record<string, any>
+  return {
+    ...source,
+    code: source.code ?? source.apartmentCode ?? null,
+    floorNumber: source.floorNumber ?? source.floor ?? null,
+    area: source.area ?? null,
+    status: source.status ?? null,
+    ownerName: source.ownerName ?? source.owner ?? null,
+    peopleCount: source.peopleCount ?? source.people ?? 0,
+  }
+}
 
 const ApartmentManagement: React.FC = () => {
   const loc: any = useLocation()
+  const navigate = useNavigate()
   const state = loc.state || {}
-  const building = state.buildingId || 'Tòa chưa chọn'
-  const apartment = state.aptCode || null
+  const params = new URLSearchParams(loc.search || '')
+  const requestedApartmentCode = state.aptCode || params.get('apt') || null
+  const requestedBuildingId = state.buildingId || params.get('buildingId') || null
 
   const [aptData, setAptData] = useState<any | null>(null)
+  const [activeApartmentCode, setActiveApartmentCode] = useState<string | null>(null)
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(requestedBuildingId)
+  const [buildings, setBuildings] = useState<any[]>([])
+  const [buildingApartments, setBuildingApartments] = useState<any[]>([])
+  const [loadingSelector, setLoadingSelector] = useState(false)
+  const [loadingApartment, setLoadingApartment] = useState(false)
+  const [selectorError, setSelectorError] = useState<string | null>(null)
+
+  const loadBuildings = async () => {
+    setLoadingSelector(true)
+    setSelectorError(null)
+    try {
+      const response = await api.get('/dashboard/buildings')
+      const buildingList = Array.isArray(response.data) ? response.data : []
+      setBuildings(buildingList)
+      return buildingList
+    } catch {
+      setBuildings([])
+      setSelectorError('Không thể tải danh sách tòa nhà. Vui lòng thử lại.')
+      return []
+    } finally {
+      setLoadingSelector(false)
+    }
+  }
+
+  const loadBuildingApartments = async (buildingId: string) => {
+    try {
+      const response = await api.get(`/dashboard/buildings/${buildingId}`)
+      const apartments = Array.isArray(response.data?.apartments) ? response.data.apartments : []
+      setBuildingApartments(apartments)
+      return apartments
+    } catch {
+      setBuildingApartments([])
+      return []
+    }
+  }
+
+  const loadApartmentDetail = async (apartmentCode: string) => {
+    setLoadingApartment(true)
+    try {
+      const response = await api.get(`/apartments/${apartmentCode}`)
+      const normalized = parseApartmentPayload(response.data)
+      setAptData(normalized)
+      setActiveApartmentCode(apartmentCode)
+      localStorage.setItem(LAST_APARTMENT_CODE_KEY, apartmentCode)
+    } catch {
+      setAptData(null)
+    } finally {
+      setLoadingApartment(false)
+    }
+  }
+
+  const reloadApartmentDetail = async () => {
+    if (!activeApartmentCode) return
+    await loadApartmentDetail(activeApartmentCode)
+  }
 
   useEffect(() => {
-    if (apartment) {
-      api.get(`/apartments/${apartment}`).then((r) => setAptData(r.data)).catch(() => setAptData(null))
+    const initDirectEntryFlow = async () => {
+      const buildingsList = await loadBuildings()
+      const lastApartmentCode = localStorage.getItem(LAST_APARTMENT_CODE_KEY)
+      const initialApartmentCode = requestedApartmentCode || lastApartmentCode || null
+
+      if (requestedBuildingId) {
+        setSelectedBuildingId(requestedBuildingId)
+        void loadBuildingApartments(requestedBuildingId)
+      } else if (buildingsList.length > 0) {
+        setSelectedBuildingId((current) => current || String(buildingsList[0].id))
+      }
+
+      if (initialApartmentCode) {
+        await loadApartmentDetail(initialApartmentCode)
+      } else {
+        setAptData(null)
+        setActiveApartmentCode(null)
+      }
     }
-  }, [apartment])
+
+    void initDirectEntryFlow()
+  }, [requestedApartmentCode, requestedBuildingId])
+
+  useEffect(() => {
+    if (!selectedBuildingId) {
+      setBuildingApartments([])
+      return
+    }
+
+    void loadBuildingApartments(selectedBuildingId)
+  }, [selectedBuildingId])
+
+  useEffect(() => {
+    if (!activeApartmentCode) return
+    if (buildingApartments.length === 0) return
+
+    const exists = buildingApartments.some((apartment) => String(apartment.code) === String(activeApartmentCode))
+    if (!exists) {
+      setActiveApartmentCode(null)
+      setAptData(null)
+    }
+  }, [buildingApartments, activeApartmentCode])
+
+  const handleSelectBuilding = (buildingId: string) => {
+    setSelectedBuildingId(buildingId)
+    setBuildingApartments([])
+    setAptData(null)
+    setActiveApartmentCode(null)
+  }
+
+  const handleSelectApartment = async (apartmentCode: string) => {
+    await loadApartmentDetail(apartmentCode)
+  }
+
+  const buildingSelectOptions = buildings.map((building) => ({
+    value: String(building.id),
+    label: `${building.name || 'Tòa nhà'}${building.code ? ` (${building.code})` : ''}`,
+  }))
+
+  const apartmentSelectOptions = buildingApartments.map((apartment) => ({
+    value: String(apartment.code),
+    label: `${apartment.code}${apartment.owner ? ` - ${apartment.owner}` : ''}`,
+  }))
 
   return (
     <div style={{ padding: 24 }}>
-      <div className="breadcrumb">Dashboard &gt; {building} &gt; Căn hộ {apartment || '---'}</div>
-      <h2>Quản lý căn hộ</h2>
+      <Card style={{ marginBottom: 16, borderRadius: 12 }}>
+        <Space orientation="vertical" size={10} style={{ width: '100%' }}>
+          <Space wrap size={12} style={{ width: '100%', justifyContent: 'space-between' }}>
+            <Space wrap size={12}>
+              <Select
+                style={{ minWidth: 250 }}
+                placeholder="Chọn tòa nhà"
+                loading={loadingSelector}
+                value={selectedBuildingId || undefined}
+                options={buildingSelectOptions}
+                onChange={handleSelectBuilding}
+              />
 
-      <div style={{ display: 'flex', gap: 16, marginTop: 12 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ background: '#fff', padding: 16, borderRadius: 12, boxShadow: '0 8px 20px rgba(2,6,23,0.04)' }}>
-            <h3>Thông tin căn hộ</h3>
-            <div>Mã căn hộ: <strong>{apartment}</strong></div>
-            <div>Tòa: <strong>{building}</strong></div>
-            <div>Trạng thái: <strong>{aptData?.status || '—'}</strong></div>
-            <div>Chủ hộ: <strong>{aptData?.owner || '—'}</strong></div>
-            <div>Số người: <strong>{aptData?.people ?? '—'}</strong></div>
-          </div>
+              <Select
+                style={{ minWidth: 280 }}
+                placeholder="Chọn căn hộ"
+                value={activeApartmentCode || undefined}
+                options={apartmentSelectOptions}
+                onChange={(value) => void handleSelectApartment(value)}
+                disabled={!selectedBuildingId || apartmentSelectOptions.length === 0}
+              />
+            </Space>
 
-          <div style={{ background: '#fff', padding: 16, borderRadius: 12, boxShadow: '0 8px 20px rgba(2,6,23,0.04)', marginTop: 12 }}>
-            <h3>Hành động</h3>
-            <button className="btn-view" style={{ width: '100%' }}>Sửa căn hộ</button>
-            <button className="btn-view" style={{ width: '100%', marginTop: 8 }}>Quản lý hộ khẩu</button>
-          </div>
-        </div>
+            <Button onClick={() => navigate('/admin/quan-ly-toa-nha')}>Mở quản lý tòa nhà</Button>
+          </Space>
 
-        <div style={{ width: 320 }}>
-          <div style={{ background: '#fff', padding: 16, borderRadius: 12, boxShadow: '0 8px 20px rgba(2,6,23,0.04)' }}>
-            <h3>Thông báo</h3>
-            <div>Không có thông báo</div>
-          </div>
-        </div>
+          {!aptData && (
+            <>
+              <Text strong>Chọn tòa nhà và căn hộ để xem chi tiết</Text>
+              <Text type="secondary">
+                Bạn có thể vào trực tiếp từ menu này và chọn nhanh căn hộ cần quản lý mà không cần quay lại Dashboard.
+              </Text>
+            </>
+          )}
+
+          {aptData && activeApartmentCode && (
+            <Text type="secondary">Đang xem căn hộ {activeApartmentCode}. Bạn có thể đổi căn hộ ngay trên thanh chọn.</Text>
+          )}
+
+          {selectorError && <Alert type="warning" showIcon message={selectorError} />}
+
+          {!aptData && (loadingApartment ? <Spin /> : <Empty description="Vui lòng chọn tòa nhà và căn hộ để xem chi tiết." />)}
+        </Space>
+      </Card>
+
+      <div style={{ marginTop: 18 }}>
+        <Tabs
+          defaultActiveKey="1"
+          items={[
+            {
+              key: '1',
+              label: 'Tổng quan',
+              children: <ApartmentDetail apartment={aptData} onApartmentReload={reloadApartmentDetail} />,
+            },
+            { key: '2', label: 'Cư dân', children: (
+                <div style={{ padding: 12 }}>
+                  <Button
+                    type="primary"
+                    disabled={!activeApartmentCode}
+                    onClick={() => navigate(`/admin/quan-ly-ho-khau?apt=${activeApartmentCode || ''}`)}
+                  >
+                    Mở quản lý hộ khẩu
+                  </Button>
+                </div>
+              )
+            },
+            { key: '3', label: 'Thanh toán', children: 'Thanh toán (placeholder)' },
+            { key: '4', label: 'Yêu cầu', children: 'Yêu cầu (placeholder)' },
+            { key: '5', label: 'Lịch sử', children: 'Lịch sử (placeholder)' }
+          ]}
+        />
       </div>
     </div>
   )

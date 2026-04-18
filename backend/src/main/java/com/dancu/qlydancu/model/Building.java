@@ -13,6 +13,7 @@ public class Building {
 
     private String code;
     private String name;
+    @jakarta.persistence.Column(name = "total_floors")
     private Integer floors;
 
     @OneToMany(mappedBy = "building", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

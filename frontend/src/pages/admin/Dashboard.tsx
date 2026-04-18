@@ -2,27 +2,18 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../utils/api'
 import '../../styles/dashboard.css'
-import { InfoCircleOutlined, HomeOutlined, ApartmentOutlined, UserOutlined, ExclamationCircleOutlined, ClockCircleOutlined, TeamOutlined } from '@ant-design/icons'
+import { HomeOutlined, ApartmentOutlined, ClockCircleOutlined, TeamOutlined } from '@ant-design/icons'
 import StatCard from '../../components/StatCard.tsx'
 import BuildingCard from '../../components/BuildingCard.tsx'
-import BuildingDetailPanel from '../../components/BuildingDetailPanel.tsx'
 
 const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null)
   const [buildings, setBuildings] = useState<any[]>([])
-  const [selected, setSelected] = useState<string | null>(null)
-  const [detail, setDetail] = useState<any | null>(null)
 
   useEffect(() => {
     api.get('/dashboard/stats').then((r) => setStats(r.data)).catch(() => {})
     api.get('/dashboard/buildings').then((r) => setBuildings(r.data)).catch(() => {})
   }, [])
-
-  useEffect(() => {
-    if (selected) {
-      api.get(`/dashboard/buildings/${selected}`).then((r) => setDetail(r.data)).catch(() => setDetail(null))
-    }
-  }, [selected])
 
   const navigate = useNavigate()
 
@@ -40,24 +31,16 @@ const Dashboard: React.FC = () => {
       <h3 className="section-title">Danh sách tòa nhà</h3>
       <div className="dashboard-content">
         <div className="dashboard-main">
-              <div className="buildings-grid">
-                {buildings.map((b) => (
-                  <BuildingCard key={b.id} building={b} onView={() => navigate('/admin/quan-ly-toa-nha', { state: { buildingId: b.id } })} />
-                ))}
-              </div>
-
-          {detail && (
-            <div className="building-detail-inline">
-              <BuildingDetailPanel building={detail} onClose={() => { setSelected(null); setDetail(null) }} />
-            </div>
-          )}
+          <div className="buildings-grid">
+            {buildings.map((building) => (
+              <BuildingCard
+                key={building.id}
+                building={building}
+                onView={() => navigate('/admin/quan-ly-toa-nha', { state: { buildingId: building.id } })}
+              />
+            ))}
+          </div>
         </div>
-
-        <aside className="dashboard-side">
-          {detail ? (
-            <BuildingDetailPanel building={detail} onClose={() => { setSelected(null); setDetail(null) }} />
-          ) : null}
-        </aside>
       </div>
     </div>
   )

@@ -1,99 +1,185 @@
 package com.dancu.qlydancu.config;
 
-import com.dancu.qlydancu.model.Apartment;
+import com.dancu.qlydancu.model.*;
+import com.dancu.qlydancu.model.enums.RequestStatus;
+import com.dancu.qlydancu.model.enums.RequestType;
 import com.dancu.qlydancu.model.status.ApartmentStatus;
-import com.dancu.qlydancu.model.Building;
-import com.dancu.qlydancu.model.Resident;
-import com.dancu.qlydancu.repo.ApartmentRepository;
-import com.dancu.qlydancu.repo.BuildingRepository;
-import com.dancu.qlydancu.repo.ResidentRepository;
+import com.dancu.qlydancu.repo.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Component
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 public class DataInitializer implements CommandLineRunner {
+
     private final BuildingRepository buildingRepository;
     private final ApartmentRepository apartmentRepository;
     private final ResidentRepository residentRepository;
+    private final ApartmentFinanceRepository financeRepository;
+    private final PaymentRepository paymentRepository;
+    private final MaintenanceRequestRepository maintenanceRepository;
+    private final ApartmentContractRepository contractRepository;
+    private final ApartmentNoteRepository noteRepository;
 
-    public DataInitializer(BuildingRepository buildingRepository, ApartmentRepository apartmentRepository, ResidentRepository residentRepository) {
+    public DataInitializer(BuildingRepository buildingRepository,
+                           ApartmentRepository apartmentRepository,
+                           ResidentRepository residentRepository,
+                           ApartmentFinanceRepository financeRepository,
+                           PaymentRepository paymentRepository,
+                           MaintenanceRequestRepository maintenanceRepository,
+                           ApartmentContractRepository contractRepository,
+                           ApartmentNoteRepository noteRepository) {
         this.buildingRepository = buildingRepository;
         this.apartmentRepository = apartmentRepository;
         this.residentRepository = residentRepository;
+        this.financeRepository = financeRepository;
+        this.paymentRepository = paymentRepository;
+        this.maintenanceRepository = maintenanceRepository;
+        this.contractRepository = contractRepository;
+        this.noteRepository = noteRepository;
     }
 
     @Override
-    public void run(String... args) throws Exception {
-        if (buildingRepository.count() > 0) return;
+    public void run(String... args) {
+        // If apartments already exist, skip seeding to avoid overwriting a real database
+        if (apartmentRepository.count() > 0) {
+            System.out.println("DataInitializer: apartments already present — skipping seeding.");
+            return;
+        }
 
-        Building a1 = new Building("A1", "Tòa A1", 15);
-        Building a2 = new Building("A2", "Tòa A2", 18);
-        Building b1 = new Building("B1", "Tòa B1", 12);
+        int buildings = 3;
+        int floors = 12;
+        int perFloor = 8;
 
-        buildingRepository.save(a1);
-        buildingRepository.save(a2);
-        buildingRepository.save(b1);
+        List<Apartment> allAps = new ArrayList<>();
 
-        // create some apartments for A1
-        List<Apartment> aps = new ArrayList<>();
-        for (int f = 1; f <= 15; f++) {
-            for (int s = 1; s <= 8; s++) {
-                String code = String.format("A1-%02d%02d", f, s);
-                Apartment ap = new Apartment(code, f, (s % 4 == 0) ? ApartmentStatus.VACANT : ApartmentStatus.OCCUPIED);
-                ap.setOwnerName((s % 4 == 0) ? null : "Nguyễn Văn A");
-                ap.setPeopleCount((s % 4 == 0) ? 0 : 3);
-                ap.setBuilding(a1);
-                aps.add(ap);
+        for (int b = 1; b <= buildings; b++) {
+
+            String code = "T" + b;
+            Building building = new Building(code, "Tòa " + code, floors);
+            buildingRepository.save(building);
+
+            for (int f = 1; f <= floors; f++) {
+                for (int s = 1; s <= perFloor; s++) {
+
+                    String apCode = String.format("%s-%02d%02d", code, f, s);
+
+                    Apartment ap = new Apartment(apCode, f, ApartmentStatus.EMPTY);
+                    ap.setBuilding(building);
+
+                    allAps.add(ap);
+                }
             }
         }
-        apartmentRepository.saveAll(aps);
 
-        // small set for A2
-        List<Apartment> aps2 = new ArrayList<>();
-        for (int f = 1; f <= 18; f++) {
-            for (int s = 1; s <= 8; s++) {
-                String code = String.format("A2-%02d%02d", f, s);
-                Apartment ap = new Apartment(code, f, (s % 5 == 0) ? ApartmentStatus.VACANT : ApartmentStatus.OCCUPIED);
-                ap.setOwnerName((s % 5 == 0) ? null : "Trần Thị B");
-                ap.setPeopleCount((s % 5 == 0) ? 0 : 2);
-                ap.setBuilding(a2);
-                aps2.add(ap);
-            }
-        }
-        apartmentRepository.saveAll(aps2);
+        apartmentRepository.saveAll(allAps);
 
-        // small set for B1
-        List<Apartment> aps3 = new ArrayList<>();
-        for (int f = 1; f <= 12; f++) {
-            for (int s = 1; s <= 8; s++) {
-                String code = String.format("B1-%02d%02d", f, s);
-                Apartment ap = new Apartment(code, f, (s % 3 == 0) ? ApartmentStatus.VACANT : ApartmentStatus.OCCUPIED);
-                ap.setOwnerName((s % 3 == 0) ? null : "Phạm Văn C");
-                ap.setPeopleCount((s % 3 == 0) ? 0 : 4);
-                ap.setBuilding(b1);
-                aps3.add(ap);
-            }
-        }
-        apartmentRepository.saveAll(aps3);
+        Random rnd = new Random(12345);
 
-        // create some residents linked to random apartments
         List<Resident> residents = new ArrayList<>();
-        var allAps = apartmentRepository.findAll();
-        int idx = 1;
-        for (var ap : allAps) {
-            if (ap.getStatus() == ApartmentStatus.OCCUPIED) {
-                Resident r = new Resident("Cư dân " + idx);
-                r.setApartment(ap);
-                r.setAge(30);
-                r.setPhone("09" + (10000000 + idx));
-                residents.add(r);
-                idx++;
-                if (idx > 200) break;
+        long phoneBase = 900000000L;
+        int residentIdx = 1;
+
+        // 👉 chuẩn month format YYYY-MM
+        String month = LocalDate.now().getYear() + "-" +
+                String.format("%02d", LocalDate.now().getMonthValue());
+
+        for (Apartment ap : apartmentRepository.findAll()) {
+
+            boolean occupied = rnd.nextDouble() < 0.7;
+
+            if (occupied) {
+
+                int people = 1 + rnd.nextInt(4);
+
+                ap.setStatus(ApartmentStatus.OCCUPIED);
+                ap.setPeopleCount(people);
+                ap.setOwnerName("Chủ nhà " + ap.getCode());
+                apartmentRepository.save(ap);
+
+                for (int p = 0; p < people; p++) {
+                    Resident r = new Resident("Cư dân " + residentIdx);
+                    r.setApartment(ap);
+                    r.setAge(18 + rnd.nextInt(60));
+                    r.setPhone("09" + (phoneBase + residentIdx));
+                    residents.add(r);
+                    residentIdx++;
+                }
+
+                // ================= FINANCE FIXED =================
+                ApartmentFinance f1 = new ApartmentFinance(
+                        "Phí quản lý",
+                        400000L + rnd.nextInt(200000),
+                        month
+                );
+                ApartmentFinance f2 = new ApartmentFinance(
+                        "Tiền điện",
+                        100000L + rnd.nextInt(300000),
+                        month
+                );
+                ApartmentFinance f3 = new ApartmentFinance(
+                        "Tiền nước",
+                        50000L + rnd.nextInt(100000),
+                        month
+                );
+
+                f1.setApartment(ap);
+                f2.setApartment(ap);
+                f3.setApartment(ap);
+
+                financeRepository.save(f1);
+                financeRepository.save(f2);
+                financeRepository.save(f3);
+
+                // ================= PAYMENT =================
+                Payment pay = new Payment(
+                        f1.getAmount() + f2.getAmount() + f3.getAmount(),
+                        LocalDate.now().minusDays(rnd.nextInt(30))
+                );
+                pay.setApartment(ap);
+                paymentRepository.save(pay);
+
+                // ================= MAINTENANCE =================
+                MaintenanceRequest m = new MaintenanceRequest();
+                m.setTitle("Yêu cầu sửa chữa");
+                m.setDescription("Mô tả lỗi mẫu");
+                m.setType(RequestType.REPAIR);
+                m.setStatus(rnd.nextBoolean() ? RequestStatus.PENDING : RequestStatus.DONE);
+                m.setCreatedAt(LocalDateTime.now().minusDays(rnd.nextInt(90)));
+                m.setApartment(ap);
+                maintenanceRepository.save(m);
+
+                // ================= CONTRACT =================
+                ApartmentContract c = new ApartmentContract();
+                c.setTenantName("Người thuê " + ap.getCode());
+                c.setStartDate(LocalDate.now().minusMonths(3 + rnd.nextInt(12)));
+                c.setEndDate(LocalDate.now().plusMonths(6 + rnd.nextInt(12)));
+                c.setDeposit(1000000L + rnd.nextInt(2000000));
+                c.setApartment(ap);
+                contractRepository.save(c);
+
+                // ================= NOTE =================
+                ApartmentNote n = new ApartmentNote();
+                n.setContent("Ghi chú tự động cho " + ap.getCode());
+                n.setCreatedAt(LocalDateTime.now());
+                n.setApartment(ap);
+                noteRepository.save(n);
+
+            } else {
+                ap.setStatus(ApartmentStatus.EMPTY);
+                ap.setPeopleCount(0);
+                ap.setOwnerName(null);
+                apartmentRepository.save(ap);
             }
         }
+
         residentRepository.saveAll(residents);
     }
 }

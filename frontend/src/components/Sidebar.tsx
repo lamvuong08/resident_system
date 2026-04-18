@@ -4,7 +4,6 @@ import {
   DashboardOutlined,
   TeamOutlined,
   HomeOutlined,
-  BranchesOutlined,
   FileTextOutlined,
   UserOutlined,
   LogoutOutlined,
@@ -20,25 +19,23 @@ import {
   HistoryOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
 
 import '../styles/sidebar.css'
 
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
-  const user = JSON.parse(localStorage.getItem('user') || 'null') || { name: 'Người dùng', role: 'ROLE_USER' }
+  const user = getStoredUser()
   const rawRole = (user.role || 'ROLE_USER').replace('ROLE_', '')
   const displayRole = rawRole === 'ADMIN' ? 'Quản trị viên' : rawRole === 'USER' ? 'Người dùng' : rawRole
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('role')
+    clearAuthStorage()
     navigate('/login')
   }
-
-  const location = useLocation()
 
   const getActiveKeyFromPath = (path: string) => {
     if (rawRole === 'ADMIN') {
@@ -72,25 +69,27 @@ const Sidebar: React.FC = () => {
 
   const activeKey = getActiveKeyFromPath(location.pathname)
 
+  const userRouteMap: Record<string, string> = {
+    home: '/user',
+    profile: '/user/profile',
+    hokhau: '/user/hokhau',
+    payment: '/user/payment',
+    'send-request': '/user/send-request',
+    'tam-tru': '/user/tam-tru',
+    notifications: '/user/notifications',
+    history: '/user/history',
+    'account-settings': '/user/account-settings',
+  }
+
   const navigateByKey = (key: string) => {
     if (!key) return
     if (rawRole === 'ADMIN') {
       navigate(`/admin${key === 'dashboard' ? '' : '/' + key}`)
-    } else {
-      const map: Record<string, string> = {
-        home: '/user',
-        profile: '/user/profile',
-        hokhau: '/user/hokhau',
-        payment: '/user/payment',
-        'send-request': '/user/send-request',
-        'tam-tru': '/user/tam-tru',
-        notifications: '/user/notifications',
-        history: '/user/history',
-        'account-settings': '/user/account-settings',
-      }
-      const to = map[key] || '/user'
-      navigate(to)
+      return
     }
+
+    const nextPath = userRouteMap[key] || '/user'
+    navigate(nextPath)
   }
 
   const adminItems = [

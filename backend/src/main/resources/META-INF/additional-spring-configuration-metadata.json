@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "app.jwt.secret",
+      "type": "java.lang.String",
+      "description": "JWT signing secret"
+    },
+    {
+      "name": "app.jwt.expiration-ms",
+      "type": "java.lang.Long",
+      "description": "JWT expiration time in milliseconds"
+    },
+    {
+      "name": "app.seed.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable demo data seeding at startup"
+    }
+  ]
+}

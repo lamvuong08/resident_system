@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { EyeInvisibleOutlined, EyeOutlined, KeyOutlined, LockOutlined } from '@ant-design/icons'
 import '../../styles/forgot.css'
-import api from '../../utils/api'
+import api, { extractApiError } from '../../utils/api'
 
 export default function Reset() {
   const loc = useLocation()
   const navigate = useNavigate()
-  const state: any = loc.state || {}
+  const state = (loc.state || {}) as { email?: string }
   const [email, setEmail] = useState(state.email || '')
   const [otp, setOtp] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -15,35 +15,35 @@ export default function Reset() {
   const [msg, setMsg] = useState('')
   const [step, setStep] = useState<number>(state.email ? 2 : 1)
 
-  async function sendOtp(e: any) {
-    e.preventDefault()
+  const handleSendOtp = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setMsg('')
     try {
       await api.post('/auth/forgot', { email })
       setMsg('Mã OTP đã được gửi tới email')
       setStep(2)
     } catch (err: any) {
-      const m = err.response?.data || err.message
+      const m = extractApiError(err)
       setMsg(m)
     }
   }
 
-  function verifyOtpLocal(e: any) {
-    e.preventDefault()
+  const handleVerifyOtp = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setMsg('')
     if (!otp) return setMsg('Vui lòng nhập mã OTP')
     setStep(3)
   }
 
-  async function resetPassword(e: any) {
-    e.preventDefault()
+  const handleResetPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setMsg('')
     try {
       await api.post('/auth/reset', { email, otp, newPassword })
       setMsg('Đặt lại mật khẩu thành công')
       setTimeout(() => navigate('/login'), 1200)
     } catch (err: any) {
-      const m = err.response?.data || err.message
+      const m = extractApiError(err)
       setMsg(m)
     }
   }
@@ -62,7 +62,7 @@ export default function Reset() {
         </div>
 
         {step === 1 && (
-          <form onSubmit={sendOtp} className="register-form">
+          <form onSubmit={handleSendOtp} className="register-form">
             <div className="form-row">
               <label><span className="required">*</span> Email</label>
               <div className="input-group">
@@ -76,7 +76,7 @@ export default function Reset() {
         )}
 
         {step === 2 && (
-          <form onSubmit={verifyOtpLocal} className="register-form">
+          <form onSubmit={handleVerifyOtp} className="register-form">
             <div className="form-row">
               <label><span className="required">*</span> Nhập mã OTP</label>
               <div className="input-group">
@@ -92,7 +92,7 @@ export default function Reset() {
         )}
 
         {step === 3 && (
-          <form onSubmit={resetPassword} className="register-form">
+          <form onSubmit={handleResetPassword} className="register-form">
             <div className="form-row">
               <label><span className="required">*</span> Mật khẩu mới</label>
               <div className="input-group">

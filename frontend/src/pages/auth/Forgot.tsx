@@ -2,21 +2,21 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MailOutlined } from '@ant-design/icons'
 import '../../styles/forgot.css'
-import api from '../../utils/api'
+import api, { extractApiError } from '../../utils/api'
 
 export default function Forgot() {
   const [email, setEmail] = useState('')
   const [msg, setMsg] = useState('')
   const navigate = useNavigate()
 
-  async function submit(e: any) {
-    e.preventDefault()
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     setMsg('')
     try {
       await api.post('/auth/forgot', { email })
       navigate('/reset', { state: { email } })
     } catch (err: any) {
-      const m = err.response?.data || err.message
+      const m = extractApiError(err)
       setMsg(m)
     }
   }
@@ -35,7 +35,7 @@ export default function Forgot() {
           <div className="step"><div className="dot">3</div><div className="label">Đặt mật khẩu mới</div></div>
         </div>
 
-        <form onSubmit={submit} className="register-form" style={{marginTop:6}}>
+        <form onSubmit={handleSubmit} className="register-form" style={{marginTop:6}}>
           <div className="form-row">
             <label><span className="required">*</span> Email</label>
             <div className="input-group">

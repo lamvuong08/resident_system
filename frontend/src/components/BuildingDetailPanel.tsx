@@ -12,6 +12,7 @@ const BuildingDetailPanel: React.FC<{
   const [search, setSearch] = useState('')
 
   const apartments = building.apartments || []
+  const isVacant = (status: string) => status === 'EMPTY' || status === 'VACANT'
   const filtered = apartments.filter((ap: any) => {
     if (floorFilter) {
       const floor = ap.code.split('-')[1].slice(0, 2)
@@ -27,7 +28,7 @@ const BuildingDetailPanel: React.FC<{
 
       if (
         statusFilter === 'VACANT' &&
-        ap.status !== 'VACANT'
+        !isVacant(ap.status)
       )
         return false
     }
@@ -216,8 +217,11 @@ const BuildingDetailPanel: React.FC<{
                 if (
                   statusFilter !==
                     'ALL' &&
-                  ap.status !==
-                    statusFilter
+                  !(
+                    statusFilter === 'VACANT'
+                      ? isVacant(ap.status)
+                      : ap.status === statusFilter
+                  )
                 )
                   return false
 

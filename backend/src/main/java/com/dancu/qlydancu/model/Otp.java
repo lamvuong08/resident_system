@@ -1,6 +1,7 @@
 package com.dancu.qlydancu.model;
 
 import jakarta.persistence.*;
+import com.dancu.qlydancu.model.enums.OtpPurpose;
 
 @Entity
 @Table(name = "otps")
@@ -10,17 +11,22 @@ public class Otp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "email")
     private String email;
 
+    @Column(name = "code")
     private String code;
 
+    @Column(name = "expiry")
     private Long expiry;
 
-    private String purpose; 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purpose")
+    private OtpPurpose purpose;
 
     public Otp() {}
 
-    public Otp(String email, String code, Long expiry, String purpose) {
+    public Otp(String email, String code, Long expiry, OtpPurpose purpose) {
         this.email = email;
         this.code = code;
         this.expiry = expiry;
@@ -59,11 +65,11 @@ public class Otp {
         this.expiry = expiry;
     }
 
-    public String getPurpose() {
+    public OtpPurpose getPurpose() {
         return purpose;
     }
 
-    public void setPurpose(String purpose) {
+    public void setPurpose(OtpPurpose purpose) {
         this.purpose = purpose;
     }
 }

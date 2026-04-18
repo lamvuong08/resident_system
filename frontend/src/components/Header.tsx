@@ -2,26 +2,23 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { NotificationOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons'
 import '../styles/App.css'
+import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
 
 const Header: React.FC = () => {
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user') || 'null') || { name: 'Người dùng', role: 'ROLE_USER' }
-  const rawRole = (user.role || 'ROLE_USER').replace('ROLE_', '')
+  const user = getStoredUser()
+  const roleValue = (user.role || 'ROLE_USER').replace('ROLE_', '')
 
   const goNotifications = () => {
-    if (rawRole === 'ADMIN') navigate('/admin/thong-bao')
-    else navigate('/user/notifications')
+    navigate(roleValue === 'ADMIN' ? '/admin/thong-bao' : '/user/notifications')
   }
 
   const goSettings = () => {
-    if (rawRole === 'ADMIN') navigate('/admin/cai-dat')
-    else navigate('/user/account-settings')
+    navigate(roleValue === 'ADMIN' ? '/admin/cai-dat' : '/user/account-settings')
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    localStorage.removeItem('role')
+    clearAuthStorage()
     navigate('/login')
   }
 

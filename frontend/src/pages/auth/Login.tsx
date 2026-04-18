@@ -1,26 +1,35 @@
-import React from 'react';
 import { Button, Divider, Form, Input, notification } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { MailOutlined, LockOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import api from '../../utils/api';
+import api, { extractApiError } from '../../utils/api';
+import { setAuthSession } from '../../utils/authStorage';
 
 import '../../styles/login.css';
+
+type LoginFormValues = {
+  email: string
+  password: string
+}
 
 const LoginPage = () => {
   const navigate = useNavigate();
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: LoginFormValues) => {
     const { email, password } = values;
     try {
       const res = await api.post('/auth/login', { email, password });
       const data = res.data || {};
 
-      if (data.token) localStorage.setItem('token', data.token);
+      if (data.token) {
+        setAuthSession(data.token, {
+          email,
+          role: data.role,
+          name: data.name || '',
+        });
+      }
+
       notification.success({ title: 'Đăng nhập thành công' });
 
-      if (data.role) localStorage.setItem('role', data.role);
-      const user = { email, role: data.role, name: data.name || '' };
-      localStorage.setItem('user', JSON.stringify(user));
       const role = (data.role || '').toUpperCase();
       if (role.includes('ADMIN')) {
         navigate('/admin');
@@ -28,7 +37,7 @@ const LoginPage = () => {
         navigate('/user');
       }
     } catch (err: any) {
-      const msg = err.response?.data || err.message || 'Vui lòng kiểm tra lại thông tin';
+      const msg = extractApiError(err, 'Vui lòng kiểm tra lại thông tin');
       notification.error({ title: 'Đăng nhập thất bại', description: msg });
     }
   };

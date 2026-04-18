@@ -11,19 +11,37 @@ const BuildingManagement: React.FC = () => {
   const location: any = useLocation()
   const requested = location.state?.buildingId || null
 
+  const loadBuildingDetail = async (buildingId: string) => {
+    try {
+      const response = await api.get(`/dashboard/buildings/${buildingId}`)
+      setDetail(response.data)
+    } catch {
+      setDetail(null)
+    }
+  }
+
   useEffect(() => {
-    api.get('/dashboard/buildings').then((r) => {
-      setBuildings(r.data)
-      if (r.data && r.data.length > 0) {
-        const first = r.data[0]
-        api.get(`/dashboard/buildings/${first.id}`).then((rr) => setDetail(rr.data)).catch(() => {})
+    const loadBuildings = async () => {
+      try {
+        const response = await api.get('/dashboard/buildings')
+        const buildingList = response.data || []
+        setBuildings(buildingList)
+
+        if (buildingList.length > 0) {
+          await loadBuildingDetail(buildingList[0].id)
+        }
+      } catch {
+        setBuildings([])
+        setDetail(null)
       }
-    }).catch(() => {})
+    }
+
+    void loadBuildings()
   }, [])
 
   useEffect(() => {
     if (requested) {
-      api.get(`/dashboard/buildings/${requested}`).then((r) => setDetail(r.data)).catch(() => setDetail(null))
+      void loadBuildingDetail(requested)
     }
   }, [requested])
 
@@ -36,8 +54,7 @@ const BuildingManagement: React.FC = () => {
       <div className="buildings-grid">
         {buildings.map((b) => (
           <BuildingCard key={b.id} building={b} selected={detail?.id === b.id || false} onView={() => {
-            setDetail(null)
-            api.get(`/dashboard/buildings/${b.id}`).then((r) => setDetail(r.data)).catch(() => setDetail(null))
+            void loadBuildingDetail(b.id)
           }} />
         ))}
       </div>

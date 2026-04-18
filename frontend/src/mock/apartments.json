@@ -1,0 +1,16 @@
+{
+  "apartments": [
+    {
+      "code": "A-0101",
+      "building": "Toà A",
+      "floor": 1,
+      "type": "2PN",
+      "area": 68,
+      "status": "OCCUPIED",
+      "owner": "Nguyễn Văn A",
+      "people": 4,
+      "occupiedSince": "2022-08-12",
+      "id": "apt-a-0101"
+    }
+  ]
+}

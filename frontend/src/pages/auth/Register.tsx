@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { UserOutlined, MailOutlined, PhoneOutlined, LockOutlined, EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons'
 import { notification } from 'antd'
 import '../../styles/register.css'
-import api from '../../utils/api'
+import api, { extractApiError } from '../../utils/api'
 
 export default function Register() {
   const [firstName, setFirstName] = useState('')
@@ -16,15 +16,17 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const navigate = useNavigate()
 
-  async function sendOtp(e: any) {
-    e.preventDefault()
+  const fullName = `${lastName} ${firstName}`.trim()
+
+  const handleSendOtp = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
     try {
-      const fullName = `${lastName} ${firstName}`.trim()
       await api.post('/auth/send-register-otp', { email, name: fullName, purpose: 'REGISTER' })
       notification.success({ title: 'OTP đã gửi', description: 'Vui lòng kiểm tra email để nhận mã OTP' })
       navigate('/confirm-register', { state: { name: fullName, email, password } })
     } catch (err: any) {
-      const m = err.response?.data || err.message || 'Có lỗi xảy ra'
+      const m = extractApiError(err, 'Có lỗi xảy ra')
       notification.error({ title: 'Đăng ký thất bại', description: m })
     }
   }
@@ -46,7 +48,7 @@ export default function Register() {
           </div>
         </div>
 
-        <form onSubmit={sendOtp} className="register-form">
+        <form onSubmit={handleSendOtp} className="register-form">
           <div className="form-row two-cols">
             <div className="form-group">
               <label className="form-label">

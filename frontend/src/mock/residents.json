@@ -1,0 +1,34 @@
+{
+  "residents": [
+    {
+      "id": "r1",
+      "name": "Nguyễn Văn A",
+      "role": "CHU_HO",
+      "birthYear": 1985,
+      "cccd": "012345678",
+      "phone": "0912345678",
+      "movedIn": "2022-08-12",
+      "gender": "M"
+    },
+    {
+      "id": "r2",
+      "name": "Trần Thị B",
+      "role": "VO_CHONG",
+      "birthYear": 1988,
+      "cccd": "098765432",
+      "phone": "0987654321",
+      "movedIn": "2022-08-12",
+      "gender": "F"
+    },
+    {
+      "id": "r3",
+      "name": "Nguyễn C",
+      "role": "CON",
+      "birthYear": 2015,
+      "cccd": "",
+      "phone": "",
+      "movedIn": "2022-08-12",
+      "gender": "M"
+    }
+  ]
+}

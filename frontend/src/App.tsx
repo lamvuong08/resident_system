@@ -1,6 +1,6 @@
 import React from 'react'
 import './styles/App.css'
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import Header from './components/Header'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -14,6 +14,39 @@ import HouseholdManagement from './pages/admin/HouseholdManagement'
 import ApartmentManagement from './pages/admin/ApartmentManagement'
 import BuildingManagement from './pages/admin/BuildingManagement'
 import User from './pages/user/User'
+import { getStoredRole, hasToken } from './utils/authStorage'
+
+type RoleKey = 'ADMIN' | 'USER'
+
+type GuardProps = {
+  children: React.ReactElement
+}
+
+type RoleGuardProps = GuardProps & {
+  role: RoleKey
+}
+
+const AUTH_PATHS = ['/', '/login', '/register', '/forgot', '/forgot-password', '/reset', '/confirm-register']
+
+const RequireAuth: React.FC<GuardProps> = ({ children }) => {
+  if (!hasToken()) {
+    return <Navigate to="/login" replace />
+  }
+  return children
+}
+
+const RequireRole: React.FC<RoleGuardProps> = ({ role, children }) => {
+  if (!hasToken()) {
+    return <Navigate to="/login" replace />
+  }
+
+  const currentRole = getStoredRole()
+  if (!currentRole.includes(role)) {
+    return <Navigate to={role === 'ADMIN' ? '/user' : '/admin'} replace />
+  }
+
+  return children
+}
 
 function AppWrapper() {
   return (
@@ -25,8 +58,7 @@ function AppWrapper() {
 
 function App() {
   const location = useLocation()
-  const authPaths = ['/', '/login', '/register', '/forgot', '/forgot-password', '/reset', '/confirm-register']
-  const showHeader = !authPaths.includes(location.pathname)
+  const showHeader = !AUTH_PATHS.includes(location.pathname)
 
   return (
     <>
@@ -38,16 +70,16 @@ function App() {
         <Route path="/forgot-password" element={<Forgot />} />
         <Route path="/reset" element={<Reset />} />
         <Route path="/confirm-register" element={<ConfirmRegister />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/admin/*" element={<Admin />}>
+        <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
+        <Route path="/admin/*" element={<RequireRole role="ADMIN"><Admin /></RequireRole>}>
           <Route index element={<Dashboard />} />
           <Route path="quan-ly-dan-cu" element={<React.Suspense fallback=''><div /></React.Suspense>} />
           <Route path="quan-ly-ho-khau" element={<HouseholdManagement />} />
           <Route path="quan-ly-can-ho" element={<ApartmentManagement />} />
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
         </Route>
-        <Route path="/user/*" element={<User />}>
-          <Route index element={<div />} />
+        <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
+          <Route index element={<Home />} />
         </Route>
         <Route path="/" element={<Login />} />
       </Routes>

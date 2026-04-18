@@ -3,6 +3,9 @@ package com.dancu.qlydancu.model;
 import jakarta.persistence.*;
 import com.dancu.qlydancu.model.status.ApartmentStatus;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "apartments")
 public class Apartment {
@@ -11,12 +14,30 @@ public class Apartment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "code", nullable = false, unique = true)
     private String code;
+
+    @Column(name = "floor_number")
     private Integer floorNumber;
+
+    @Column(name = "room_number")
+    private Integer roomNumber;
+
+    @Column(name = "area")
+    private BigDecimal area;
+
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private ApartmentStatus status;
+
+    @Transient
     private String ownerName;
+
+    @Transient
     private Integer peopleCount;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id")
@@ -55,6 +76,22 @@ public class Apartment {
         this.floorNumber = floorNumber;
     }
 
+    public Integer getRoomNumber() {
+        return roomNumber;
+    }
+
+    public void setRoomNumber(Integer roomNumber) {
+        this.roomNumber = roomNumber;
+    }
+
+    public BigDecimal getArea() {
+        return area;
+    }
+
+    public void setArea(BigDecimal area) {
+        this.area = area;
+    }
+
     public ApartmentStatus getStatus() {
         return status;
     }
@@ -77,6 +114,14 @@ public class Apartment {
 
     public void setPeopleCount(Integer peopleCount) {
         this.peopleCount = peopleCount;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Building getBuilding() {
