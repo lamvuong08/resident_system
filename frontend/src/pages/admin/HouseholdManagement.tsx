@@ -5,29 +5,30 @@ import ResidentTable from '../../components/ResidentTable'
 import ResidentModal from '../../components/ResidentModal'
 import api from '../../utils/api'
 import { normalizeResident } from '../../utils/resident'
+import type { Resident } from '../../types/api'
 import '../../styles/dashboard.css'
 
 const { Title, Text } = Typography
 
 type ResidentId = string | number
 
-const getNormalizedResidentList = (payload: unknown) => {
+const getNormalizedResidentList = (payload: unknown): Resident[] => {
   if (!Array.isArray(payload)) {
     return []
   }
-  return payload.map((resident: any) => normalizeResident(resident))
+  return payload.map((resident: unknown) => normalizeResident(resident as Resident))
 }
 
 const HouseholdManagement: React.FC = () => {
-  const loc: any = useLocation()
-  const state = loc.state || {}
+  const loc = useLocation()
+  const state = (loc.state as { aptCode?: string } | null) ?? {}
   const params = new URLSearchParams(loc.search || '')
   const apartment = state.aptCode || params.get('apt') || null
 
-  const [residents, setResidents] = useState<any[]>([])
+  const [residents, setResidents] = useState<Resident[]>([])
   const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
-  const [editing, setEditing] = useState<any | null>(null)
+  const [editing, setEditing] = useState<Resident | null>(null)
   const [householdId, setHouseholdId] = useState<number | null>(null)
 
   const loadResidents = async (apartmentCode: string) => {
@@ -67,7 +68,7 @@ const HouseholdManagement: React.FC = () => {
     setModalVisible(true)
   }
 
-  const handleEdit = (resident: any) => {
+  const handleEdit = (resident: Resident) => {
     setEditing(resident)
     setModalVisible(true)
   }
@@ -91,15 +92,16 @@ const HouseholdManagement: React.FC = () => {
         )
       )
       message.success('Đã cập nhật chủ hộ')
-    } catch (err: any) {
-      if (err?.response?.status === 403) {
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number } }
+      if (e?.response?.status === 403) {
         message.error('Bạn không có quyền thực hiện hành động này (403)')
       } else {
         message.error('Không thể cập nhật chủ hộ. Vui lòng thử lại sau.')
       }
     }
   }
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: Partial<Resident>) => {
     const payload = {
       name: values.name,
       gender: values.gender,
@@ -142,7 +144,7 @@ const HouseholdManagement: React.FC = () => {
       <Row gutter={16} style={{ marginTop: 12 }}>
         <Col span={16}>
           <Card style={{ borderRadius: 12 }}>
-            <ResidentTable data={residents} loading={loading} onView={(r:any) => console.log(r)} onEdit={handleEdit} onDelete={handleDelete} onMakeOwner={handleMakeOwner} />
+            <ResidentTable data={residents} loading={loading} onView={() => {}} onEdit={handleEdit} onDelete={handleDelete} onMakeOwner={handleMakeOwner} />
           </Card>
         </Col>
 

@@ -1,10 +1,13 @@
 package com.dancu.qlydancu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
 @Table(name = "buildings")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Building {
 
     @Id
@@ -17,6 +20,7 @@ public class Building {
     private Integer floors;
 
     @OneToMany(mappedBy = "building", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Apartment> apartments;
 
     public Building() {

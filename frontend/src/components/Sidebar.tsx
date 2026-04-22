@@ -42,7 +42,7 @@ const Sidebar: React.FC = () => {
       if (path === '/admin' || path === '/admin/') return 'dashboard'
       if (path.startsWith('/admin/quan-ly-toa-nha')) return 'quan-ly-toa-nha'
       if (path.startsWith('/admin/quan-ly-can-ho')) return 'quan-ly-can-ho'
-      if (path.startsWith('/admin/quan-ly-ho-khau')) return 'quan-ly-ho-khau'
+      if (path.startsWith('/admin/quan-ly-cu-tru') || path.startsWith('/admin/quan-ly-ho-khau')) return 'quan-ly-cu-tru'
       if (path.startsWith('/admin/quan-ly-cu-dan') || path.startsWith('/admin/quan-ly-dan-cu')) return 'quan-ly-cu-dan'
       if (path.startsWith('/admin/yeu-cau-nguoi-dan')) return 'yeu-cau-nguoi-dan'
       if (path.startsWith('/admin/quan-ly-thanh-toan')) return 'quan-ly-thanh-toan'
@@ -96,7 +96,7 @@ const Sidebar: React.FC = () => {
     { key: 'dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: 'quan-ly-toa-nha', icon: <ApartmentOutlined />, label: 'Quản lý tòa nhà' },
     { key: 'quan-ly-can-ho', icon: <HomeOutlined />, label: 'Quản lý căn hộ' },
-    { key: 'quan-ly-ho-khau', icon: <BankOutlined />, label: 'Quản lý hộ khẩu' },
+    { key: 'quan-ly-cu-tru', icon: <BankOutlined />, label: 'Quản lý cư trú' },
     { key: 'quan-ly-cu-dan', icon: <TeamOutlined />, label: 'Quản lý cư dân' },
     { key: 'yeu-cau-nguoi-dan', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
     { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán' },

@@ -1,6 +1,8 @@
 import React from 'react'
-import { Modal, Form, Input, Select, Row, Col } from 'antd'
+import { Modal, Form, Input, Select, Row, Col, DatePicker } from 'antd'
+import dayjs from 'dayjs'
 import { normalizeResident } from '../utils/resident'
+import type { Resident } from '../types/api'
 
 const { Option } = Select
 
@@ -8,6 +10,13 @@ const toInputDate = (value?: string | null) => {
   if (!value) return undefined
   if (value.includes('T')) return value.split('T')[0]
   return value
+}
+
+const toDayjsDate = (value?: string | null) => {
+  const normalized = toInputDate(value)
+  if (!normalized) return undefined
+  const parsed = dayjs(normalized)
+  return parsed.isValid() ? parsed : undefined
 }
 
 const normalizeGender = (gender?: string | null) => {
@@ -36,7 +45,14 @@ const sanitizeField = (value?: string | null) => {
   return trimmed
 }
 
-const ResidentModal: React.FC<any> = ({ visible, onCancel, onSave, initial, householdId, loading }) => {
+const ResidentModal: React.FC<{
+  visible?: boolean
+  onCancel?: () => void
+  onSave: (values: Partial<Resident>) => Promise<void>
+  initial?: Partial<Resident> | null
+  householdId?: number | null
+  loading?: boolean
+}> = ({ visible, onCancel, onSave, initial, householdId, loading }) => {
   const [form] = Form.useForm()
 
   React.useEffect(() => {
@@ -45,7 +61,7 @@ const ResidentModal: React.FC<any> = ({ visible, onCancel, onSave, initial, hous
       const resident = normalizeResident(initial)
       form.setFieldsValue({
         ...resident,
-        dob: toInputDate(resident.dob),
+        dob: toDayjsDate(resident.dob),
         gender: normalizeGender(resident.gender),
         relationship: normalizeRelationship(resident.relationship),
         cccd: sanitizeField(resident.cccd),
@@ -68,7 +84,17 @@ const ResidentModal: React.FC<any> = ({ visible, onCancel, onSave, initial, hous
   }
 
   return (
-    <Modal forceRender open={visible} confirmLoading={loading} onCancel={onCancel} onOk={handleOk} title={initial ? 'Chỉnh sửa cư dân' : 'Thêm cư dân'} okText={initial ? 'Lưu thay đổi' : 'Thêm cư dân'} cancelText="Hủy">
+    <Modal
+      forceRender
+      open={visible}
+      confirmLoading={loading}
+      onCancel={onCancel}
+      onOk={handleOk}
+      title={initial ? 'Chỉnh sửa cư dân' : 'Thêm cư dân'}
+      okText={initial ? 'Lưu thay đổi' : 'Thêm cư dân'}
+      cancelText="Hủy"
+      className="resident-editor-modal"
+    >
       <Form form={form} layout="vertical">
         <Row gutter={12}>
           <Col span={12}>
@@ -88,7 +114,7 @@ const ResidentModal: React.FC<any> = ({ visible, onCancel, onSave, initial, hous
         <Row gutter={12}>
           <Col span={12}>
             <Form.Item name="dob" label="Ngày sinh" rules={[{ required: true, message: 'Vui lòng chọn ngày sinh' }]}>
-              <Input type="date" />
+              <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
             </Form.Item>
           </Col>
           <Col span={12}>

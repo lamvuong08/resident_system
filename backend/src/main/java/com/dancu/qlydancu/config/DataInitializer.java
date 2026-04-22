@@ -8,6 +8,8 @@ import com.dancu.qlydancu.repo.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,6 +21,7 @@ import java.util.Random;
 @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
 public class DataInitializer implements CommandLineRunner {
 
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
     private final BuildingRepository buildingRepository;
     private final ApartmentRepository apartmentRepository;
     private final ResidentRepository residentRepository;
@@ -50,7 +53,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         // If apartments already exist, skip seeding to avoid overwriting a real database
         if (apartmentRepository.count() > 0) {
-            System.out.println("DataInitializer: apartments already present — skipping seeding.");
+            logger.info("DataInitializer: apartments already present — skipping seeding.");
             return;
         }
 

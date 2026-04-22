@@ -87,6 +87,9 @@ public class HouseholdController {
         residentResponse.put("cccd", resident.getCccd());
         residentResponse.put("phone", resident.getPhone());
         residentResponse.put("relationship", resident.getRelationship() != null ? resident.getRelationship().name() : null);
+        residentResponse.put("residentCategory", resident.getResidentCategory() != null ? resident.getResidentCategory().name() : null);
+        residentResponse.put("occupancyStatus", resident.getOccupancyStatus() != null ? resident.getOccupancyStatus().name() : null);
+        residentResponse.put("status", resident.getStatus());
         residentResponse.put("householdId", resident.getHouseholdId());
         return residentResponse;
     }

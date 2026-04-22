@@ -77,4 +77,8 @@ export const normalizeResident = (resident: ResidentInput) => {
   }
 }
 
-export const residentKey = (resident: any) => String(resident?.id ?? resident?.cccd ?? resident?.name ?? 'resident')
+export const residentKey = (resident: ResidentInput | unknown) => {
+  const r = resident as unknown as Record<string, unknown>
+  const id = r.id ?? r.cccd ?? r.name ?? 'resident'
+  return String(id)
+}

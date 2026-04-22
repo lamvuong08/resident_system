@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { DownOutlined } from '@ant-design/icons'
 import ApartmentGrid from './ApartmentGrid.tsx'
+import type { Building, Apartment } from '../types/api'
 
 const BuildingDetailPanel: React.FC<{
-  building: any
+  building: Building
   onClose: () => void
   groupByFloor?: boolean
 }> = ({ building, onClose, groupByFloor }) => {
@@ -11,67 +12,47 @@ const BuildingDetailPanel: React.FC<{
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [search, setSearch] = useState('')
 
-  const apartments = building.apartments || []
-  const isVacant = (status: string) => status === 'EMPTY' || status === 'VACANT'
-  const filtered = apartments.filter((ap: any) => {
+  const apartments: Apartment[] = building.apartments || []
+  const isVacant = (status?: string | null) => (status || '').toUpperCase() === 'EMPTY' || (status || '').toUpperCase() === 'VACANT'
+
+  const getFloorFromCode = (code?: string | null) => {
+    if (!code) return ''
+    const parts = String(code).split('-')
+    if (parts.length < 2) return ''
+    return String(parts[1]).slice(0, 2)
+  }
+
+  const filtered = apartments.filter((ap: Apartment) => {
+    const floor = getFloorFromCode(ap.code ?? null)
     if (floorFilter) {
-      const floor = ap.code.split('-')[1].slice(0, 2)
       if (floor !== floorFilter) return false
     }
 
     if (statusFilter !== 'ALL') {
-      if (
-        statusFilter === 'OCCUPIED' &&
-        ap.status !== 'OCCUPIED'
-      )
-        return false
-
-      if (
-        statusFilter === 'VACANT' &&
-        !isVacant(ap.status)
-      )
-        return false
+      if (statusFilter === 'OCCUPIED' && ap.status !== 'OCCUPIED') return false
+      if (statusFilter === 'VACANT' && !isVacant(ap.status)) return false
     }
 
-    if (
-      search &&
-      !ap.code
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    )
-      return false
+    if (search && !(ap.code || '').toLowerCase().includes(search.toLowerCase())) return false
 
     return true
   })
 
   const floors: string[] = useMemo(() =>
-    Array.from(
-      new Set<string>(
-        apartments.map((a: any) =>
-          String(a.code.split('-')[1].slice(0, 2))
-        )
-      )
-    ).sort((a, b) => Number(a) - Number(b)),
+    Array.from(new Set<string>(apartments.map((a: Apartment) => getFloorFromCode(a.code ?? null))))
+      .filter((f) => f)
+      .sort((a, b) => Number(a) - Number(b)),
     [apartments]
   )
 
   const [collapsedFloors, setCollapsedFloors] =
-    useState<Record<string, boolean>>({})
-
-  useEffect(() => {
-    const init: Record<string, boolean> = {}
-
-    floors.forEach((f) => {
-      init[f] = true
+    useState<Record<string, boolean>>(() => {
+      const init: Record<string, boolean> = {}
+      floors.forEach((f) => {
+        init[f] = true
+      })
+      return init
     })
-
-    setCollapsedFloors((prev) => {
-      if (Object.keys(prev).length === 0 && Object.keys(init).length > 0) {
-        return init
-      }
-      return prev
-    })
-  }, [floors])
 
   const toggleFloor = (floor: string) => {
     setCollapsedFloors((prev) => ({
@@ -80,20 +61,18 @@ const BuildingDetailPanel: React.FC<{
     }))
   }
 
-  const grouped: Record<string, any[]> = {}
+  const grouped: Record<string, Apartment[]> = {}
 
-  apartments.forEach((a: any) => {
-    const floor = a.code.split('-')[1].slice(0, 2)
-
+  apartments.forEach((a: Apartment) => {
+    const floor = getFloorFromCode(a.code ?? null)
     if (!grouped[floor]) grouped[floor] = []
-
     grouped[floor].push(a)
   })
 
   return (
     <div className="building-detail">
       <div className="detail-header">
-        <h3>Chi tiết {building.name}</h3>
+        <h3 className="section-title">Chi tiết tòa {building.name}</h3>
 
         <button
           className="btn-close"
@@ -104,12 +83,25 @@ const BuildingDetailPanel: React.FC<{
       </div>
 
       <div className="detail-info">
-        <div>Tổng tầng: {building.floors}</div>
-        <div>
-          Tổng căn hộ: {building.totalApartments}
+        <div className="detail-stat">
+          <span className="detail-stat-label">Tổng tầng</span>
+          <span className="detail-stat-value">{building.floors}</span>
         </div>
-        <div>Đã ở: {building.occupied}</div>
-        <div>Còn trống: {building.vacant}</div>
+
+        <div className="detail-stat">
+          <span className="detail-stat-label">Tổng căn hộ</span>
+          <span className="detail-stat-value">{building.totalApartments}</span>
+        </div>
+
+        <div className="detail-stat">
+          <span className="detail-stat-label">Đã ở</span>
+          <span className="detail-stat-value">{building.occupied}</span>
+        </div>
+
+        <div className="detail-stat">
+          <span className="detail-stat-label">Còn trống</span>
+          <span className="detail-stat-value">{building.vacant}</span>
+        </div>
       </div>
 
       <div className="detail-filters">
@@ -211,9 +203,7 @@ const BuildingDetailPanel: React.FC<{
                 Number(a) - Number(b)
             )
             .map((f) => {
-              const items = grouped[
-                f
-              ].filter((ap: any) => {
+              const items = grouped[f].filter((ap: Apartment) => {
                 if (
                   statusFilter !==
                     'ALL' &&
@@ -226,12 +216,7 @@ const BuildingDetailPanel: React.FC<{
                   return false
 
                 if (
-                  search &&
-                  !ap.code
-                    .toLowerCase()
-                    .includes(
-                      search.toLowerCase()
-                    )
+                    search && !(ap.code || '').toLowerCase().includes(search.toLowerCase())
                 )
                   return false
 
@@ -280,26 +265,11 @@ const BuildingDetailPanel: React.FC<{
                         : ''
                     }`}
                   >
-                    {items.map(
-                      (ap: any) => (
-                        <div
-                          key={ap.code}
-                          style={{
-                            width: 140,
-                            marginRight: 12
-                          }}
-                        >
-                          <ApartmentGrid
-                            apartments={[
-                              ap
-                            ]}
-                            buildingId={
-                              building.id
-                            }
-                          />
-                        </div>
-                      )
-                    )}
+                    {items.map((ap: Apartment) => (
+                      <div key={ap.code} style={{ width: 140, marginRight: 12 }}>
+                        <ApartmentGrid apartments={[ap]} buildingId={building.id} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               )

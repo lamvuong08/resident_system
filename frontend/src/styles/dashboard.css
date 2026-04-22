@@ -218,6 +218,59 @@
   margin-top:12px;
 }
 
+/* Building detail header & metadata styles */
+.section-title{
+  font-size:28px;
+  font-weight:600;
+  color:#1E3A8A;
+  margin:0 0 20px;
+  line-height:1.1;
+}
+
+.detail-stat{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#6B7280;
+  font-size:14px;
+  font-weight:400;
+  min-width:0;
+}
+
+.detail-stat + .detail-stat::before{
+  content: '•';
+  color: #9CA3AF;
+  margin: 0 10px;
+}
+
+.detail-stat-label{
+  color:#6B7280;
+  font-size:14px;
+  white-space:nowrap;
+}
+
+.detail-stat-value{
+  color:#0f172a;
+  font-weight:600;
+  font-size:14px;
+}
+
+@media (max-width:720px){
+  .detail-info{
+    gap:10px;
+  }
+
+  .detail-stat{
+    width:100%;
+    justify-content:flex-start;
+    gap:6px;
+  }
+
+  .detail-stat + .detail-stat::before{
+    display:none;
+  }
+}
+
 .btn-close{
   border:1px solid #e5e7eb;
   background:#fff;
@@ -412,6 +465,29 @@
   color:#64748b;
 }
 
+/* Apartment action buttons: ensure consistent height & alignment */
+.apartment-actions .apt-action-btn{
+  height:40px;
+  min-height:40px;
+  padding:0 16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.apartment-actions .apt-action-btn .anticon{
+  margin-right:8px;
+  display:inline-flex;
+  align-items:center;
+}
+
+/* Ensure when wrapping on small screens the buttons stay aligned and can wrap */
+.apartment-actions{display:flex;align-items:center;gap:12px}
+@media (max-width:520px){
+  .apartment-actions{flex-wrap:wrap;gap:8px}
+  .apartment-actions .apt-action-btn{height:38px;min-height:38px;padding:0 12px}
+}
+
 @media (max-width:1100px){
   .dashboard-content{
     grid-template-columns:1fr;
@@ -457,5 +533,12 @@
 
   .filter-controls{
     grid-template-columns:1fr;
+  }
+}
+
+@media (max-width:720px){
+  .section-title{
+    margin:0 0 12px;
+    font-size:22px;
   }
 }

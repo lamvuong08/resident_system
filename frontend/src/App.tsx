@@ -10,9 +10,10 @@ import Forgot from './pages/auth/Forgot'
 import Reset from './pages/auth/Reset'
 import Admin from './pages/admin/Admin'
 import Dashboard from './pages/admin/Dashboard'
-import HouseholdManagement from './pages/admin/HouseholdManagement'
 import ApartmentManagement from './pages/admin/ApartmentManagement'
 import BuildingManagement from './pages/admin/BuildingManagement'
+import ResidenceManagement from './pages/admin/ResidenceManagement'
+import ResidentManagement from './pages/admin/ResidentManagement'
 import User from './pages/user/User'
 import { getStoredRole, hasToken } from './utils/authStorage'
 
@@ -73,8 +74,10 @@ function App() {
         <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
         <Route path="/admin/*" element={<RequireRole role="ADMIN"><Admin /></RequireRole>}>
           <Route index element={<Dashboard />} />
-          <Route path="quan-ly-dan-cu" element={<React.Suspense fallback=''><div /></React.Suspense>} />
-          <Route path="quan-ly-ho-khau" element={<HouseholdManagement />} />
+          <Route path="quan-ly-cu-tru" element={<ResidenceManagement />} />
+          <Route path="quan-ly-cu-dan" element={<ResidentManagement />} />
+          <Route path="quan-ly-ho-khau" element={<Navigate to="/admin/quan-ly-cu-tru" replace />} />
+          <Route path="quan-ly-dan-cu" element={<Navigate to="/admin/quan-ly-cu-dan" replace />} />
           <Route path="quan-ly-can-ho" element={<ApartmentManagement />} />
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
         </Route>

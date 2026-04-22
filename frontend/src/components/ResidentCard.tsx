@@ -2,6 +2,7 @@ import React from 'react'
 import { Card, Avatar, Button, Tag, Descriptions } from 'antd'
 import { UserOutlined } from '@ant-design/icons'
 import { normalizeResident } from '../utils/resident'
+import type { Resident } from '../types/api'
 
 const roleColor = (r: string) => {
   switch (r) {
@@ -19,8 +20,8 @@ const roleColor = (r: string) => {
   }
 }
 
-export const ResidentCard: React.FC<any> = ({ resident, onEdit, onDelete }) => {
-  const data = normalizeResident(resident || {})
+export const ResidentCard: React.FC<{ resident?: Resident | unknown; onEdit?: (r: Resident) => void; onDelete?: (id: number | string) => void }> = ({ resident, onEdit, onDelete }) => {
+  const data = normalizeResident((resident as unknown) || {})
 
   return (
     <Card hoverable style={{ borderRadius: 12, marginBottom: 12 }}>
@@ -42,8 +43,8 @@ export const ResidentCard: React.FC<any> = ({ resident, onEdit, onDelete }) => {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <Button size="small" onClick={() => onEdit(data)}>Sửa</Button>
-          <Button size="small" danger onClick={() => onDelete(data.id)}>Xóa</Button>
+          <Button size="small" onClick={() => onEdit?.(data as Resident)}>Sửa</Button>
+          <Button size="small" danger onClick={() => data.id !== undefined && onDelete?.(data.id)}>Xóa</Button>
         </div>
       </div>
     </Card>

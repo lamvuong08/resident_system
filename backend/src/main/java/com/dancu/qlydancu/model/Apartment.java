@@ -1,5 +1,7 @@
 package com.dancu.qlydancu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import com.dancu.qlydancu.model.status.ApartmentStatus;
 
@@ -8,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "apartments")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Apartment {
 
     @Id
@@ -41,6 +44,7 @@ public class Apartment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id")
+    @JsonIgnore
     private Building building;
 
     public Apartment() {

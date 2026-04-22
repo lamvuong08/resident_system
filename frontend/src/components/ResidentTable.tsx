@@ -1,6 +1,8 @@
 import React from 'react'
 import { Table, Tag, Space, Button } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { formatDateVN, formatResidentGender, formatResidentRelationship, normalizeResident, residentKey } from '../utils/resident'
+import type { Resident } from '../types/api'
 
 const roleColor = (r: string) => {
   switch (r) {
@@ -21,10 +23,18 @@ const roleColor = (r: string) => {
   }
 }
 
-const ResidentTable: React.FC<any> = ({ data, loading, onView, onEdit, onDelete, showActions = true }) => {
-  const residents = (data || []).map((resident: any) => normalizeResident(resident))
+const ResidentTable: React.FC<{
+  data?: Resident[] | unknown[]
+  loading?: boolean
+  onView?: (r: Resident) => void
+  onEdit?: (r: Resident) => void
+  onDelete?: (id: number | string) => void
+  onMakeOwner?: (id: number | string) => void
+  showActions?: boolean
+}> = ({ data, loading, onView, onEdit, onDelete, onMakeOwner, showActions = true }) => {
+  const residents: Resident[] = (data || []).map((resident: unknown) => normalizeResident(resident as Resident))
 
-  const baseColumns: any[] = [
+  const baseColumns: ColumnsType<Resident> = [
     { title: 'Họ tên', dataIndex: 'name', key: 'name', render: (value: string) => value || '-' },
     { title: 'Giới tính', dataIndex: 'gender', key: 'gender', render: (value: string) => formatResidentGender(value) },
     { title: 'Ngày sinh', dataIndex: 'dob', key: 'dob', render: (value: string) => formatDateVN(value) },
@@ -38,12 +48,24 @@ const ResidentTable: React.FC<any> = ({ data, loading, onView, onEdit, onDelete,
     },
   ]
 
-  const actionColumn = {
-    title: 'Hành động', key: 'actions', render: (_:any, record:any) => (
+  const actionColumn: ColumnsType<Resident>[number] = {
+    title: 'Hành động', key: 'actions', render: (_: unknown, record: Resident) => (
       <Space>
         <Button size="small" onClick={() => onView && onView(record)}>Xem</Button>
         <Button size="small" onClick={() => onEdit && onEdit(record)}>Sửa</Button>
-        <Button size="small" danger onClick={() => onDelete && onDelete(record.id)}>Xóa</Button>
+        {onMakeOwner && record.id !== undefined && (
+          <Button
+            size="small"
+            onClick={() => {
+              const id = record.id
+              if (id === undefined) return
+              onMakeOwner(id)
+            }}
+          >
+            Chủ hộ
+          </Button>
+        )}
+        <Button size="small" danger onClick={() => record.id !== undefined && onDelete?.(record.id)}>Xóa</Button>
       </Space>
     )
   }

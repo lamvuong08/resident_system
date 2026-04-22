@@ -2,6 +2,7 @@ package com.dancu.qlydancu.controller;
 
 import com.dancu.qlydancu.repo.BuildingRepository;
 import com.dancu.qlydancu.repo.ApartmentRepository;
+import com.dancu.qlydancu.repo.ResidenceRecordRepository;
 import com.dancu.qlydancu.repo.ResidentRepository;
 import com.dancu.qlydancu.model.Building;
 import com.dancu.qlydancu.model.Apartment;
@@ -15,29 +16,35 @@ import java.util.*;
 @RequestMapping("/api/dashboard")
 @CrossOrigin(origins = "*")
 public class DashboardController {
-    private static final int MOCK_PENDING_REQUESTS = 12;
-
     private final BuildingRepository buildingRepository;
     private final ApartmentRepository apartmentRepository;
     private final ResidentRepository residentRepository;
+    private final ResidenceRecordRepository residenceRecordRepository;
 
     public DashboardController(BuildingRepository buildingRepository,
                                ApartmentRepository apartmentRepository,
-                               ResidentRepository residentRepository) {
+                               ResidentRepository residentRepository,
+                               ResidenceRecordRepository residenceRecordRepository) {
         this.buildingRepository = buildingRepository;
         this.apartmentRepository = apartmentRepository;
         this.residentRepository = residentRepository;
+        this.residenceRecordRepository = residenceRecordRepository;
     }
 
     @GetMapping("/stats")
     public Map<String, Object> stats() {
         Map<String, Object> statistics = new HashMap<>();
+        long totalDashboardResidents = residentRepository.countDashboardResidents(null);
         statistics.put("totalBuildings", buildingRepository.count());
         statistics.put("totalApartments", apartmentRepository.count());
         statistics.put("occupiedApartments", apartmentRepository.countByStatus(ApartmentStatus.OCCUPIED));
         statistics.put("vacantApartments", apartmentRepository.countByStatus(ApartmentStatus.EMPTY));
-        statistics.put("totalResidents", residentRepository.count());
-        statistics.put("pendingRequests", MOCK_PENDING_REQUESTS);
+        statistics.put("totalResidents", totalDashboardResidents);
+        statistics.put("totalLivingResidents", totalDashboardResidents);
+        statistics.put("totalTemporaryResidents", residentRepository.countTemporaryResidents());
+        long temporaryAbsentFromResidents = residentRepository.countTemporaryAbsentResidents();
+        long temporaryAbsentFromRecords = residenceRecordRepository.countActiveApprovedTemporaryAbsenceResidents();
+        statistics.put("totalTemporaryAbsentResidents", Math.max(temporaryAbsentFromResidents, temporaryAbsentFromRecords));
         return statistics;
     }
 
@@ -77,7 +84,7 @@ public class DashboardController {
         summary.put("name", building.getName());
         summary.put("floors", building.getFloors());
         summary.put("apartments", apartmentRepository.findByBuilding_Code(building.getCode()).size());
-        summary.put("residents", residentRepository.countByApartment_Building_Code(building.getCode()));
+        summary.put("residents", residentRepository.countDashboardResidents(building.getCode()));
         return summary;
     }
 
@@ -125,7 +132,9 @@ public class DashboardController {
         response.put("cccd", resident.getCccd());
         response.put("phone", resident.getPhone());
         response.put("relationship", resident.getRelationship() != null ? resident.getRelationship().name() : null);
-        response.put("status", resident.getStatus() != null ? resident.getStatus().name() : null);
+        response.put("residentCategory", resident.getResidentCategory() != null ? resident.getResidentCategory().name() : null);
+        response.put("occupancyStatus", resident.getOccupancyStatus() != null ? resident.getOccupancyStatus().name() : null);
+        response.put("status", resident.getStatus());
         response.put("householdId", resident.getHouseholdId());
         return response;
     }

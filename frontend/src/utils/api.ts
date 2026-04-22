@@ -23,8 +23,15 @@ const api = axios.create({
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem('token')
 
-  if (token) {
-    config.headers.set('Authorization', `Bearer ${token}`)
+  if (token && config.headers) {
+    const headers = config.headers as unknown as Record<string, unknown>
+    // Axios headers may expose a `set` method (AxiosHeaders) or be a plain object.
+    const headersWithSet = headers as unknown as { set?: (k: string, v: string) => void }
+    if (typeof headersWithSet.set === 'function') {
+      headersWithSet.set('Authorization', `Bearer ${token}`)
+    } else {
+      ;(headers as Record<string, string>)['Authorization'] = `Bearer ${token}`
+    }
   }
 
   return config
@@ -57,14 +64,16 @@ api.interceptors.response.use(
   }
 )
 
-export const extractApiError = (err: any, fallback = 'Có lỗi xảy ra') => {
-  const data = err?.response?.data
+export const extractApiError = (err: unknown, fallback = 'Có lỗi xảy ra') => {
+  const maybe = err as { response?: { data?: unknown }; message?: unknown }
+  const data = maybe.response?.data
   if (typeof data === 'string' && data.trim()) return data
   if (data && typeof data === 'object') {
-    if (typeof data.message === 'string' && data.message.trim()) return data.message
-    if (typeof data.error === 'string' && data.error.trim()) return data.error
+    const obj = data as Record<string, unknown>
+    if (typeof obj.message === 'string' && obj.message.trim()) return obj.message
+    if (typeof obj.error === 'string' && obj.error.trim()) return obj.error
   }
-  if (typeof err?.message === 'string' && err.message.trim()) return err.message
+  if (typeof maybe.message === 'string' && maybe.message.trim()) return maybe.message
   return fallback
 }
 

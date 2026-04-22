@@ -46,7 +46,18 @@ public class ApartmentController {
     }
 
     @GetMapping
-    public List<Apartment> list() {
+    public List<Apartment> list(
+            @RequestParam(required = false) Long buildingId,
+            @RequestParam(required = false) String buildingCode
+    ) {
+        if (buildingId != null) {
+            return apartmentRepository.findByBuilding_Id(buildingId);
+        }
+
+        if (buildingCode != null && !buildingCode.isBlank()) {
+            return apartmentRepository.findByBuilding_Code(buildingCode.trim().toUpperCase());
+        }
+
         return apartmentRepository.findAll();
     }
 
