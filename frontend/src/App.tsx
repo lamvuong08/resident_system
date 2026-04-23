@@ -6,6 +6,7 @@ import ApartmentManagement from './pages/admin/ApartmentManagement'
 import BuildingManagement from './pages/admin/BuildingManagement'
 import Dashboard from './pages/admin/Dashboard'
 import HouseholdManagement from './pages/admin/HouseholdManagement'
+import NotificationManagement from './pages/admin/NotificationManagement';
 import ConfirmRegister from './pages/auth/ConfirmRegister'
 import Forgot from './pages/auth/Forgot'
 import Login from './pages/auth/Login'
@@ -78,6 +79,7 @@ function App() {
           <Route path="quan-ly-ho-khau" element={<HouseholdManagement />} />
           <Route path="quan-ly-can-ho" element={<ApartmentManagement />} />
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
+          <Route path="thong-bao" element={<NotificationManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route path="support" element={<ResidentSupport />} />
