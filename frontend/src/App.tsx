@@ -1,19 +1,20 @@
 import React from 'react'
-import './styles/App.css'
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Header from './components/Header'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import ConfirmRegister from './pages/auth/ConfirmRegister'
-import Home from './pages/user/Home'
-import Forgot from './pages/auth/Forgot'
-import Reset from './pages/auth/Reset'
 import Admin from './pages/admin/Admin'
-import Dashboard from './pages/admin/Dashboard'
-import HouseholdManagement from './pages/admin/HouseholdManagement'
 import ApartmentManagement from './pages/admin/ApartmentManagement'
 import BuildingManagement from './pages/admin/BuildingManagement'
+import Dashboard from './pages/admin/Dashboard'
+import HouseholdManagement from './pages/admin/HouseholdManagement'
+import ConfirmRegister from './pages/auth/ConfirmRegister'
+import Forgot from './pages/auth/Forgot'
+import Login from './pages/auth/Login'
+import Register from './pages/auth/Register'
+import Reset from './pages/auth/Reset'
+import Home from './pages/user/Home'
 import User from './pages/user/User'
+import ResidentSupport from './pages/user/ResidentSupport';
+import './styles/App.css'
 import { getStoredRole, hasToken } from './utils/authStorage'
 
 type RoleKey = 'ADMIN' | 'USER'
@@ -79,6 +80,7 @@ function App() {
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
+          <Route path="support" element={<ResidentSupport />} />
           <Route index element={<Home />} />
         </Route>
         <Route path="/" element={<Login />} />
