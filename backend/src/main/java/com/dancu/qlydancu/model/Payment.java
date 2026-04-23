@@ -1,5 +1,6 @@
 package com.dancu.qlydancu.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import com.dancu.qlydancu.model.enums.PaymentMethod;
 
@@ -13,8 +14,10 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "bill_id")
-    private Long billId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bill_id")
+    @JsonIgnore
+    private Bill bill;
 
     private Long amount;
 
@@ -24,9 +27,6 @@ public class Payment {
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
-
-    @Transient
-    private Apartment apartment;
 
     public Payment() {}
 
@@ -38,8 +38,22 @@ public class Payment {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getBillId() { return billId; }
-    public void setBillId(Long billId) { this.billId = billId; }
+    public Long getBillId() { return bill != null ? bill.getId() : null; }
+
+    public void setBillId(Long billId) {
+        if (billId == null) {
+            this.bill = null;
+            return;
+        }
+
+        if (this.bill == null) {
+            this.bill = new Bill();
+        }
+        this.bill.setId(billId);
+    }
+
+    public Bill getBill() { return bill; }
+    public void setBill(Bill bill) { this.bill = bill; }
 
     public Long getAmount() { return amount; }
     public void setAmount(Long amount) { this.amount = amount; }
@@ -49,7 +63,4 @@ public class Payment {
 
     public LocalDateTime getPaidAt() { return paidAt; }
     public void setPaidAt(LocalDateTime paidAt) { this.paidAt = paidAt; }
-
-    public Apartment getApartment() { return apartment; }
-    public void setApartment(Apartment apartment) { this.apartment = apartment; }
 }

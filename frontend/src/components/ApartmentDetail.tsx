@@ -327,7 +327,6 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
               <div>Trạng thái: <Tag color={statusColor(normalizedApartment.status)}>{statusLabel(normalizedApartment.status)}</Tag></div>
               <div>Chủ hộ: <strong>{normalizedApartment.ownerName ?? '-'}</strong></div>
               <div>Số người ở: <strong>{loadingResidents ? (normalizedApartment.peopleCount ?? 0) : residents.length}</strong></div>
-              <div>Household ID: <strong>{householdId ?? '-'}</strong></div>
             </div>
           </Card>
 

@@ -1,6 +1,8 @@
 package com.dancu.qlydancu.config;
 
 import com.dancu.qlydancu.model.*;
+import com.dancu.qlydancu.model.enums.BillStatus;
+import com.dancu.qlydancu.model.enums.PaymentMethod;
 import com.dancu.qlydancu.model.enums.RequestStatus;
 import com.dancu.qlydancu.model.enums.RequestType;
 import com.dancu.qlydancu.model.status.ApartmentStatus;
@@ -25,6 +27,8 @@ public class DataInitializer implements CommandLineRunner {
     private final BuildingRepository buildingRepository;
     private final ApartmentRepository apartmentRepository;
     private final ResidentRepository residentRepository;
+    private final HouseholdRepository householdRepository;
+    private final BillRepository billRepository;
     private final ApartmentFinanceRepository financeRepository;
     private final PaymentRepository paymentRepository;
     private final MaintenanceRequestRepository maintenanceRepository;
@@ -34,6 +38,8 @@ public class DataInitializer implements CommandLineRunner {
     public DataInitializer(BuildingRepository buildingRepository,
                            ApartmentRepository apartmentRepository,
                            ResidentRepository residentRepository,
+                           HouseholdRepository householdRepository,
+                           BillRepository billRepository,
                            ApartmentFinanceRepository financeRepository,
                            PaymentRepository paymentRepository,
                            MaintenanceRequestRepository maintenanceRepository,
@@ -42,6 +48,8 @@ public class DataInitializer implements CommandLineRunner {
         this.buildingRepository = buildingRepository;
         this.apartmentRepository = apartmentRepository;
         this.residentRepository = residentRepository;
+        this.householdRepository = householdRepository;
+        this.billRepository = billRepository;
         this.financeRepository = financeRepository;
         this.paymentRepository = paymentRepository;
         this.maintenanceRepository = maintenanceRepository;
@@ -107,9 +115,13 @@ public class DataInitializer implements CommandLineRunner {
                 ap.setOwnerName("Chủ nhà " + ap.getCode());
                 apartmentRepository.save(ap);
 
+                Household household = new Household();
+                household.setApartment(ap);
+                household = householdRepository.save(household);
+
                 for (int p = 0; p < people; p++) {
                     Resident r = new Resident("Cư dân " + residentIdx);
-                    r.setApartment(ap);
+                    r.setHouseholdId(household.getId());
                     r.setAge(18 + rnd.nextInt(60));
                     r.setPhone("09" + (phoneBase + residentIdx));
                     residents.add(r);
@@ -141,12 +153,22 @@ public class DataInitializer implements CommandLineRunner {
                 financeRepository.save(f2);
                 financeRepository.save(f3);
 
+                long totalBillAmount = f1.getAmount() + f2.getAmount() + f3.getAmount();
+                Bill bill = new Bill();
+                bill.setApartment(ap);
+                bill.setBillingMonth(month);
+                bill.setTotalAmount(totalBillAmount);
+                bill.setStatus(BillStatus.PAID);
+                bill.setCreatedAt(LocalDateTime.now());
+                bill = billRepository.save(bill);
+
                 // ================= PAYMENT =================
                 Payment pay = new Payment(
-                        f1.getAmount() + f2.getAmount() + f3.getAmount(),
+                    totalBillAmount,
                         LocalDate.now().minusDays(rnd.nextInt(30))
                 );
-                pay.setApartment(ap);
+                pay.setBill(bill);
+                pay.setPaymentMethod(PaymentMethod.CASH);
                 paymentRepository.save(pay);
 
                 // ================= MAINTENANCE =================
@@ -156,7 +178,7 @@ public class DataInitializer implements CommandLineRunner {
                 m.setType(RequestType.REPAIR);
                 m.setStatus(rnd.nextBoolean() ? RequestStatus.PENDING : RequestStatus.DONE);
                 m.setCreatedAt(LocalDateTime.now().minusDays(rnd.nextInt(90)));
-                m.setApartment(ap);
+                m.setHouseholdId(household.getId());
                 maintenanceRepository.save(m);
 
                 // ================= CONTRACT =================

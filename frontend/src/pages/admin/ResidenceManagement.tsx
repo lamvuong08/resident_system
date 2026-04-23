@@ -96,6 +96,12 @@ const STATUS_COLOR: Record<ResidenceRecordStatus, string> = {
   REJECTED: 'red',
 }
 
+const STATUS_SORT_ORDER: Record<ResidenceRecordStatus, number> = {
+  PENDING: 1,
+  APPROVED: 2,
+  REJECTED: 3,
+}
+
 const parseIntSafe = (value: unknown, fallback = 0) => {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
@@ -212,7 +218,17 @@ const ResidenceManagement: React.FC = () => {
       const response = await api.get('/residence-records', { params })
       const payload = Array.isArray(response.data) ? response.data : []
       const normalized = payload.map((item: ResidenceRecordApi) => normalizeResidenceRecord(item))
-      const validRows = normalized.filter((item): item is ResidenceRecordRow => item !== null)
+      const validRows = normalized
+        .filter((item): item is ResidenceRecordRow => item !== null)
+        .sort((a, b) => {
+          const statusDiff = STATUS_SORT_ORDER[a.status] - STATUS_SORT_ORDER[b.status]
+          if (statusDiff !== 0) return statusDiff
+
+          const dateDiff = dayjs(b.startDate).valueOf() - dayjs(a.startDate).valueOf()
+          if (dateDiff !== 0) return dateDiff
+
+          return b.id - a.id
+        })
 
       setRecords(validRows)
       setInvalidRowCount(normalized.length - validRows.length)
@@ -298,14 +314,6 @@ const ResidenceManagement: React.FC = () => {
   }
 
   const columns: ColumnsType<ResidenceRecordRow> = [
-    {
-      title: 'Mã hồ sơ',
-      dataIndex: 'recordCode',
-      key: 'recordCode',
-      width: 110,
-      align: 'center',
-      render: (value: string) => <Text strong>#{value}</Text>,
-    },
     {
       title: 'Loại hồ sơ',
       dataIndex: 'type',

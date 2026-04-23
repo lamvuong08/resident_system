@@ -101,6 +101,11 @@ const OCCUPANCY_COLOR: Record<OccupancyStatus, string> = {
   EXPIRED: 'default',
 }
 
+const apartmentCodeCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+})
+
 const CATEGORY_LABEL: Record<ResidentCategory, string> = {
   OFFICIAL: 'Chính thức',
   TEMPORARY: 'Tạm trú',
@@ -277,13 +282,29 @@ const ResidentManagement: React.FC = () => {
   }, [buildingFilter])
 
   const displayedRows = useMemo(() => {
-    return rows.filter((row) => {
+    return rows
+      .filter((row) => {
       if (viewFilter === 'LIVING') return row.occupancyStatus === 'LIVING' && row.residentCategory === 'OFFICIAL'
       if (viewFilter === 'TEMP_ABSENT') return row.occupancyStatus === 'TEMP_ABSENT'
       if (viewFilter === 'TEMPORARY') return row.residentCategory === 'TEMPORARY' && row.occupancyStatus === 'LIVING'
       if (viewFilter === 'EXPIRED') return row.occupancyStatus === 'EXPIRED'
       return true
     })
+      .sort((a, b) => {
+        const buildingCompare = apartmentCodeCollator.compare(a.buildingCode || '', b.buildingCode || '')
+        if (buildingCompare !== 0) return buildingCompare
+
+        const apartmentCompare = apartmentCodeCollator.compare(a.apartmentCode || '', b.apartmentCode || '')
+        if (apartmentCompare !== 0) return apartmentCompare
+
+        const nameCompare = apartmentCodeCollator.compare(a.fullName || '', b.fullName || '')
+        if (nameCompare !== 0) return nameCompare
+
+        const aId = Number(a.id)
+        const bId = Number(b.id)
+        if (Number.isFinite(aId) && Number.isFinite(bId)) return aId - bId
+        return String(a.id).localeCompare(String(b.id))
+      })
   }, [rows, viewFilter])
 
   const totalRows = displayedRows.length

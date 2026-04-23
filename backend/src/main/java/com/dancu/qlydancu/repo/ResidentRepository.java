@@ -171,21 +171,7 @@ public interface ResidentRepository extends JpaRepository<Resident, Long> {
         JOIN apartments a ON h.apartment_id = a.id
         JOIN buildings b ON a.building_id = b.id
         WHERE (:buildingCode IS NULL OR b.code = :buildingCode)
-                    AND UPPER(TRIM(r.occupancy_status)) = 'LIVING'
-                    AND (
-                        COALESCE(UPPER(TRIM(r.resident_category)), '') <> 'TEMPORARY'
-                        OR EXISTS (
-                            SELECT 1
-                            FROM residence_records rr
-                            WHERE rr.household_id = r.household_id
-                                AND COALESCE(UPPER(TRIM(rr.type)), '') = 'TEMPORARY_STAY'
-                                AND COALESCE(UPPER(TRIM(rr.status)), '') = 'APPROVED'
-                                AND (
-                                    (NULLIF(TRIM(rr.guest_cccd), '') IS NOT NULL AND NULLIF(TRIM(r.cccd), '') IS NOT NULL AND UPPER(TRIM(rr.guest_cccd)) = UPPER(TRIM(r.cccd)))
-                                    OR (NULLIF(TRIM(rr.guest_name), '') IS NOT NULL AND NULLIF(TRIM(r.full_name), '') IS NOT NULL AND UPPER(TRIM(rr.guest_name)) = UPPER(TRIM(r.full_name)))
-                                )
-                        )
-                    )
+          AND UPPER(TRIM(r.occupancy_status)) = 'LIVING'
         """, nativeQuery = true)
     long countDashboardResidents(@Param("buildingCode") String buildingCode);
 
@@ -237,7 +223,13 @@ public interface ResidentRepository extends JpaRepository<Resident, Long> {
                         )
                     )
           AND (:includeExpiredTemporary = TRUE OR NOT (UPPER(TRIM(r.resident_category)) = 'TEMPORARY' AND UPPER(TRIM(r.occupancy_status)) = 'EXPIRED'))
-        ORDER BY r.id DESC
+                ORDER BY
+                    b.code ASC,
+                    a.floor_number ASC,
+                    a.room_number ASC,
+                    a.code ASC,
+                    r.full_name ASC,
+                    r.id ASC
         """, nativeQuery = true)
     List<Resident> searchResidents(
             @Param("buildingCode") String buildingCode,
@@ -285,7 +277,13 @@ public interface ResidentRepository extends JpaRepository<Resident, Long> {
                         )
                     )
           AND (:includeExpiredTemporary = TRUE OR NOT (r.resident_category = 'TEMPORARY' AND r.occupancy_status = 'EXPIRED'))
-        ORDER BY r.id DESC
+                ORDER BY
+                    b.code ASC,
+                    a.floor_number ASC,
+                    a.room_number ASC,
+                    a.code ASC,
+                    r.full_name ASC,
+                    r.id ASC
         """, nativeQuery = true)
     List<ResidentAdminRowProjection> searchResidentAdminRows(
             @Param("buildingCode") String buildingCode,

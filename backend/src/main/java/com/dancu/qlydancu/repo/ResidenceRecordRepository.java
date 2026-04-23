@@ -59,11 +59,7 @@ public interface ResidenceRecordRepository extends JpaRepository<ResidenceRecord
             GROUP BY household_id
         ) head_map ON head_map.household_id = h.id
         LEFT JOIN residents head ON head.id = head_map.head_id
-        WHERE b.code IN ('A1', 'A2', 'B1')
-          AND a.floor_number BETWEEN 1 AND 10
-          AND a.room_number BETWEEN 1 AND 8
-          AND a.code REGEXP '^(A1|A2|B1)-(0[1-9]|10)(0[1-8])$'
-          AND SUBSTRING_INDEX(a.code, '-', 1) = b.code
+        WHERE 1 = 1
           AND (:buildingCode IS NULL OR b.code = :buildingCode)
           AND (:apartmentCode IS NULL OR a.code = :apartmentCode)
           AND (:type IS NULL OR rr.type = :type)
@@ -75,7 +71,15 @@ public interface ResidenceRecordRepository extends JpaRepository<ResidenceRecord
             OR LOWER(COALESCE(r.full_name, rr.guest_name)) LIKE CONCAT('%', LOWER(:keyword), '%')
             OR COALESCE(r.cccd, rr.guest_cccd) LIKE CONCAT('%', :keyword, '%')
           )
-        ORDER BY rr.start_date DESC, rr.id DESC
+        ORDER BY
+          CASE
+            WHEN rr.status = 'PENDING' THEN 1
+            WHEN rr.status = 'APPROVED' THEN 2
+            WHEN rr.status = 'REJECTED' THEN 3
+            ELSE 4
+          END ASC,
+          rr.start_date DESC,
+          rr.id DESC
         """, nativeQuery = true)
     List<ResidenceRecordRowProjection> findResidenceRows(
             @Param("buildingCode") String buildingCode,
