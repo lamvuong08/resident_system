@@ -1,25 +1,32 @@
 package com.dancu.qlydancu.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.dancu.qlydancu.dto.ApartmentResponse;
 import com.dancu.qlydancu.model.Apartment;
 import com.dancu.qlydancu.model.Bill;
 import com.dancu.qlydancu.model.BillDetail;
 import com.dancu.qlydancu.model.Household;
-import com.dancu.qlydancu.model.Resident;
 import com.dancu.qlydancu.model.Payment;
+import com.dancu.qlydancu.model.Resident;
 import com.dancu.qlydancu.repo.ApartmentRepository;
-import com.dancu.qlydancu.repo.HouseholdRepository;
-import com.dancu.qlydancu.repo.ResidentRepository;
 import com.dancu.qlydancu.repo.BillDetailRepository;
 import com.dancu.qlydancu.repo.BillRepository;
+import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.PaymentRepository;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.dancu.qlydancu.repo.ResidentRepository;
 
 @RestController
 @RequestMapping("/api/apartments")
@@ -32,11 +39,11 @@ public class ApartmentController {
     private final PaymentRepository paymentRepository;
 
     public ApartmentController(ApartmentRepository apartmentRepository,
-                               HouseholdRepository householdRepository,
-                               ResidentRepository residentRepository,
-                               BillRepository billRepository,
-                               BillDetailRepository billDetailRepository,
-                               PaymentRepository paymentRepository) {
+            HouseholdRepository householdRepository,
+            ResidentRepository residentRepository,
+            BillRepository billRepository,
+            BillDetailRepository billDetailRepository,
+            PaymentRepository paymentRepository) {
         this.apartmentRepository = apartmentRepository;
         this.householdRepository = householdRepository;
         this.residentRepository = residentRepository;
@@ -48,6 +55,39 @@ public class ApartmentController {
     @GetMapping
     public List<Apartment> list() {
         return apartmentRepository.findAll();
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<ApartmentResponse>> filterApartments(
+            @RequestParam String buildingId, // Đổi từ Long sang String để hứng cả ID lẫn Mã tòa
+            @RequestParam(required = false) Integer floor) {
+
+        List<Apartment> apartments = new ArrayList<>();
+        
+        try {
+            // Trường hợp 1: Frontend gửi lên dạng số (ID = "1", "2")
+            Long bId = Long.parseLong(buildingId);
+            if (floor != null) {
+                apartments = apartmentRepository.findByBuildingIdAndFloorNumber(bId, floor);
+            } else {
+                apartments = apartmentRepository.findByBuildingId(bId);
+            }
+        } catch (NumberFormatException ex) {
+            // Trường hợp 2: Frontend gửi lên dạng chữ (Code = "A1", "A2") -> Ép kiểu Long thất bại sẽ nhảy vào đây
+            if (floor != null) {
+                apartments = apartmentRepository.findByBuilding_CodeAndFloorNumber(buildingId, floor);
+            } else {
+                apartments = apartmentRepository.findByBuilding_Code(buildingId); // Hàm này có sẵn trong Repo của bạn
+            }
+        }
+
+        // Sử dụng hàm toApartmentResponse (đã có sẵn trong file của bạn) để map DTO.
+        // Việc dùng toApartmentResponse giúp lấy được thông tin Chủ hộ, Số người và tránh lỗi 500 Lazy Load.
+        List<ApartmentResponse> response = apartments.stream()
+                .map(this::toApartmentResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{idOrCode}")
@@ -130,20 +170,23 @@ public class ApartmentController {
     }
 
     private ApartmentResponse toApartmentResponse(Apartment apartment) {
-        ApartmentResponse apartmentResponse = new ApartmentResponse();
-        apartmentResponse.id = apartment.getId();
-        apartmentResponse.code = apartment.getCode();
-        apartmentResponse.floorNumber = apartment.getFloorNumber();
-        apartmentResponse.roomNumber = apartment.getRoomNumber();
-        apartmentResponse.area = apartment.getArea();
-        apartmentResponse.status = apartment.getStatus() != null ? apartment.getStatus().name() : null;
+        // 1. Sử dụng Constructor đã có (tự động map id, code, floor, area, status,
+        // building info)
+        ApartmentResponse apartmentResponse = new ApartmentResponse(apartment);
+
+        // 2. Bổ sung các thông tin mà Entity Apartment không có sẵn (phải truy vấn từ
+        // Repo khác)
+        // Lấy tên chủ hộ
         apartmentResponse.ownerName = residentRepository.findOwnerNameByApartmentCode(apartment.getCode());
+
+        // Đếm số thành viên
         apartmentResponse.peopleCount = (int) residentRepository.countByApartmentCode(apartment.getCode());
-        apartmentResponse.buildingCode = apartment.getBuilding() != null ? apartment.getBuilding().getCode() : null;
-        apartmentResponse.buildingName = apartment.getBuilding() != null ? apartment.getBuilding().getName() : null;
+
+        // Tìm householdId (vì Apartment không có liên kết tới Household)
         apartmentResponse.householdId = householdRepository.findByApartment_Code(apartment.getCode())
                 .map(Household::getId)
                 .orElse(null);
+
         return apartmentResponse;
     }
 
@@ -153,4 +196,17 @@ public class ApartmentController {
         response.put("apartmentCode", apartment.getCode());
         return response;
     }
+
+    // public ResponseEntity<List<ApartmentResponse>> getApartmentsByBuildingAndFloor(
+    //         @PathVariable Long buildingId,
+    //         @PathVariable Integer floorNumber) {
+
+    //     List<Apartment> apartments = apartmentRepository.findByBuildingIdAndFloorNumber(buildingId, floorNumber);
+
+    //     List<ApartmentResponse> response = apartments.stream()
+    //             .map(ApartmentResponse::new)
+    //             .collect(Collectors.toList());
+
+    //     return ResponseEntity.ok(response);
+    // }
 }
