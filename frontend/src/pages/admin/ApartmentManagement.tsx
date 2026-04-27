@@ -3,11 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Tabs, Button, Card, Select, Space, Empty, Typography, Alert, Spin } from 'antd'
 import ApartmentDetail from '../../components/ApartmentDetail'
 import api from '../../utils/api'
+import type { Apartment, Building } from '../../types/api'
 
 const { Text } = Typography
 const LAST_APARTMENT_CODE_KEY = 'admin.lastSelectedApartmentCode'
 
-const parseApartmentPayload = (payload: unknown) => {
+const parseApartmentPayload = (payload: unknown): Apartment | null => {
   let parsedPayload = payload
 
   while (typeof parsedPayload === 'string') {
@@ -22,31 +23,35 @@ const parseApartmentPayload = (payload: unknown) => {
     return null
   }
 
-  const source = parsedPayload as Record<string, any>
+  const source = parsedPayload as Record<string, unknown>
+  const codeValue = (source.code as string | undefined) ?? (source.apartmentCode as string | undefined)
+  const floorValue = (source.floorNumber as number | undefined) ?? (source.floor as number | undefined)
+
   return {
-    ...source,
-    code: source.code ?? source.apartmentCode ?? null,
-    floorNumber: source.floorNumber ?? source.floor ?? null,
-    area: source.area ?? null,
-    status: source.status ?? null,
-    ownerName: source.ownerName ?? source.owner ?? null,
-    peopleCount: source.peopleCount ?? source.people ?? 0,
+    code: codeValue,
+    floorNumber: floorValue,
+    area: (source.area as number | null | undefined) ?? null,
+    status: (source.status as string | null | undefined) ?? null,
+    ownerName: (source.ownerName as string | null | undefined) ?? (source.owner as string | null | undefined) ?? null,
+    peopleCount: (source.peopleCount as number | undefined) ?? (source.people as number | undefined) ?? 0,
+    buildingName: (source.buildingName as string | null | undefined) ?? null,
+    householdId: (source.householdId as number | null | undefined) ?? null,
   }
 }
 
 const ApartmentManagement: React.FC = () => {
-  const loc: any = useLocation()
+  const loc = useLocation()
   const navigate = useNavigate()
-  const state = loc.state || {}
+  const state = (loc.state as { aptCode?: string; buildingId?: string } | null) ?? {}
   const params = new URLSearchParams(loc.search || '')
   const requestedApartmentCode = state.aptCode || params.get('apt') || null
   const requestedBuildingId = state.buildingId || params.get('buildingId') || null
 
-  const [aptData, setAptData] = useState<any | null>(null)
+  const [aptData, setAptData] = useState<Apartment | null>(null)
   const [activeApartmentCode, setActiveApartmentCode] = useState<string | null>(null)
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(requestedBuildingId)
-  const [buildings, setBuildings] = useState<any[]>([])
-  const [buildingApartments, setBuildingApartments] = useState<any[]>([])
+  const [buildings, setBuildings] = useState<Building[]>([])
+  const [buildingApartments, setBuildingApartments] = useState<Apartment[]>([])
   const [loadingSelector, setLoadingSelector] = useState(false)
   const [loadingApartment, setLoadingApartment] = useState(false)
   const [selectorError, setSelectorError] = useState<string | null>(null)
@@ -162,7 +167,7 @@ const ApartmentManagement: React.FC = () => {
 
   const apartmentSelectOptions = buildingApartments.map((apartment) => ({
     value: String(apartment.code),
-    label: `${apartment.code}${apartment.owner ? ` - ${apartment.owner}` : ''}`,
+    label: `${apartment.code}${apartment.ownerName ? ` - ${apartment.ownerName}` : ''}`,
   }))
 
   return (
@@ -226,9 +231,9 @@ const ApartmentManagement: React.FC = () => {
                   <Button
                     type="primary"
                     disabled={!activeApartmentCode}
-                    onClick={() => navigate(`/admin/quan-ly-ho-khau?apt=${activeApartmentCode || ''}`)}
+                    onClick={() => navigate(`/admin/quan-ly-cu-tru?apt=${activeApartmentCode || ''}`)}
                   >
-                    Mở quản lý hộ khẩu
+                    Mở quản lý cư trú
                   </Button>
                 </div>
               )

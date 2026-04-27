@@ -8,10 +8,16 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
+@EnableScheduling
 public class QlydancuApplication {
+
+	private static final Logger logger = LoggerFactory.getLogger(QlydancuApplication.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(QlydancuApplication.class, args);
@@ -29,7 +35,7 @@ public class QlydancuApplication {
 				admin.setRoles(UserRole.ROLE_ADMIN);
 				admin.setStatus(UserStatus.ACTIVE);
 				userRepository.save(admin);
-				System.out.println("Seeded admin user: admin@admin.local / admin123");
+				logger.info("Seeded admin user: admin@admin.local / <hidden-password>");
 			}
 		};
 	}

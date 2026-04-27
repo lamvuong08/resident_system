@@ -2,8 +2,9 @@ package com.dancu.qlydancu.model;
 
 import jakarta.persistence.*;
 import com.dancu.qlydancu.model.enums.Gender;
+import com.dancu.qlydancu.model.enums.OccupancyStatus;
+import com.dancu.qlydancu.model.enums.ResidentCategory;
 import com.dancu.qlydancu.model.enums.ResidentRelationship;
-import com.dancu.qlydancu.model.enums.ResidentStatus;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -36,8 +37,13 @@ public class Resident {
     @Column(name = "relationship")
     private ResidentRelationship relationship;
 
-    @Transient
-    private ResidentStatus status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "resident_category")
+    private ResidentCategory residentCategory;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "occupancy_status")
+    private OccupancyStatus occupancyStatus;
 
     @Column(name = "household_id", nullable = false)
     private Long householdId;
@@ -126,12 +132,53 @@ public class Resident {
         this.relationship = relationship;
     }
 
-    public ResidentStatus getStatus() {
-        return status;
+    public ResidentCategory getResidentCategory() {
+        return residentCategory;
     }
 
-    public void setStatus(ResidentStatus status) {
-        this.status = status;
+    public void setResidentCategory(ResidentCategory residentCategory) {
+        this.residentCategory = residentCategory;
+    }
+
+    public OccupancyStatus getOccupancyStatus() {
+        return occupancyStatus;
+    }
+
+    public void setOccupancyStatus(OccupancyStatus occupancyStatus) {
+        this.occupancyStatus = occupancyStatus;
+    }
+
+    @Transient
+    public String getStatus() {
+        return occupancyStatus != null ? occupancyStatus.name() : null;
+    }
+
+    public void setStatus(String status) {
+        if (status == null || status.isBlank()) {
+            this.occupancyStatus = null;
+            return;
+        }
+
+        String normalized = status.trim().toUpperCase();
+        if ("ACTIVE".equals(normalized)) {
+            this.occupancyStatus = OccupancyStatus.LIVING;
+            return;
+        }
+        if ("TEMPORARY_ABSENCE".equals(normalized)) {
+            this.occupancyStatus = OccupancyStatus.TEMP_ABSENT;
+            return;
+        }
+        if ("MOVED_OUT".equals(normalized)) {
+            this.occupancyStatus = OccupancyStatus.EXPIRED;
+            return;
+        }
+        if ("TEMPORARY_STAY".equals(normalized)) {
+            this.occupancyStatus = OccupancyStatus.LIVING;
+            this.residentCategory = ResidentCategory.TEMPORARY;
+            return;
+        }
+
+        this.occupancyStatus = OccupancyStatus.valueOf(normalized);
     }
 
     public Long getHouseholdId() {

@@ -110,7 +110,7 @@ const NotificationManagement: React.FC = () => {
   const loadData = async (page = pagination.current, type = selectedType) => {
     setLoading(true);
     try {
-      const res = await api.get(`/api/notifications`, {
+      const res = await api.get(`/notifications`, {
         params: {
           page: page - 1,
           size: pagination.pageSize,
@@ -207,7 +207,7 @@ const NotificationManagement: React.FC = () => {
         }
       }
 
-      await api.post("/api/notifications", {
+      await api.post("/notifications", {
         title: values.title,
         content: values.content,
         type: values.type,
@@ -242,7 +242,7 @@ const NotificationManagement: React.FC = () => {
     if (!editingNoti) return;
     try {
       const values = await detailForm.validateFields();
-      await api.put(`/api/notifications/${editingNoti.id}`, values);
+      await api.put(`/notifications/${editingNoti.id}`, values);
       message.success("Cập nhật thông báo thành công");
       setIsDetailModalOpen(false);
       loadData();
@@ -254,7 +254,7 @@ const NotificationManagement: React.FC = () => {
   const handleDelete = async () => {
     if (!editingNoti) return;
     try {
-      await api.delete(`/api/notifications/${editingNoti.id}`);
+      await api.delete(`/notifications/${editingNoti.id}`);
       message.success("Đã xóa thông báo");
       setIsDetailModalOpen(false);
       loadData();

@@ -1,8 +1,12 @@
 import React from 'react'
 import { ApartmentOutlined } from '@ant-design/icons'
+import type { Building } from '../types/api'
 
-const BuildingCard: React.FC<{ building: any; onView: () => void; selected?: boolean }> = ({ building, onView, selected }) => {
-  const pct = Math.round(((building.residents || 0) / Math.max(1, building.apartments || 1)) * 100)
+const BuildingCard: React.FC<{ building: Partial<Building>; onView: () => void; selected?: boolean }> = ({ building, onView, selected }) => {
+  const totalApartments = Number(building.totalApartments ?? (Array.isArray(building.apartments) ? building.apartments.length : 0))
+  const totalResidents = Number(building.residents ?? 0)
+  const vacantApartments = Number(building.vacant ?? Math.max(0, totalApartments - Number(building.occupied ?? 0)))
+  const pct = Math.round((totalResidents / Math.max(1, totalApartments)) * 100)
   return (
     <div className={`building-card ${selected ? 'selected' : ''}`} role="button">
       <div className="building-top">
@@ -20,11 +24,11 @@ const BuildingCard: React.FC<{ building: any; onView: () => void; selected?: boo
         </div>
         <div className="info-row">
           <div className="info-label">Tổng cư dân</div>
-          <div className="info-value">{building.residents}</div>
+          <div className="info-value">{totalResidents}</div>
         </div>
         <div className="info-row">
           <div className="info-label">Căn hộ trống</div>
-          <div className="info-value">{building.apartments - (building.residents ? Math.floor(building.residents/3) : 0)}</div>
+          <div className="info-value">{vacantApartments}</div>
         </div>
       </div>
 

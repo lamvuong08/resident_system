@@ -2,10 +2,6 @@ import React from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Header from './components/Header'
 import Admin from './pages/admin/Admin'
-import ApartmentManagement from './pages/admin/ApartmentManagement'
-import BuildingManagement from './pages/admin/BuildingManagement'
-import Dashboard from './pages/admin/Dashboard'
-import HouseholdManagement from './pages/admin/HouseholdManagement'
 import NotificationManagement from './pages/admin/NotificationManagement';
 import ConfirmRegister from './pages/auth/ConfirmRegister'
 import Forgot from './pages/auth/Forgot'
@@ -13,6 +9,12 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import Reset from './pages/auth/Reset'
 import Home from './pages/user/Home'
+import Dashboard from './pages/admin/Dashboard'
+import ApartmentManagement from './pages/admin/ApartmentManagement'
+import BuildingManagement from './pages/admin/BuildingManagement'
+import ResidenceManagement from './pages/admin/ResidenceManagement'
+import ResidentManagement from './pages/admin/ResidentManagement'
+import AccountManagement from './pages/admin/AccountManagement'
 import User from './pages/user/User'
 import ResidentSupport from './pages/user/ResidentSupport';
 import './styles/App.css'
@@ -75,11 +77,14 @@ function App() {
         <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
         <Route path="/admin/*" element={<RequireRole role="ADMIN"><Admin /></RequireRole>}>
           <Route index element={<Dashboard />} />
-          <Route path="quan-ly-dan-cu" element={<React.Suspense fallback=''><div /></React.Suspense>} />
-          <Route path="quan-ly-ho-khau" element={<HouseholdManagement />} />
+          <Route path="quan-ly-cu-tru" element={<ResidenceManagement />} />
+          <Route path="quan-ly-cu-dan" element={<ResidentManagement />} />
+          <Route path="quan-ly-ho-khau" element={<Navigate to="/admin/quan-ly-cu-tru" replace />} />
+          <Route path="quan-ly-dan-cu" element={<Navigate to="/admin/quan-ly-cu-dan" replace />} />
           <Route path="quan-ly-can-ho" element={<ApartmentManagement />} />
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
           <Route path="thong-bao" element={<NotificationManagement />} />
+          <Route path="quan-ly-tai-khoan" element={<AccountManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route path="support" element={<ResidentSupport />} />

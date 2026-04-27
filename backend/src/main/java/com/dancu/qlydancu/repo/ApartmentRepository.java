@@ -13,6 +13,7 @@ import com.dancu.qlydancu.model.status.ApartmentStatus;
 public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
     long countByStatus(ApartmentStatus status);
 
+    List<Apartment> findByBuilding_Id(Long buildingId);
     List<Apartment> findByBuilding_Code(String buildingCode);
 
     Optional<Apartment> findByCode(String code);

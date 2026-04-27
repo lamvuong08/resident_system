@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import type { Apartment, Resident } from '../types/api'
 import { Row, Col, Card, Typography, Button, Tag, Space, Modal, message, Empty } from 'antd'
 import { DownloadOutlined, UserAddOutlined } from '@ant-design/icons'
 import { jsPDF } from 'jspdf'
@@ -6,7 +7,7 @@ import ResidentTable from './ResidentTable'
 import ResidentModal from './ResidentModal'
 import FinancePanel from './FinancePanel'
 import api, { extractApiError } from '../utils/api'
-import { normalizeResident } from '../utils/resident'
+import { formatDateVN, formatResidentGender, formatResidentRelationship, normalizeResident } from '../utils/resident'
 
 const { Title } = Typography
 
@@ -25,18 +26,21 @@ const statusColor = (status?: string | null) => {
   return 'blue'
 }
 
-const normalizeApartment = (apartment: any) => {
+const normalizeApartment = (apartment: Partial<Apartment> | null) => {
   if (!apartment || typeof apartment !== 'object') return null
+  const a = apartment as Record<string, unknown>
+
+  const building = (a.building as Record<string, unknown> | undefined) ?? undefined
 
   return {
     ...apartment,
-    code: apartment.code ?? apartment.apartmentCode ?? null,
-    floorNumber: apartment.floorNumber ?? apartment.floor ?? null,
+    code: (apartment as Partial<Apartment>).code ?? (a.apartmentCode as string | undefined) ?? null,
+    floorNumber: (apartment as Partial<Apartment>).floorNumber ?? (a.floor as number | undefined) ?? null,
     area: apartment.area ?? null,
     status: apartment.status ?? null,
-    ownerName: apartment.ownerName ?? apartment.owner ?? null,
-    peopleCount: apartment.peopleCount ?? apartment.people ?? 0,
-    buildingName: apartment.buildingName ?? apartment.building?.name ?? apartment.building?.code ?? null,
+    ownerName: apartment.ownerName ?? (a.owner as string | undefined) ?? null,
+    peopleCount: apartment.peopleCount ?? (a.people as number | undefined) ?? 0,
+    buildingName: apartment.buildingName ?? ((building?.name as string | undefined) ?? (building?.code as string | undefined)) ?? null,
     householdId: apartment.householdId ?? null,
   }
 }
@@ -70,12 +74,13 @@ const sanitizeOptionalText = (value?: string | null) => {
 const containsAny = (value: string, keywords: string[]) => keywords.some((keyword) => value.includes(keyword))
 
 const toFriendlyResidentMessage = (
-  error: any,
+  error: unknown,
   options?: { fallback?: string; genericInvalid?: string }
 ) => {
   const fallback = options?.fallback || 'Có lỗi xảy ra, vui lòng thử lại.'
   const genericInvalid = options?.genericInvalid || 'Không thể thêm cư dân. Vui lòng kiểm tra lại thông tin.'
-  const status = Number(error?.response?.status || 0)
+  const e = error as { response?: { status?: unknown } }
+  const status = Number(e?.response?.status || 0)
   const rawMessage = String(extractApiError(error, '') || '')
   const normalized = rawMessage.toLowerCase()
 
@@ -102,8 +107,9 @@ const toFriendlyResidentMessage = (
   return fallback
 }
 
-const toFriendlyActionMessage = (error: any, fallback: string) => {
-  const status = Number(error?.response?.status || 0)
+const toFriendlyActionMessage = (error: unknown, fallback: string) => {
+  const e = error as { response?: { status?: unknown } }
+  const status = Number(e?.response?.status || 0)
   if (status === 400 || status === 422) {
     return 'Dữ liệu chưa hợp lệ. Vui lòng kiểm tra lại thông tin.'
   }
@@ -119,12 +125,12 @@ const toFriendlyActionMessage = (error: any, fallback: string) => {
   return fallback
 }
 
-const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
-  const normalizedApartment = useMemo(() => normalizeApartment(apartment), [apartment])
-  const [residents, setResidents] = useState<any[]>([])
+const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApartmentReload?: () => void }> = ({ apartment, onApartmentReload }) => {
+  const normalizedApartment = useMemo(() => normalizeApartment(apartment ?? null), [apartment])
+  const [residents, setResidents] = useState<Resident[]>([])
   const [loadingResidents, setLoadingResidents] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
-  const [editing, setEditing] = useState<any | null>(null)
+  const [editing, setEditing] = useState<Resident | null>(null)
   const [savingResident, setSavingResident] = useState(false)
   const [householdId, setHouseholdId] = useState<number | null>(normalizedApartment?.householdId ?? null)
 
@@ -132,7 +138,7 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
     setHouseholdId(normalizedApartment?.householdId ?? null)
   }, [normalizedApartment?.householdId])
 
-  const loadResidents = async () => {
+  const loadResidents = useCallback(async () => {
     if (!normalizedApartment?.code) {
       setResidents([])
       return
@@ -140,20 +146,20 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
 
     setLoadingResidents(true)
     try {
-      const response = await api.get(`/apartments/${normalizedApartment.code}/residents`) 
+      const response = await api.get(`/apartments/${normalizedApartment.code}/residents`)
       const payload = Array.isArray(response.data) ? response.data : []
-      setResidents(payload.map((resident: any) => normalizeResident(resident)))
-    } catch (error) {
-      console.error('Failed to load residents from API', error)
+      setResidents(payload.map((resident: unknown) => normalizeResident(resident as Resident)) as Resident[])
+    } catch {
+      message.error('Không thể tải danh sách cư dân. Vui lòng thử lại.')
       setResidents([])
     } finally {
       setLoadingResidents(false)
     }
-  }
+  }, [normalizedApartment?.code])
 
   useEffect(() => {
     void loadResidents()
-  }, [normalizedApartment?.code])
+  }, [loadResidents])
 
   const ensureHouseholdId = async () => {
     if (householdId) return householdId
@@ -170,7 +176,7 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
     setModalVisible(true)
   }
 
-  const handleEdit = (resident: any) => {
+  const handleEdit = (resident: Resident) => {
     setEditing(resident)
     setModalVisible(true)
   }
@@ -188,8 +194,7 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
           message.success('Đã xóa cư dân.')
           await loadResidents()
           await onApartmentReload?.()
-        } catch (error: any) {
-          console.error('Failed to delete resident', error)
+        } catch (error: unknown) {
           message.error(toFriendlyActionMessage(error, 'Không thể xóa cư dân. Vui lòng thử lại.'))
           throw error
         }
@@ -197,34 +202,7 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
     })
   }
 
-  const handleMakeOwner = async (id: string | number) => {
-    const target = residents.find((resident) => String(resident.id) === String(id))
-    if (!target) return
-
-    const resolvedHouseholdId = await ensureHouseholdId()
-    if (!resolvedHouseholdId) {
-      message.error('Không thể xác định household của căn hộ này')
-      return
-    }
-
-    try {
-      await api.put(`/residents/${id}`, {
-        ...target,
-        relationship: 'HEAD',
-        householdId: resolvedHouseholdId,
-        dob: target.dob || null,
-        gender: target.gender || null,
-      })
-      message.success('Đã cập nhật cư dân thành chủ hộ')
-      await loadResidents()
-      await onApartmentReload?.()
-    } catch (err: any) {
-      console.error('Failed to update owner', err)
-      message.error(toFriendlyActionMessage(err, 'Không thể cập nhật chủ hộ. Vui lòng thử lại.'))
-    }
-  }
-
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: Partial<Resident>) => {
     if (!normalizedApartment?.code) {
       message.error('Thiếu mã căn hộ')
       return
@@ -260,8 +238,7 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
       setEditing(null)
       await loadResidents()
       await onApartmentReload?.()
-    } catch (error: any) {
-      console.error('Failed to save resident', error)
+    } catch (error: unknown) {
       message.error(
         toFriendlyResidentMessage(error, {
           fallback: 'Có lỗi xảy ra, vui lòng thử lại.',
@@ -312,7 +289,7 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
       doc.text('Chưa có cư dân.', 14, cursorY)
     } else {
       residents.forEach((resident, index) => {
-        const row = `${index + 1}. ${resident.name} | ${resident.genderLabel} | ${resident.dobLabel} | ${resident.cccd} | ${resident.phone} | ${resident.relationshipLabel}`
+        const row = `${index + 1}. ${resident.name || '-'} | ${formatResidentGender(resident.gender)} | ${formatDateVN(resident.dob)} | ${resident.cccd || '-'} | ${resident.phone || '-'} | ${formatResidentRelationship(resident.relationship)}`
         const lines = doc.splitTextToSize(row, 180)
 
         if (cursorY > 270) {
@@ -350,7 +327,6 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
               <div>Trạng thái: <Tag color={statusColor(normalizedApartment.status)}>{statusLabel(normalizedApartment.status)}</Tag></div>
               <div>Chủ hộ: <strong>{normalizedApartment.ownerName ?? '-'}</strong></div>
               <div>Số người ở: <strong>{loadingResidents ? (normalizedApartment.peopleCount ?? 0) : residents.length}</strong></div>
-              <div>Household ID: <strong>{householdId ?? '-'}</strong></div>
             </div>
           </Card>
 
@@ -360,21 +336,22 @@ const ApartmentDetail: React.FC<any> = ({ apartment, onApartmentReload }) => {
                 <Title level={5} style={{ textAlign: 'left', margin: 0 }}>Thông tin cư dân</Title>
                 <div style={{ color: 'rgba(0,0,0,0.45)', fontSize: 13, marginTop: 4 }}>Danh sách cư dân thật từ database</div>
               </div>
-              <Space wrap>
-                <Button type="primary" icon={<UserAddOutlined />} onClick={handleAdd}>
-                  Thêm cư dân
-                </Button>
-                <Button icon={<DownloadOutlined />} onClick={handleExportPdf}>
-                  Xuất PDF
-                </Button>
-              </Space>
+              <div className="apartment-actions">
+                <Space wrap>
+                  <Button className="apt-action-btn" type="primary" icon={<UserAddOutlined />} onClick={handleAdd}>
+                    Thêm cư dân
+                  </Button>
+                  <Button className="apt-action-btn" icon={<DownloadOutlined />} onClick={handleExportPdf}>
+                    Xuất PDF
+                  </Button>
+                </Space>
+              </div>
             </div>
             <ResidentTable
               data={residents}
               loading={loadingResidents}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              onMakeOwner={handleMakeOwner}
             />
           </Card>
 

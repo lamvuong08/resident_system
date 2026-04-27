@@ -1,0 +1,89 @@
+.account-filter-panel {
+  margin-bottom: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: visible; 
+}
+
+.account-filter-form .account-control.ant-input-affix-wrapper,
+.account-filter-form .account-control.ant-select .ant-select-selector,
+.account-filter-form .account-control.account-action-btn {
+  height: 32px;
+  min-height: 32px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.account-filter-form .account-search-item .ant-form-item-control-input {
+  min-height: 32px; 
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.account-filter-form .account-search-item .ant-form-item-control-input-content {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+.account-filter-form .account-control.ant-input-affix-wrapper {
+  padding: 0 11px; 
+  overflow: visible;
+}
+
+.account-filter-form .account-search-item .account-control.ant-input-affix-wrapper {
+  height: auto;  
+  min-height: 32px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: normal;
+}
+
+.account-filter-form .account-search-item .account-control.ant-input-affix-wrapper > input.ant-input {
+  height: 30px;  
+  line-height: 30px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.account-filter-form .account-control.ant-select .ant-select-selector,
+.account-filter-form .account-control.account-action-btn {
+  padding: 0 12px;
+}
+
+.account-filter-form .account-control.ant-input-affix-wrapper input {
+  font-size: 14px;
+}
+
+.account-filter-form .account-control.ant-input-affix-wrapper .ant-input-prefix,
+.account-filter-form .account-control.ant-input-affix-wrapper .ant-input-suffix {
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-filter-form .account-control.ant-input-affix-wrapper .anticon {
+  line-height: 1;
+}
+
+.account-filter-form .account-control.ant-select .ant-select-selector {
+  justify-content: center;
+}
+
+.account-filter-form .account-control.account-action-btn .ant-btn-icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.account-disabled-row td {
+  opacity: 0.55;
+}

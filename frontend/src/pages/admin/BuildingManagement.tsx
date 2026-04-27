@@ -4,19 +4,20 @@ import BuildingCard from '../../components/BuildingCard'
 import BuildingDetailPanel from '../../components/BuildingDetailPanel'
 import '../../styles/dashboard.css'
 import { useLocation } from 'react-router-dom'
+import type { Building } from '../../types/api'
 
 const BuildingManagement: React.FC = () => {
-  const [buildings, setBuildings] = useState<any[]>([])
-  const [detail, setDetail] = useState<any | null>(null)
-  const location: any = useLocation()
-  const requested = location.state?.buildingId || null
+  const [buildings, setBuildings] = useState<Building[]>([])
+  const [detail, setDetail] = useState<Building | null>(null)
+  const location = useLocation()
+  const requested = ((location.state as { buildingId?: number } | null)?.buildingId) ?? null
 
-  const loadBuildingDetail = async (buildingId: string) => {
+  const fetchBuildingDetail = async (buildingId: string | number) => {
     try {
       const response = await api.get(`/dashboard/buildings/${buildingId}`)
-      setDetail(response.data)
+      return response.data as Building
     } catch {
-      setDetail(null)
+      return null
     }
   }
 
@@ -27,8 +28,9 @@ const BuildingManagement: React.FC = () => {
         const buildingList = response.data || []
         setBuildings(buildingList)
 
-        if (buildingList.length > 0) {
-          await loadBuildingDetail(buildingList[0].id)
+        if (buildingList.length > 0 && buildingList[0]?.id !== undefined) {
+          const d = await fetchBuildingDetail(buildingList[0].id)
+          setDetail(d)
         }
       } catch {
         setBuildings([])
@@ -40,9 +42,11 @@ const BuildingManagement: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    if (requested) {
-      void loadBuildingDetail(requested)
-    }
+    if (!requested) return
+    void (async () => {
+      const d = await fetchBuildingDetail(requested)
+      setDetail(d)
+    })()
   }, [requested])
 
   return (
@@ -54,7 +58,11 @@ const BuildingManagement: React.FC = () => {
       <div className="buildings-grid">
         {buildings.map((b) => (
           <BuildingCard key={b.id} building={b} selected={detail?.id === b.id || false} onView={() => {
-            void loadBuildingDetail(b.id)
+            void (async () => {
+              if (b.id === undefined) return
+              const d = await fetchBuildingDetail(b.id)
+              setDetail(d)
+            })()
           }} />
         ))}
       </div>
