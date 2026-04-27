@@ -465,7 +465,6 @@
   color:#64748b;
 }
 
-/* Apartment action buttons: ensure consistent height & alignment */
 .apartment-actions .apt-action-btn{
   height:40px;
   min-height:40px;
@@ -481,7 +480,6 @@
   align-items:center;
 }
 
-/* Ensure when wrapping on small screens the buttons stay aligned and can wrap */
 .apartment-actions{display:flex;align-items:center;gap:12px}
 @media (max-width:520px){
   .apartment-actions{flex-wrap:wrap;gap:8px}

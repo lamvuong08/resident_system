@@ -1,6 +1,7 @@
 package com.dancu.qlydancu.security;
 
 import com.dancu.qlydancu.model.User;
+import com.dancu.qlydancu.model.enums.UserStatus;
 import com.dancu.qlydancu.repo.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -31,6 +32,17 @@ public class CustomUserDetailsService implements UserDetailsService {
             authorities.add(new SimpleGrantedAuthority(user.getRoles().name()));
         }
 
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(), authorities);
+        boolean isBlocked = user.getStatus() == UserStatus.BLOCKED;
+        boolean enabled = !isBlocked;
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                enabled,
+                true,
+                true,
+                !isBlocked,
+                authorities
+        );
     }
 }

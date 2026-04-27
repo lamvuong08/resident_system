@@ -59,7 +59,6 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // If apartments already exist, skip seeding to avoid overwriting a real database
         if (apartmentRepository.count() > 0) {
             logger.info("DataInitializer: apartments already present — skipping seeding.");
             return;
@@ -97,8 +96,6 @@ public class DataInitializer implements CommandLineRunner {
         List<Resident> residents = new ArrayList<>();
         long phoneBase = 900000000L;
         int residentIdx = 1;
-
-        // 👉 chuẩn month format YYYY-MM
         String month = LocalDate.now().getYear() + "-" +
                 String.format("%02d", LocalDate.now().getMonthValue());
 

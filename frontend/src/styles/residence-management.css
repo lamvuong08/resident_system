@@ -128,8 +128,6 @@
   line-height: 38px;
 }
 
-/* Specific smaller height for the search input (họ tên / CCCD) */
-/* Apply border to the affix wrapper only; remove inner input border to avoid double frame */
 .residence-search-input.ant-input-affix-wrapper {
   height: 31.6px !important;
   line-height: 31.6px !important;
@@ -357,7 +355,6 @@
     font-size: 20px;
   }
 
-  /* Keep reset button aligned to the right even on small screens per user request */
   .residence-filter-actions {
     justify-content: flex-end;
   }

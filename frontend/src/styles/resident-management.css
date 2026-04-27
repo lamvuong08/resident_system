@@ -170,7 +170,6 @@
   border-radius: 14px;
 }
 
-/* Ensure all form controls inside resident modal share identical height and alignment */
 .resident-editor-modal .ant-input,
 .resident-editor-modal .ant-input-affix-wrapper,
 .resident-editor-modal .ant-select-selector,
@@ -184,19 +183,16 @@
   border-radius: 8px !important;
 }
 
-/* Make sure select text and placeholder vertically centered */
 .resident-editor-modal .ant-select-selection-item,
 .resident-editor-modal .ant-select-selection-placeholder {
   line-height: 32px !important;
 }
 
-/* DatePicker input inner input alignment */
 .resident-editor-modal .ant-picker .ant-picker-input > input {
   height: 32px !important;
   line-height: 32px !important;
 }
 
-/* Modal footer buttons same height */
 .resident-editor-modal .ant-modal-footer .ant-btn {
   height: 32px !important;
   min-height: 32px !important;
@@ -205,7 +201,6 @@
   align-items: center !important;
 }
 
-/* Layout: consistent row gaps and label spacing */
 .resident-editor-modal .ant-form-item {
   margin-bottom: 12px;
 }

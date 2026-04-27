@@ -14,6 +14,7 @@ import ApartmentManagement from './pages/admin/ApartmentManagement'
 import BuildingManagement from './pages/admin/BuildingManagement'
 import ResidenceManagement from './pages/admin/ResidenceManagement'
 import ResidentManagement from './pages/admin/ResidentManagement'
+import AccountManagement from './pages/admin/AccountManagement'
 import User from './pages/user/User'
 import { getStoredRole, hasToken } from './utils/authStorage'
 
@@ -80,6 +81,7 @@ function App() {
           <Route path="quan-ly-dan-cu" element={<Navigate to="/admin/quan-ly-cu-dan" replace />} />
           <Route path="quan-ly-can-ho" element={<ApartmentManagement />} />
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
+          <Route path="quan-ly-tai-khoan" element={<AccountManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route index element={<Home />} />

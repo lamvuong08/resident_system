@@ -5,9 +5,13 @@ import com.dancu.qlydancu.dto.AuthResponses;
 import com.dancu.qlydancu.model.User;
 import com.dancu.qlydancu.model.enums.OtpPurpose;
 import com.dancu.qlydancu.model.enums.UserRole;
+import com.dancu.qlydancu.model.enums.UserStatus;
 import com.dancu.qlydancu.repo.UserRepository;
 import com.dancu.qlydancu.security.JwtUtil;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -47,14 +50,22 @@ public class AuthService {
     }
 
     public AuthResponses.AuthResponse login(AuthRequests.LoginRequest req) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email, req.password));
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email, req.password));
+        } catch (DisabledException | LockedException ex) {
+            throw new AuthenticationServiceException("Tài khoản đã bị vô hiệu hóa");
+        }
         String token = jwtUtil.generateToken(req.email);
         User user = userRepository.findByEmail(req.email).orElseThrow(() -> new RuntimeException("No user found"));
         return new AuthResponses.AuthResponse(token, req.email, user.getRoles() != null ? user.getRoles().name() : null, user.getName());
     }
 
+    @Transactional
     public String forgotPassword(AuthRequests.ForgotRequest forgotRequest) {
-        String email = forgotRequest.email;
+        String email = normalizeEmail(forgotRequest.email);
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email không hợp lệ");
+        }
         userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("No user with that email"));
 
         String generatedOtp = generateOtp();
@@ -64,26 +75,33 @@ public class AuthService {
         otpRepository.save(new Otp(email, generatedOtp, expiryMillis, OtpPurpose.RESET_PASSWORD));
         emailService.sendSimpleMessage(email, "OTP đặt lại mật khẩu", "Mã OTP: " + generatedOtp + "\nHết hạn sau 10 phút.");
 
-        return generatedOtp; // for testing; in prod do not return
+        return generatedOtp; 
     }
 
     @Transactional
     public void resetPassword(AuthRequests.ResetRequest resetRequest) {
-        Otp otp = otpRepository.findFirstByEmailAndPurposeOrderByIdDesc(resetRequest.email, OtpPurpose.RESET_PASSWORD)
-                .orElseThrow(() -> new RuntimeException("Invalid or expired OTP"));
-
-        if (!otp.getCode().equals(resetRequest.otp) || otp.getExpiry() < Instant.now().toEpochMilli()) {
+        String email = normalizeEmail(resetRequest.email);
+        String otpCode = resetRequest.otp != null ? resetRequest.otp.trim() : null;
+        if (email == null || email.isBlank() || otpCode == null || otpCode.isBlank()) {
             throw new RuntimeException("Invalid or expired OTP");
         }
 
-        User existingUser = userRepository.findByEmail(resetRequest.email)
+        Otp otp = otpRepository.findFirstByEmailAndPurposeOrderByIdDesc(email, OtpPurpose.RESET_PASSWORD)
+                .orElseThrow(() -> new RuntimeException("Invalid or expired OTP"));
+
+        if (!otp.getCode().equals(otpCode) || otp.getExpiry() < Instant.now().toEpochMilli()) {
+            throw new RuntimeException("Invalid or expired OTP");
+        }
+
+        User existingUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("No user"));
         existingUser.setPassword(passwordEncoder.encode(resetRequest.newPassword));
         userRepository.save(existingUser);
 
-        otpRepository.deleteByEmailAndPurpose(resetRequest.email, OtpPurpose.RESET_PASSWORD);
+        otpRepository.deleteByEmailAndPurpose(email, OtpPurpose.RESET_PASSWORD);
     }
 
+    @Transactional
     public String sendRegisterOtp(AuthRequests.SendOtpRequest sendOtpRequest) {
         String email = sendOtpRequest.email;
         validateEmailNotExists(email);
@@ -128,6 +146,7 @@ public class AuthService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setRoles(UserRole.ROLE_USER);
+        user.setStatus(UserStatus.ACTIVE);
         return user;
     }
 
@@ -135,5 +154,10 @@ public class AuthService {
         Random random = new Random();
         int otpNumber = 100000 + random.nextInt(900000);
         return String.valueOf(otpNumber);
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) return null;
+        return email.trim().toLowerCase();
     }
 }

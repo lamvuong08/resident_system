@@ -25,7 +25,6 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
   if (token && config.headers) {
     const headers = config.headers as unknown as Record<string, unknown>
-    // Axios headers may expose a `set` method (AxiosHeaders) or be a plain object.
     const headersWithSet = headers as unknown as { set?: (k: string, v: string) => void }
     if (typeof headersWithSet.set === 'function') {
       headersWithSet.set('Authorization', `Bearer ${token}`)

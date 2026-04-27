@@ -15,7 +15,7 @@ public class ApartmentFinance {
     private Long amount;
 
     @Column(name = "billing_month", nullable = false)
-    private String billingMonth; // format: YYYY-MM (vd: 2026-04)
+    private String billingMonth; 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id")
