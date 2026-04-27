@@ -17,6 +17,7 @@ import ResidentManagement from './pages/admin/ResidentManagement'
 import AccountManagement from './pages/admin/AccountManagement'
 import User from './pages/user/User'
 import ResidentSupport from './pages/user/ResidentSupport';
+import ResidentRequestHistory from './pages/user/ResidentRequestHistory';
 import './styles/App.css'
 import { getStoredRole, hasToken } from './utils/authStorage'
 
@@ -87,7 +88,8 @@ function App() {
           <Route path="quan-ly-tai-khoan" element={<AccountManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
-          <Route path="support" element={<ResidentSupport />} />
+          <Route path="send-request" element={<ResidentSupport />} />
+          <Route path="history" element={<ResidentRequestHistory />} />
           <Route index element={<Home />} />
         </Route>
         <Route path="/" element={<Login />} />

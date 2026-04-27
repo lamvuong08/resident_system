@@ -1,94 +1,148 @@
-import React, { useState } from 'react';
-import '../../styles/dashboard.css';
-import '../../styles/App.css';
+import React, { useRef, useState } from "react";
+import "../../styles/resident-support.css";
 
-type NotificationType = 'GENERAL' | 'PAYMENT' | 'MAINTENANCE' | 'EMERGENCY';
-type RequestType = 'REPAIR' | 'COMPLAINT' | 'SUPPORT';
+export const RequestType = {
+  REPAIR: "REPAIR",
+  COMPLAINT: "COMPLAINT",
+  SUPPORT: "SUPPORT",
+} as const;
+
+export type RequestTypeValues = (typeof RequestType)[keyof typeof RequestType];
 
 const ResidentSupport: React.FC = () => {
-    const [requestType, setRequestType] = useState<RequestType>('SUPPORT');
+  const [requestType, setRequestType] = useState<RequestTypeValues>(
+    RequestType.REPAIR,
+  );
+  const [description, setDescription] = useState<string>("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    return (
-        <div className="dashboard-root">
-            <h1 className="section-title">Hỗ trợ & Thông báo</h1>
-            
-            <div className="dashboard-content">
-                {/* CỘT TRÁI: DANH SÁCH THÔNG BÁO */}
-                <div className="dashboard-main">
-                    <div className="building-detail" style={{ display: 'block' }}>
-                        <div className="detail-header">
-                            <h2 style={{ color: '#1E3A8A' }}>Thông báo từ Ban quản lý</h2>
-                        </div>
-                        
-                        <div className="apartment-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <div className="apt-card apt-pending payment-alert" style={{ minHeight: 'auto', width: '100%' }}>
-                                <div className="apt-top">
-                                    <span className="apt-code" style={{ color: '#dc2626' }}>[THANH TOÁN]</span>
-                                    <span className="small muted">20/04/2026</span>
-                                </div>
-                                <div className="apt-owner">Hóa đơn tháng 04/2026 của bạn sắp hết hạn. Vui lòng thanh toán trước ngày 25/04.</div>
-                            </div>
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const newFiles = Array.from(event.target.files);
+      setSelectedFiles((prev) => [...prev, ...newFiles]);
+    }
+  };
 
-                            <div className="apt-card apt-occupied maintenance-alert" style={{ minHeight: 'auto', width: '100%' }}>
-                                <div className="apt-top">
-                                    <span className="apt-code" style={{ color: '#1e6efc' }}>[BẢO TRÌ]</span>
-                                    <span className="small muted">18/04/2026</span>
-                                </div>
-                                <div className="apt-owner">Tòa A1 sẽ bảo trì hệ thống thang máy từ 09:00 - 11:00 sáng mai.</div>
-                            </div>
-
-                            <div className="apt-card emergency" style={{ minHeight: 'auto', width: '100%' }}>
-                                <div className="apt-top">
-                                    <span className="apt-code" style={{ color: '#ef4444' }}>🚨 KHẨN CẤP</span>
-                                    <span className="small muted">Vừa xong</span>
-                                </div>
-                                <div className="apt-owner"><b>Diễn tập PCCC:</b> Tất cả cư dân vui lòng tập trung tại sảnh tòa nhà lúc 15:00.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* CỘT PHẢI: FORM GỬI YÊU CẦU */}
-                <div className="dashboard-side" style={{ display: 'block' }}>
-                    <div className="card" style={{ width: '100%', padding: '24px' }}>
-                        <h2 style={{ fontSize: '20px', marginBottom: '20px' }}>Gửi yêu cầu hỗ trợ</h2>
-                        
-                        <div className="form-row">
-                            <label>Loại yêu cầu</label>
-                            <select 
-                                className="search-select" 
-                                style={{ width: '100%', padding: '0 12px' }}
-                                value={requestType}
-                                onChange={(e) => setRequestType(e.target.value as RequestType)}
-                            >
-                                <option value="SUPPORT">Gia hạn thanh toán (Support)</option>
-                                <option value="REPAIR">Sửa chữa thiết bị (Repair)</option>
-                                <option value="COMPLAINT">Khiếu nại/Góp ý (Complaint)</option>
-                            </select>
-                        </div>
-
-                        {requestType === 'SUPPORT' && (
-                            <div className="otp-note" style={{ color: '#16a34a', marginBottom: '12px' }}>
-                                * Bạn đang tạo yêu cầu xin gia hạn cho hóa đơn chưa thanh toán.
-                            </div>
-                        )}
-
-                        <div className="form-row">
-                            <label>Nội dung chi tiết</label>
-                            <textarea 
-                                className="search-input custom-textarea" 
-                                placeholder="Nhập lý do hoặc mô tả sự cố..."
-                            ></textarea>
-                        </div>
-
-                        <button className="btn" style={{ marginTop: '10px' }}>
-                            Gửi yêu cầu ngay
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+  const removeFile = (indexToRemove: number) => {
+    setSelectedFiles((prev) =>
+      prev.filter((_, index) => index !== indexToRemove),
     );
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    console.log("Payload chuẩn bị gửi Backend:", {
+      type: requestType,
+      description: description,
+      files: selectedFiles.map((f) => f.name),
+    });
+    alert("Đã ghi nhận form (UI Mode). Xem console để biết payload.");
+  };
+
+  return (
+    <div className="support-container">
+      <div className="support-header">
+        <div className="header-text">
+          <h2>Gửi yêu cầu hỗ trợ</h2>
+          <p>Ban quản lý sẽ phản hồi yêu cầu của bạn trong thời gian sớm nhất</p>
+        </div>
+      </div>
+
+      <div className="support-card">
+        <form onSubmit={handleSubmit} className="support-form">
+          
+          {/* Loại yêu cầu */}
+          <div className="form-group">
+            <label>
+              Loại yêu cầu <span className="required">*</span>
+            </label>
+            <select
+              value={requestType}
+              onChange={(e) => setRequestType(e.target.value as RequestTypeValues)}
+              required
+            >
+              <option value={RequestType.REPAIR}>Sửa chữa</option>
+              <option value={RequestType.COMPLAINT}>Khiếu nại</option>
+              <option value={RequestType.SUPPORT}>Hỗ trợ chung</option>
+            </select>
+          </div>
+
+          {/* Nội dung chi tiết */}
+          <div className="form-group">
+            <label>
+              Nội dung chi tiết <span className="required">*</span>
+            </label>
+            <textarea
+              rows={5}
+              placeholder="Mô tả chi tiết vấn đề bạn đang gặp phải..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              required
+            ></textarea>
+            <p className="helper-text">
+              Cung cấp thông tin chi tiết giúp chúng tôi xử lý nhanh hơn.
+            </p>
+          </div>
+
+          {/* Khu vực Upload Ảnh */}
+          <div className="form-group">
+            <label>Đính kèm hình ảnh / Tài liệu</label>
+            <div
+              className="upload-zone"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <p className="upload-title">
+                Nhấp để tải lên hoặc kéo thả tệp tại đây
+              </p>
+              <p className="upload-subtitle">
+                Hỗ trợ JPG, PNG, PDF (Tối đa 5MB)
+              </p>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                multiple
+                accept=".jpg,.png,.pdf"
+                hidden
+              />
+            </div>
+
+            {/* Preview files */}
+            {selectedFiles.length > 0 && (
+              <div className="file-preview-list">
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="file-preview-item">
+                    <span className="file-name">{file.name}</span>
+                    <button type="button" onClick={() => removeFile(index)}>
+                      Xóa
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="form-actions">
+            <button type="submit" className="btn-submit">
+              Gửi yêu cầu
+            </button>
+            <button
+              type="button"
+              className="btn-cancel"
+              onClick={() => {
+                setDescription("");
+                setSelectedFiles([]);
+              }}
+            >
+              Hủy bỏ
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default ResidentSupport;

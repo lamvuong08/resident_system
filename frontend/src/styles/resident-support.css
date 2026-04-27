@@ -1,0 +1,192 @@
+/* src/styles/resident-support.css */
+.support-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    font-family: 'Public Sans', sans-serif;
+    color: #1e293b;
+}
+
+/* Header */
+.support-header {
+    margin-bottom: 2rem;
+}
+
+.header-text h2 {
+    color: #1e293b !important;
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 0.25rem 0;
+}
+
+.header-text p {
+    color: #64748b;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Card */
+.support-card {
+    background-color: #ffffff;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    padding: 2rem;
+    border: 1px solid #f1f5f9;
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.5rem;
+}
+
+.required {
+    color: #ef4444;
+}
+
+/* Đã xóa .input-wrapper, trỏ CSS thẳng vào select và textarea */
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    box-sizing: border-box; /* Đảm bảo padding không làm tràn khung */
+    padding: 0.875rem 1rem; 
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    color: #0f172a;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.helper-text {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0.5rem 0 0 0;
+}
+
+/* Upload Zone */
+.upload-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    background-color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.upload-zone:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.upload-title {
+    font-size: 0.875rem;
+    color: #475569;
+    margin: 0;
+    font-weight: 600;
+}
+
+.upload-subtitle {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 0.5rem;
+}
+
+/* File Preview */
+.file-preview-list {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.file-preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #f1f5f9;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.file-preview-item button {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.file-preview-item button:hover {
+    text-decoration: underline;
+}
+
+/* Actions */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn-submit {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+.btn-submit:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-cancel {
+    background-color: transparent;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+    background-color: #f8fafc;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .form-actions {
+        flex-direction: column;
+    }
+}
