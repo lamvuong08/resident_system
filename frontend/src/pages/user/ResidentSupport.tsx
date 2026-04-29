@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../styles/resident-support.css";
 
 export const RequestType = {
@@ -10,11 +11,13 @@ export const RequestType = {
 export type RequestTypeValues = (typeof RequestType)[keyof typeof RequestType];
 
 const ResidentSupport: React.FC = () => {
+  const navigate = useNavigate();
   const [requestType, setRequestType] = useState<RequestTypeValues>(
     RequestType.REPAIR,
   );
   const [description, setDescription] = useState<string>("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false); // Thêm state loading
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,14 +33,57 @@ const ResidentSupport: React.FC = () => {
     );
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  // HÀM ĐÃ ĐƯỢC SỬA ĐỂ GỌI API THẬT
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log("Payload chuẩn bị gửi Backend:", {
+    setIsSubmitting(true);
+
+    const payload = {
       type: requestType,
       description: description,
-      files: selectedFiles.map((f) => f.name),
-    });
-    alert("Đã ghi nhận form (UI Mode). Xem console để biết payload.");
+    };
+
+    try {
+      // Lấy token từ localStorage (hoặc nơi bạn lưu trữ token đăng nhập)
+      // Nếu dự án của bạn dùng session cookie, có thể không cần dòng này
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        "http://localhost:8080/api/user/send-request",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // Gắn token vào header để Backend xác thực UserDetails
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (response.ok) {
+        alert("Gửi yêu cầu thành công!");
+        // Reset form
+        setDescription("");
+        setSelectedFiles([]);
+        // Chuyển hướng sang trang lịch sử yêu cầu để xem
+        navigate("/user/history");
+      } else {
+        // Xử lý lỗi từ Backend trả về
+        const errorData = await response.json().catch(() => ({}));
+        alert(
+          "Lỗi khi gửi yêu cầu: " +
+            (errorData.message || "Vui lòng thử lại sau."),
+        );
+      }
+    } catch (error) {
+      console.error("Lỗi kết nối server:", error);
+      alert(
+        "Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng hoặc Backend.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -45,13 +91,14 @@ const ResidentSupport: React.FC = () => {
       <div className="support-header">
         <div className="header-text">
           <h2>Gửi yêu cầu hỗ trợ</h2>
-          <p>Ban quản lý sẽ phản hồi yêu cầu của bạn trong thời gian sớm nhất</p>
+          <p>
+            Ban quản lý sẽ phản hồi yêu cầu của bạn trong thời gian sớm nhất
+          </p>
         </div>
       </div>
 
       <div className="support-card">
         <form onSubmit={handleSubmit} className="support-form">
-          
           {/* Loại yêu cầu */}
           <div className="form-group">
             <label>
@@ -59,8 +106,11 @@ const ResidentSupport: React.FC = () => {
             </label>
             <select
               value={requestType}
-              onChange={(e) => setRequestType(e.target.value as RequestTypeValues)}
+              onChange={(e) =>
+                setRequestType(e.target.value as RequestTypeValues)
+              }
               required
+              disabled={isSubmitting}
             >
               <option value={RequestType.REPAIR}>Sửa chữa</option>
               <option value={RequestType.COMPLAINT}>Khiếu nại</option>
@@ -79,18 +129,19 @@ const ResidentSupport: React.FC = () => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
+              disabled={isSubmitting}
             ></textarea>
             <p className="helper-text">
               Cung cấp thông tin chi tiết giúp chúng tôi xử lý nhanh hơn.
             </p>
           </div>
 
-          {/* Khu vực Upload Ảnh */}
+          {/* Khu vực Upload Ảnh (Tạm thời Frontend chỉ nhận UI, BE chưa xử lý file) */}
           <div className="form-group">
             <label>Đính kèm hình ảnh / Tài liệu</label>
             <div
               className="upload-zone"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => !isSubmitting && fileInputRef.current?.click()}
             >
               <p className="upload-title">
                 Nhấp để tải lên hoặc kéo thả tệp tại đây
@@ -108,13 +159,16 @@ const ResidentSupport: React.FC = () => {
               />
             </div>
 
-            {/* Preview files */}
             {selectedFiles.length > 0 && (
               <div className="file-preview-list">
                 {selectedFiles.map((file, index) => (
                   <div key={index} className="file-preview-item">
                     <span className="file-name">{file.name}</span>
-                    <button type="button" onClick={() => removeFile(index)}>
+                    <button
+                      type="button"
+                      onClick={() => removeFile(index)}
+                      disabled={isSubmitting}
+                    >
                       Xóa
                     </button>
                   </div>
@@ -125,12 +179,17 @@ const ResidentSupport: React.FC = () => {
 
           {/* Actions */}
           <div className="form-actions">
-            <button type="submit" className="btn-submit">
-              Gửi yêu cầu
+            <button
+              type="submit"
+              className="btn-submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
             </button>
             <button
               type="button"
               className="btn-cancel"
+              disabled={isSubmitting}
               onClick={() => {
                 setDescription("");
                 setSelectedFiles([]);

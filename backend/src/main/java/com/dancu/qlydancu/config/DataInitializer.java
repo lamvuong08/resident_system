@@ -1,23 +1,39 @@
 package com.dancu.qlydancu.config;
 
-import com.dancu.qlydancu.model.*;
-import com.dancu.qlydancu.model.enums.BillStatus;
-import com.dancu.qlydancu.model.enums.PaymentMethod;
-import com.dancu.qlydancu.model.enums.RequestStatus;
-import com.dancu.qlydancu.model.enums.RequestType;
-import com.dancu.qlydancu.model.status.ApartmentStatus;
-import com.dancu.qlydancu.repo.*;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+import com.dancu.qlydancu.model.Apartment;
+import com.dancu.qlydancu.model.ApartmentContract;
+import com.dancu.qlydancu.model.ApartmentFinance;
+import com.dancu.qlydancu.model.ApartmentNote;
+import com.dancu.qlydancu.model.Bill;
+import com.dancu.qlydancu.model.Building;
+import com.dancu.qlydancu.model.Household;
+import com.dancu.qlydancu.model.Payment;
+import com.dancu.qlydancu.model.Resident;
+import com.dancu.qlydancu.model.enums.BillStatus;
+import com.dancu.qlydancu.model.enums.PaymentMethod;
+import com.dancu.qlydancu.model.status.ApartmentStatus;
+import com.dancu.qlydancu.repo.ApartmentContractRepository;
+import com.dancu.qlydancu.repo.ApartmentFinanceRepository;
+import com.dancu.qlydancu.repo.ApartmentNoteRepository;
+import com.dancu.qlydancu.repo.ApartmentRepository;
+import com.dancu.qlydancu.repo.BillRepository;
+import com.dancu.qlydancu.repo.BuildingRepository;
+import com.dancu.qlydancu.repo.HouseholdRepository;
+import com.dancu.qlydancu.repo.PaymentRepository;
+import com.dancu.qlydancu.repo.ResidentRepository;
+import com.dancu.qlydancu.repo.UserRequestRepository;
 
 @Component
 @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
@@ -31,7 +47,7 @@ public class DataInitializer implements CommandLineRunner {
     private final BillRepository billRepository;
     private final ApartmentFinanceRepository financeRepository;
     private final PaymentRepository paymentRepository;
-    private final MaintenanceRequestRepository maintenanceRepository;
+    // private final UserRequestRepository maintenanceRepository;
     private final ApartmentContractRepository contractRepository;
     private final ApartmentNoteRepository noteRepository;
 
@@ -42,7 +58,7 @@ public class DataInitializer implements CommandLineRunner {
                            BillRepository billRepository,
                            ApartmentFinanceRepository financeRepository,
                            PaymentRepository paymentRepository,
-                           MaintenanceRequestRepository maintenanceRepository,
+                           UserRequestRepository maintenanceRepository,
                            ApartmentContractRepository contractRepository,
                            ApartmentNoteRepository noteRepository) {
         this.buildingRepository = buildingRepository;
@@ -52,7 +68,7 @@ public class DataInitializer implements CommandLineRunner {
         this.billRepository = billRepository;
         this.financeRepository = financeRepository;
         this.paymentRepository = paymentRepository;
-        this.maintenanceRepository = maintenanceRepository;
+        // this.maintenanceRepository = maintenanceRepository;
         this.contractRepository = contractRepository;
         this.noteRepository = noteRepository;
     }
@@ -168,15 +184,15 @@ public class DataInitializer implements CommandLineRunner {
                 pay.setPaymentMethod(PaymentMethod.CASH);
                 paymentRepository.save(pay);
 
-                // ================= MAINTENANCE =================
-                MaintenanceRequest m = new MaintenanceRequest();
-                m.setTitle("Yêu cầu sửa chữa");
-                m.setDescription("Mô tả lỗi mẫu");
-                m.setType(RequestType.REPAIR);
-                m.setStatus(rnd.nextBoolean() ? RequestStatus.PENDING : RequestStatus.DONE);
-                m.setCreatedAt(LocalDateTime.now().minusDays(rnd.nextInt(90)));
-                m.setHouseholdId(household.getId());
-                maintenanceRepository.save(m);
+                // // ================= MAINTENANCE =================
+                // UserRequest m = new UserRequest();
+                // m.setTitle("Yêu cầu sửa chữa");
+                // m.setDescription("Mô tả lỗi mẫu");
+                // m.setType(RequestType.REPAIR);
+                // m.setStatus(rnd.nextBoolean() ? RequestStatus.PENDING : RequestStatus.DONE);
+                // m.setCreatedAt(LocalDateTime.now().minusDays(rnd.nextInt(90)));
+                // m.setHouseholdId(household.getId());
+                // maintenanceRepository.save(m);
 
                 // ================= CONTRACT =================
                 ApartmentContract c = new ApartmentContract();
