@@ -16,7 +16,7 @@ import {
   CreditCardOutlined,
   BarChartOutlined,
   CalendarOutlined,
-  HistoryOutlined,
+  BellOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
@@ -53,15 +53,13 @@ const Sidebar: React.FC = () => {
     }
 
     if (rawRole !== 'ADMIN') {
-      if (path === '/user' || path === '/user/') return 'home'
-      if (path.startsWith('/user/profile')) return 'profile'
-      if (path.startsWith('/user/hokhau')) return 'hokhau'
+      if (path === '/user' || path === '/user/') return 'dashboard'
+      if (path.startsWith('/user/profile-household')) return 'profile-household'
       if (path.startsWith('/user/payment')) return 'payment'
-      if (path.startsWith('/user/send-request')) return 'send-request'
-      if (path.startsWith('/user/tam-tru')) return 'tam-tru'
+      if (path.startsWith('/user/requests')) return 'requests'
       if (path.startsWith('/user/notifications')) return 'notifications'
-      if (path.startsWith('/user/history')) return 'history'
-      if (path.startsWith('/user/account-settings')) return 'account-settings'
+      if (path.startsWith('/user/temporary')) return 'temporary'
+      if (path.startsWith('/user/settings')) return 'settings'
     }
 
     return ''
@@ -70,15 +68,13 @@ const Sidebar: React.FC = () => {
   const activeKey = getActiveKeyFromPath(location.pathname)
 
   const userRouteMap: Record<string, string> = {
-    home: '/user',
-    profile: '/user/profile',
-    hokhau: '/user/hokhau',
+    dashboard: '/user',
+    'profile-household': '/user/profile-household',
     payment: '/user/payment',
-    'send-request': '/user/send-request',
-    'tam-tru': '/user/tam-tru',
+    requests: '/user/requests',
     notifications: '/user/notifications',
-    history: '/user/history',
-    'account-settings': '/user/account-settings',
+    temporary: '/user/temporary',
+    settings: '/user/settings',
   }
 
   const navigateByKey = (key: string) => {
@@ -107,21 +103,20 @@ const Sidebar: React.FC = () => {
   ]
 
   const userItems = [
-    { key: 'home', icon: <HomeOutlined />, label: 'Trang chủ' },
-    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ cá nhân' },
-    { key: 'hokhau', icon: <HomeOutlined />, label: 'Thông tin hộ khẩu' },
+    { key: 'dashboard', icon: <DashboardOutlined />, label: 'Trang chủ' },
+    { key: 'profile-household', icon: <ApartmentOutlined />, label: 'Hồ sơ & Hộ khẩu' },
     { key: 'payment', icon: <CreditCardOutlined />, label: 'Thanh toán' },
-    { key: 'send-request', icon: <FileTextOutlined />, label: 'Gửi yêu cầu' },
-    { key: 'tam-tru', icon: <CalendarOutlined />, label: 'Tạm trú / Tạm vắng' },
-    { key: 'notifications', icon: <NotificationOutlined />, label: 'Thông báo' },
-    { key: 'history', icon: <HistoryOutlined />, label: 'Lịch sử yêu cầu' },
-    { key: 'account-settings', icon: <SettingOutlined />, label: 'Cài đặt tài khoản' },
+    { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu & Hỗ trợ' },
+    { key: 'notifications', icon: <BellOutlined />, label: 'Thông báo' },
+    { key: 'temporary', icon: <CalendarOutlined />, label: 'Tạm trú / Tạm vắng' },
+    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
   ]
 
   const items = rawRole === 'ADMIN' ? adminItems : userItems
+  const sidebarClassName = `app-sidebar ${collapsed ? 'collapsed' : ''} ${rawRole === 'ADMIN' ? 'admin-sidebar' : 'resident-sidebar'}`
 
   return (
-    <aside className={`app-sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <aside className={sidebarClassName}>
 
       <nav className="sidebar-menu">
         <Menu

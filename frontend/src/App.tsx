@@ -16,6 +16,12 @@ import ResidenceManagement from './pages/admin/ResidenceManagement'
 import ResidentManagement from './pages/admin/ResidentManagement'
 import AccountManagement from './pages/admin/AccountManagement'
 import User from './pages/user/User'
+import ProfileHousehold from './pages/user/ProfileHousehold'
+import Payment from './pages/user/Payment'
+import Requests from './pages/user/Requests'
+import Notifications from './pages/user/Notifications'
+import TemporaryResidence from './pages/user/TemporaryResidence'
+import Settings from './pages/user/Settings'
 import { getStoredRole, hasToken } from './utils/authStorage'
 
 type RoleKey = 'ADMIN' | 'USER'
@@ -85,6 +91,17 @@ function App() {
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route index element={<Home />} />
+          <Route path="profile-household" element={<ProfileHousehold />} />
+          <Route path="payment" element={<Payment />} />
+          <Route path="requests" element={<Requests />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="temporary" element={<TemporaryResidence />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="profile" element={<Navigate to="/user/profile-household" replace />} />
+          <Route path="hokhau" element={<Navigate to="/user/profile-household" replace />} />
+          <Route path="send-request" element={<Navigate to="/user/requests" replace />} />
+          <Route path="tam-tru" element={<Navigate to="/user/temporary" replace />} />
+          <Route path="account-settings" element={<Navigate to="/user/settings" replace />} />
         </Route>
         <Route path="/" element={<Login />} />
       </Routes>

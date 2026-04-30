@@ -107,8 +107,14 @@
 }
 
 .app-sidebar .ant-menu-item-selected {
-  background: #0ea5a1 !important; 
-  color: #001217 !important;
+  background: rgba(14,165,161,0.2) !important;
+  color: #f4fdff !important;
+  border-left: 3px solid #0ea5a1;
+  padding-left: 11px !important;
+}
+
+.app-sidebar .ant-menu-item-selected .anticon {
+  color: #89f4ee !important;
 }
 
 .app-sidebar.collapsed .ant-menu-item {
