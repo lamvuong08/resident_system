@@ -6,6 +6,8 @@ import com.dancu.qlydancu.model.Notification;
 import com.dancu.qlydancu.model.NotificationReceiver;
 import com.dancu.qlydancu.model.Payment;
 import com.dancu.qlydancu.model.Resident;
+import com.dancu.qlydancu.model.enums.OccupancyStatus;
+import com.dancu.qlydancu.model.enums.ResidentCategory;
 import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.MaintenanceRequestRepository;
 import com.dancu.qlydancu.repo.NotificationReceiverRepository;
@@ -16,6 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -84,6 +90,57 @@ public class HouseholdController {
             response.add(toResidentResponse(resident));
         }
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Cư dân đăng nhập thêm thành viên chính thức vào hộ của mình (không dùng /api/residents — endpoint đó chỉ dành cho ADMIN).
+     */
+    @PostMapping("/me/residents")
+    public ResponseEntity<?> createMyResident(@RequestBody Resident resident, Authentication authentication) {
+        Household household = findCurrentHousehold(authentication);
+        if (household == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (resident.getResidentCategory() == ResidentCategory.TEMPORARY) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Không thể tạo cư dân tạm trú qua kênh này"));
+        }
+        try {
+            resident.setHouseholdId(household.getId());
+            resident.setResidentCategory(ResidentCategory.OFFICIAL);
+            resident.setOccupancyStatus(OccupancyStatus.LIVING);
+            validateMyResidentPayload(resident);
+            Resident saved = residentRepository.save(resident);
+            return ResponseEntity.ok(toResidentResponse(saved));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
+    }
+
+    @PutMapping("/me/residents/{id}")
+    public ResponseEntity<?> updateMyResident(@PathVariable Long id, @RequestBody Resident resident, Authentication authentication) {
+        Household household = findCurrentHousehold(authentication);
+        if (household == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Resident existing = residentRepository.findById(id).orElse(null);
+        if (existing == null || !household.getId().equals(existing.getHouseholdId())) {
+            return ResponseEntity.notFound().build();
+        }
+        resident.setId(id);
+        resident.setHouseholdId(household.getId());
+        resident.setResidentCategory(existing.getResidentCategory() != null
+                ? existing.getResidentCategory()
+                : ResidentCategory.OFFICIAL);
+        resident.setOccupancyStatus(existing.getOccupancyStatus() != null
+                ? existing.getOccupancyStatus()
+                : OccupancyStatus.LIVING);
+        try {
+            validateMyResidentPayload(resident);
+            Resident updated = residentRepository.save(resident);
+            return ResponseEntity.ok(toResidentResponse(updated));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+        }
     }
 
     @GetMapping("/me/payments")
@@ -158,8 +215,24 @@ public class HouseholdController {
                 .map(Resident::getName)
                 .findFirst()
                 .orElse(null));
+        String apartmentStatus = household.getApartment() != null && household.getApartment().getStatus() != null
+                ? household.getApartment().getStatus().name()
+                : null;
+        summary.put("apartmentStatus", apartmentStatus);
 
         return summary;
+    }
+
+    private void validateMyResidentPayload(Resident resident) {
+        if (resident.getName() == null || resident.getName().isBlank()) {
+            throw new IllegalArgumentException("Tên cư dân không được để trống");
+        }
+        if (resident.getHouseholdId() == null) {
+            throw new IllegalArgumentException("householdId là bắt buộc");
+        }
+        if (householdRepository.findById(resident.getHouseholdId()).isEmpty()) {
+            throw new IllegalArgumentException("householdId không tồn tại");
+        }
     }
 
     private Map<String, Object> toResidentResponse(Resident resident) {

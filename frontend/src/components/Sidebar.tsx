@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
+import { displayInitials } from '../utils/displayInitials'
 
 import '../styles/sidebar.css'
 
@@ -117,7 +118,6 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside className={sidebarClassName}>
-
       <nav className="sidebar-menu">
         <Menu
           mode="inline"
@@ -131,7 +131,13 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-footer">
         <div className="user-info">
-          <Avatar size={collapsed ? 36 : 40} style={{ backgroundColor: '#2f6f8f' }} icon={<UserOutlined />} />
+          <Avatar
+            size={collapsed ? 36 : 40}
+            style={{ backgroundColor: 'var(--resident-user-avatar-bg, #185FA5)' }}
+            icon={rawRole === 'ADMIN' ? <UserOutlined /> : undefined}
+          >
+            {rawRole !== 'ADMIN' ? displayInitials(user.name) : null}
+          </Avatar>
           {!collapsed && (
             <div className="user-meta">
               <div className="user-name">{user.name || 'Người dùng'}</div>

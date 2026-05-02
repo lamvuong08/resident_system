@@ -505,3 +505,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Hồ sơ & Hộ khẩu: kiểu giao diện chính nằm trong profile-household-page.css */
+
+.profile-household__detail-modal .ant-descriptions-item-label {
+  font-weight: 500;
+}
+
