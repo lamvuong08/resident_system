@@ -139,7 +139,6 @@ const NotificationManagement: React.FC = () => {
     }
   };
 
-  // URL-Driven Logic: Tự động fetch khi URL thay đổi
   useEffect(() => {
     const fetchApts = async () => {
       if (buildingIdParam) {
@@ -169,7 +168,6 @@ const NotificationManagement: React.FC = () => {
   useEffect(() => {
     if (isCreateModalOpen && buildingList.length === 0) loadBuildings();
 
-    // Đồng bộ form với URL khi mở modal (Bỏ Number() đi, dùng String trực tiếp)
     if (isCreateModalOpen && buildingIdParam) {
       createForm.setFieldsValue({
         selectedBuildingId: buildingIdParam,
@@ -181,7 +179,7 @@ const NotificationManagement: React.FC = () => {
   const handleOpenCreate = () => {
     createForm.resetFields();
     setSelectedAptIds([]);
-    setSearchParams({}); // Xóa params khi bắt đầu tạo mới
+    setSearchParams({}); 
     setIsCreateModalOpen(true);
   };
 
@@ -429,7 +427,6 @@ const NotificationManagement: React.FC = () => {
                   >
                     <Select
                       placeholder="Chọn tòa..."
-                      // Ép kiểu ID về String để Ant Design map chính xác với URL Params (luôn là string)
                       options={buildingList.map((b) => ({
                         label: b.name || b.code,
                         value: String(b.id),
@@ -437,7 +434,6 @@ const NotificationManagement: React.FC = () => {
                       onChange={(val) => {
                         setSearchParams({ b: val });
                         setSelectedAptIds([]);
-                        // Ép Form update theo giá trị chuỗi
                         createForm.setFieldsValue({ selectedBuildingId: val });
                       }}
                     />
@@ -469,7 +465,6 @@ const NotificationManagement: React.FC = () => {
                 <div style={{ marginTop: 15 }}>
                   <div style={{ marginBottom: 10, fontWeight: 600 }}>
                     {(() => {
-                      // So sánh bằng String để đảm bảo không lệch type (id=1 vs b="1")
                       const building = buildingList.find(
                         (b) => String(b.id) === String(buildingIdParam),
                       );
@@ -490,7 +485,6 @@ const NotificationManagement: React.FC = () => {
                     <div
                       style={{
                         display: "grid",
-                        // Tăng minmax từ 80px lên 100px để chứa vừa mã căn hộ dài (VD: B1-0501)
                         gridTemplateColumns:
                           "repeat(auto-fill, minmax(100px, 1fr))",
                         gap: "10px",
@@ -511,13 +505,11 @@ const NotificationManagement: React.FC = () => {
                             background: selectedAptIds.includes(apt.id)
                               ? "#1890ff"
                               : "#fff",
-                            // Thêm thuộc tính này để chữ không bị tràn nếu màn hình quá nhỏ
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                           }}
                         >
-                          {/* Đổi từ apt.roomNumber sang hiển thị toàn bộ mã Code */}
                           {apt.code}
                         </Button>
                       ))}
@@ -569,6 +561,7 @@ const NotificationManagement: React.FC = () => {
             type="primary"
             disabled={!isDirty}
             onClick={handleUpdate}
+            style={{ height: 32 }}
           >
             Cập nhật
           </Button>,

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -94,7 +95,8 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    @Transactional 
+    @PostMapping
+    @Transactional
     public ResponseEntity<NotificationResponse> createNotification(
             @RequestBody NotificationCreateRequest request) {
 
@@ -112,6 +114,13 @@ public class NotificationController {
             targetHouseholds = householdRepository.findAll();
         } else if ("BUILDING".equalsIgnoreCase(request.targetType()) && request.targetIds() != null) {
             targetHouseholds = householdRepository.findByBuildingIds(request.targetIds());
+        } else if ("FLOOR".equalsIgnoreCase(request.targetType())
+                && request.targetIds() != null
+                && !request.targetIds().isEmpty()
+                && request.floorNumber() != null) {
+            targetHouseholds = householdRepository.findByBuildingAndFloor(
+                    request.targetIds().get(0),
+                    request.floorNumber());
         } else if ("APARTMENT".equalsIgnoreCase(request.targetType()) && request.targetIds() != null) {
             targetHouseholds = householdRepository.findByApartmentIds(request.targetIds());
         }
