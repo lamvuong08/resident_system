@@ -21,6 +21,11 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  if (config.data instanceof FormData && config.headers) {
+    const h = config.headers as unknown as Record<string, unknown>
+    delete h['Content-Type']
+  }
+
   const token = localStorage.getItem('token')
 
   if (token && config.headers) {

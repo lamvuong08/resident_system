@@ -4,7 +4,7 @@ const StatCard: React.FC<{ title: string; value: React.ReactNode | number | stri
   return (
     <div className="stat-card">
       <div className="stat-icon">{icon}</div>
-      <div className="stat-body">
+      <div className="stat-content">
         <div className="stat-value">{value}</div>
         <div className="stat-title">{title}</div>
       </div>

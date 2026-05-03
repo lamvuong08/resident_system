@@ -571,7 +571,7 @@ const ResidenceManagement: React.FC = () => {
         title="Chi tiết hồ sơ cư trú"
         size={520}
         onClose={() => setDrawerOpen(false)}
-        destroyOnClose
+        destroyOnHidden
       >
         {!selectedRecord ? null : (
           <Descriptions column={1} size="small" bordered>

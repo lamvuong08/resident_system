@@ -1,4 +1,5 @@
 import api from './api'
+import { fetchUserRequestsForDashboard } from './userSupportApi'
 import type {
   DashboardNotification,
   DashboardPayment,
@@ -154,8 +155,12 @@ export const getResidentPayments = async (): Promise<DashboardPayment[]> => {
 }
 
 export const getResidentRequests = async (): Promise<DashboardRequest[]> => {
-  const rows = await requestFirstArray(['/households/me/requests', '/requests/me', '/maintenance-requests/me'])
-  return rows.map(mapRequest)
+  try {
+    return await fetchUserRequestsForDashboard(50)
+  } catch {
+    const rows = await requestFirstArray(['/households/me/requests', '/requests/me', '/maintenance-requests/me'])
+    return rows.map(mapRequest)
+  }
 }
 
 export const getResidentDashboardData = async (): Promise<ResidentDashboardData> => {

@@ -92,9 +92,6 @@ public class HouseholdController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Cư dân đăng nhập thêm thành viên chính thức vào hộ của mình (không dùng /api/residents — endpoint đó chỉ dành cho ADMIN).
-     */
     @PostMapping("/me/residents")
     public ResponseEntity<?> createMyResident(@RequestBody Resident resident, Authentication authentication) {
         Household household = findCurrentHousehold(authentication);

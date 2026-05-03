@@ -627,7 +627,7 @@ const ResidentManagement: React.FC = () => {
         onClose={() => setDrawerResident(null)}
         title="Chi tiết cư dân"
         size={500}
-        destroyOnClose
+        destroyOnHidden
       >
         {!drawerResident ? null : (
           <Space direction="vertical" size={14} style={{ width: '100%' }}>
