@@ -1,5 +1,6 @@
 import api from './api'
 import { fetchUserRequestsForDashboard } from './userSupportApi'
+import { fetchMyNotifications } from './notificationApi'
 import type {
   DashboardNotification,
   DashboardPayment,
@@ -98,26 +99,6 @@ export const getResidentHouseholdSummary = async (): Promise<HouseholdSummary | 
   }
 }
 
-const mapNotification = (item: unknown): DashboardNotification => {
-  const row = toObject(item) || {}
-  const status = safeString(row.status).toUpperCase()
-  const isReadFlag = row.isRead ?? row.read
-  const isRead = typeof isReadFlag === 'boolean'
-    ? isReadFlag
-    : status === 'READ' || status === 'DA_DOC'
-
-  const title = safeString(row.title || row.subject, 'Thông báo hệ thống')
-  const content = safeString(row.content || row.message || row.description || row.body, '')
-
-  return {
-    id: String(row.id ?? row.notificationId ?? row.code ?? crypto.randomUUID()),
-    title,
-    content,
-    createdAt: safeNullableString(row.createdAt || row.createdDate || row.time),
-    isRead,
-  }
-}
-
 const mapPayment = (item: unknown): DashboardPayment => {
   const row = toObject(item) || {}
   const rawStatus = safeString(row.status || row.paymentStatus || row.state, 'UNPAID').toUpperCase()
@@ -145,8 +126,14 @@ const mapRequest = (item: unknown): DashboardRequest => {
 }
 
 export const getResidentNotifications = async (): Promise<DashboardNotification[]> => {
-  const rows = await requestFirstArray(['/households/me/notifications', '/notifications/me', '/notifications'])
-  return rows.map(mapNotification)
+  const rows = await fetchMyNotifications()
+  return rows.map((item) => ({
+    id: String(item.id),
+    title: item.title,
+    content: item.content,
+    createdAt: item.createdAt,
+    isRead: item.isRead,
+  }))
 }
 
 export const getResidentPayments = async (): Promise<DashboardPayment[]> => {

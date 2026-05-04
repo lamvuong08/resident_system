@@ -93,6 +93,7 @@ const Home = () => {
           loading={loading}
           items={dashboardData.notifications}
           onViewAll={() => navigate('/user/notifications')}
+          onItemClick={(id) => navigate(`/user/notifications/${id}`)}
         />
         <RequestListCard loading={loading} items={dashboardData.requests} />
       </div>

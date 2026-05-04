@@ -5,6 +5,7 @@ import { NotificationOutlined, SettingOutlined, LogoutOutlined } from '@ant-desi
 import '../styles/App.css'
 import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
 import NotificationsPopover from './resident/NotificationsPopover'
+import { markMyNotificationRead, fetchMyNotifications } from '../utils/notificationApi'
 
 const Header: React.FC = () => {
   const navigate = useNavigate()
@@ -12,6 +13,14 @@ const Header: React.FC = () => {
   const roleValue = (user.role || 'ROLE_USER').replace('ROLE_', '')
   const [notificationsOpen, setNotificationsOpen] = React.useState(false)
   const [unreadNotifications, setUnreadNotifications] = React.useState(0)
+
+  React.useEffect(() => {
+    if (roleValue === 'USER') {
+      fetchMyNotifications()
+        .then((rows) => setUnreadNotifications(rows.filter((item) => !item.isRead).length))
+        .catch(() => { })
+    }
+  }, [roleValue])
 
   const goNotifications = () => {
     navigate(roleValue === 'ADMIN' ? '/admin/thong-bao' : '/user/notifications')
@@ -45,6 +54,16 @@ const Header: React.FC = () => {
               <NotificationsPopover
                 open={notificationsOpen}
                 onUnreadCountChange={setUnreadNotifications}
+                onOpenNotification={async (id) => {
+                  try {
+                    await markMyNotificationRead(id)
+                    setUnreadNotifications((prev) => Math.max(0, prev - 1))
+                  } catch {
+                    // Không chặn chuyển trang nếu API đánh dấu đọc lỗi.
+                  }
+                  setNotificationsOpen(false)
+                  navigate(`/user/notifications/${id}`)
+                }}
                 onViewAll={() => {
                   setNotificationsOpen(false)
                   navigate('/user/notifications')

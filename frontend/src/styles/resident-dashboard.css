@@ -415,6 +415,14 @@
   border-bottom: none;
 }
 
+.resident-list-item--clickable {
+  cursor: pointer;
+}
+
+.resident-list-item--clickable:hover {
+  background: #f8fbff;
+}
+
 .resident-list-item p {
   margin: 4px 0 0;
   color: #5a6f87;

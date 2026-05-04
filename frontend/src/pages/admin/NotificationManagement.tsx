@@ -6,7 +6,6 @@ import {
   Input,
   message,
   Modal,
-  Popconfirm,
   Row,
   Select,
   Space,
@@ -179,7 +178,7 @@ const NotificationManagement: React.FC = () => {
   const handleOpenCreate = () => {
     createForm.resetFields();
     setSelectedAptIds([]);
-    setSearchParams({}); 
+    setSearchParams({});
     setIsCreateModalOpen(true);
   };
 
@@ -261,6 +260,20 @@ const NotificationManagement: React.FC = () => {
     }
   };
 
+  const showDeleteConfirm = () => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc chắn muốn xóa thông báo này? Thao tác này không thể hoàn tác.",
+      okText: "Xóa",
+      cancelText: "Hủy",
+      okType: "danger",
+      centered: true,
+      okButtonProps: { style: { height: 32 } },
+      cancelButtonProps: { style: { height: 32 } },
+      onOk: handleDelete,
+    });
+  };
+
   const columns = [
     { title: "Thông báo", dataIndex: "title", key: "title" },
     {
@@ -284,7 +297,7 @@ const NotificationManagement: React.FC = () => {
       key: "action",
       width: 120,
       render: (_: any, record: Notification) => (
-        <Button type="link" onClick={() => handleOpenDetails(record)}>
+        <Button type="link" onClick={() => handleOpenDetails(record)} style={{ height: 32 }}>
           Chi tiết
         </Button>
       ),
@@ -318,6 +331,7 @@ const NotificationManagement: React.FC = () => {
             (t) => (
               <Button
                 key={t}
+                style={{ height: 32 }}
                 type={
                   selectedType === t || (t === "Tất cả" && !selectedType)
                     ? "primary"
@@ -349,7 +363,7 @@ const NotificationManagement: React.FC = () => {
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         footer={[
-          <Button key="cancel" onClick={() => setIsCreateModalOpen(false)}>
+          <Button key="cancel" onClick={() => setIsCreateModalOpen(false)} style={{ height: 32 }}>
             Hủy
           </Button>,
           <Button
@@ -357,6 +371,7 @@ const NotificationManagement: React.FC = () => {
             type="primary"
             loading={isSubmitting}
             onClick={handleCreateSubmit}
+            style={{ height: 32 }}
           >
             Gửi đi
           </Button>,
@@ -500,7 +515,7 @@ const NotificationManagement: React.FC = () => {
                           }
                           onClick={() => toggleApartment(apt.id)}
                           style={{
-                            height: "45px",
+                            height: 32,
                             fontWeight: "bold",
                             background: selectedAptIds.includes(apt.id)
                               ? "#1890ff"
@@ -546,14 +561,10 @@ const NotificationManagement: React.FC = () => {
         open={isDetailModalOpen}
         onCancel={() => setIsDetailModalOpen(false)}
         footer={[
-          <Popconfirm
-            key="del"
-            title="Xóa thông báo này?"
-            onConfirm={handleDelete}
-          >
-            <Button danger>Xóa thông báo</Button>
-          </Popconfirm>,
-          <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
+          <Button key="del" danger style={{ height: 32 }} onClick={showDeleteConfirm}>
+            Xóa thông báo
+          </Button>,
+          <Button key="close" onClick={() => setIsDetailModalOpen(false)} style={{ height: 32 }}>
             Đóng
           </Button>,
           <Button

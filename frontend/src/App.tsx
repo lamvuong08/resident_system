@@ -97,6 +97,7 @@ function App() {
           <Route path="payment" element={<Payment />} />
           <Route path="requests" element={<SupportPage />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="notifications/:id" element={<Notifications />} />
           <Route path="temporary" element={<TemporaryResidence />} />
           <Route path="settings" element={<Settings />} />
           <Route path="profile" element={<Navigate to="/user/profile-household" replace />} />

@@ -1,23 +1,19 @@
-import { Button, Card, Empty, Skeleton, Tag } from 'antd'
+import { Button, Card, Empty, Skeleton, Typography } from 'antd'
 import type { DashboardNotification } from '../../types/residentDashboard'
+import { formatNotificationDate } from '../../utils/notificationApi'
+import '../../styles/resident-notifications.css'
 
 type NotificationsListCardProps = {
   loading: boolean
   items: DashboardNotification[]
   onViewAll: () => void
+  onItemClick?: (id: string, isRead: boolean) => void
 }
 
-const formatDate = (value: string | null) => {
-  if (!value) return 'Chưa rõ thời gian'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('vi-VN', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
-}
+const truncateContent = (value: string, maxLength = 100) =>
+  value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
 
-const NotificationsListCard = ({ loading, items, onViewAll }: NotificationsListCardProps) => {
+const NotificationsListCard = ({ loading, items, onViewAll, onItemClick }: NotificationsListCardProps) => {
   const latestItems = items.slice(0, 5)
 
   return (
@@ -33,15 +29,29 @@ const NotificationsListCard = ({ loading, items, onViewAll }: NotificationsListC
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có thông báo mới" />
         </div>
       ) : (
-        <div className="resident-list">
+        <div className="resident-notifications-list">
           {latestItems.map((item) => (
-            <div className="resident-list-item" key={item.id}>
-              <div>
-                <strong>{item.title}</strong>
-                <p>{formatDate(item.createdAt)}</p>
+            <button
+              key={item.id}
+              className={`resident-notifications-item ${item.isRead ? 'read' : 'unread'}`}
+              type="button"
+              style={{ width: '100%', textAlign: 'left', minWidth: 0 }}
+              onClick={() => onItemClick?.(item.id, item.isRead)}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                <Typography.Text className="resident-notifications-item__title" strong style={{ flex: 1, paddingRight: 8, wordBreak: 'break-word', textAlign: 'left' }}>
+                  {item.title}
+                </Typography.Text>
+                <Typography.Text className="resident-notifications-item__time" type="secondary" style={{ whiteSpace: 'nowrap', fontSize: 12, marginTop: 0, flexShrink: 0 }}>
+                  {formatNotificationDate(item.createdAt)}
+                </Typography.Text>
               </div>
-              <Tag color={item.isRead ? 'default' : 'processing'}>{item.isRead ? 'Đã đọc' : 'Chưa đọc'}</Tag>
-            </div>
+              {item.content && (
+                <Typography.Text className="resident-notifications-item__content" type="secondary" style={{ display: 'block' }}>
+                  {truncateContent(item.content)}
+                </Typography.Text>
+              )}
+            </button>
           ))}
         </div>
       )}
