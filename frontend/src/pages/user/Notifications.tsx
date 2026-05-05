@@ -116,6 +116,7 @@ const Notifications = () => {
               prefix={<SearchOutlined />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="fix-height-32"
               style={{ width: 250 }}
               allowClear
             />
@@ -127,10 +128,10 @@ const Notifications = () => {
             </Checkbox>
           </Space>
           <Space wrap>
-            <Button icon={<CheckSquareOutlined />} onClick={handleMarkAllAsRead}>
+            <Button icon={<CheckSquareOutlined />} onClick={handleMarkAllAsRead} className="fix-height-32">
               Đánh dấu tất cả đã đọc
             </Button>
-            <Button icon={<ReloadOutlined />} onClick={refresh}>
+            <Button icon={<ReloadOutlined />} onClick={refresh} className="fix-height-32">
               Làm mới
             </Button>
           </Space>

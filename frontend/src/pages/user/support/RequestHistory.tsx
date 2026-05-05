@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Button, Input, Modal, Select, Space, message } from 'antd'
-import { FileImageOutlined, FileOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Button, Input, Modal, Select, Space, message, Tabs, Pagination, Table, Card } from 'antd'
+import { FileImageOutlined, FileOutlined, FilePdfOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons'
 import type { UserRequestAttachment, UserRequestRow, UserRequestStats } from '../../../types/userSupport'
 import {
   deleteUserRequest,
@@ -51,7 +51,7 @@ const AttachmentPreview: React.FC<{ requestId: number; att: UserRequestAttachmen
         urlRef.current = objectUrl
         setUrl(objectUrl)
       })
-      .catch(() => {})
+      .catch(() => { })
     return () => {
       alive = false
       if (urlRef.current) {
@@ -74,7 +74,6 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
   statsLoading,
   currentPage,
   setCurrentPage,
-  totalPages,
   totalElements,
   pageSize,
   refreshAll,
@@ -88,7 +87,6 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
   const [selectedRequest, setSelectedRequest] = useState<UserRequestRow | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({ type: 'REPAIR', description: '' })
-  /** storedFileName của tệp đã có trên server — còn trong danh sách thì được giữ khi lưu */
   const [editKeepStored, setEditKeepStored] = useState<string[]>([])
   const [editNewFiles, setEditNewFiles] = useState<File[]>([])
   const editFileInputRef = useRef<HTMLInputElement>(null)
@@ -119,8 +117,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
     })
   }, [items, activeTab, filterType, searchQuery])
 
-  const startIndex = (currentPage - 1) * pageSize + 1
-  const endIndex = Math.min(startIndex + filteredRequests.length - 1, totalElements)
+
 
   const openDetail = (req: UserRequestRow) => {
     setSelectedRequest(req)
@@ -207,9 +204,9 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
           <h2>Lịch sử yêu cầu</h2>
           <p>Danh sách các phản hồi và yêu cầu bạn đã gửi đến Ban quản lý</p>
         </div>
-        <button type="button" className="btn-create-new" onClick={onCreateNew}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={onCreateNew}>
           Tạo yêu cầu mới
-        </button>
+        </Button>
       </div>
 
       <div className="stats-row">
@@ -235,120 +232,96 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
         />
       </div>
 
-      <div className="filter-section">
-        <div className="filter-tabs">
-          <button type="button" className={`filter-tab ${activeTab === 'ALL' ? 'active' : ''}`} onClick={() => setActiveTab('ALL')}>
-            Tất cả
-          </button>
-          <button type="button" className={`filter-tab ${activeTab === 'PENDING' ? 'active' : ''}`} onClick={() => setActiveTab('PENDING')}>
-            Chờ xử lý
-          </button>
-          <button type="button" className={`filter-tab ${activeTab === 'PROCESSING' ? 'active' : ''}`} onClick={() => setActiveTab('PROCESSING')}>
-            Đang xử lý
-          </button>
-          <button type="button" className={`filter-tab ${activeTab === 'DONE' ? 'active' : ''}`} onClick={() => setActiveTab('DONE')}>
-            Hoàn thành
-          </button>
-          <button type="button" className={`filter-tab ${activeTab === 'REJECTED' ? 'active' : ''}`} onClick={() => setActiveTab('REJECTED')}>
-            Đã từ chối
-          </button>
-        </div>
-        <div className="filter-actions">
-          <input
-            type="text"
-            className="filter-search"
+      <div className="filter-section" style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end', marginTop: 24 }}>
+        <Space wrap>
+          <Input
             placeholder="Tìm theo nội dung, mã..."
+            prefix={<SearchOutlined />}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="fix-height-32"
+            style={{ width: 250 }}
+            allowClear
           />
-          <select className="filter-select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-            <option value="ALL">Tất cả loại</option>
-            <option value="REPAIR">Sửa chữa</option>
-            <option value="COMPLAINT">Khiếu nại</option>
-            <option value="SUPPORT">Hỗ trợ</option>
-          </select>
-        </div>
+          <Select
+            value={filterType}
+            onChange={setFilterType}
+            className="fix-height-32"
+            style={{ width: 140 }}
+            options={[
+              { value: 'ALL', label: 'Tất cả loại' },
+              { value: 'REPAIR', label: 'Sửa chữa' },
+              { value: 'COMPLAINT', label: 'Khiếu nại' },
+              { value: 'SUPPORT', label: 'Hỗ trợ' },
+            ]}
+          />
+        </Space>
       </div>
 
-      <div className="table-card">
-        <table className="history-table">
-          <thead>
-            <tr>
-              <th>Mã số</th>
-              <th>Ngày gửi</th>
-              <th>Loại yêu cầu</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={5} className="empty-state">
-                  Đang tải dữ liệu...
-                </td>
-              </tr>
-            ) : filteredRequests.length > 0 ? (
-              filteredRequests.map((req) => (
-                <tr key={req.id}>
-                  <td className="font-bold">#{req.id}</td>
-                  <td>{formatUserRequestDate(req.createdAtRaw)}</td>
-                  <td>{getUserRequestTypeLabel(req.type)}</td>
-                  <td>
-                    <span className={`status-badge ${req.status.toLowerCase()}`}>{getStatusText(req.status)}</span>
-                  </td>
-                  <td>
-                    <button type="button" className="btn-detail" onClick={() => openDetail(req)}>
-                      Chi tiết
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="empty-state">
-                  Không có yêu cầu nào phù hợp.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <Card className="resident-requests-card" bodyStyle={{ padding: 20 }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            { key: 'ALL', label: 'Tất cả' },
+            { key: 'PENDING', label: 'Chờ xử lý' },
+            { key: 'PROCESSING', label: 'Đang xử lý' },
+            { key: 'DONE', label: 'Hoàn thành' },
+            { key: 'REJECTED', label: 'Đã từ chối' },
+          ]}
+        />
+        <Table
+          rowKey="id"
+          columns={[
+            {
+              title: 'Mã số',
+              dataIndex: 'id',
+              key: 'id',
+              render: (val: number) => <span style={{ fontWeight: 'bold' }}>#{val}</span>,
+            },
+            {
+              title: 'Ngày gửi',
+              key: 'createdAt',
+              render: (_, req) => formatUserRequestDate(req.createdAtRaw),
+            },
+            {
+              title: 'Loại yêu cầu',
+              key: 'type',
+              render: (_, req) => getUserRequestTypeLabel(req.type),
+            },
+            {
+              title: 'Trạng thái',
+              key: 'status',
+              render: (_, req) => (
+                <span className={`status-badge ${req.status.toLowerCase()}`}>{getStatusText(req.status)}</span>
+              ),
+            },
+            {
+              title: 'Thao tác',
+              key: 'actions',
+              render: (_, req) => (
+                <Button type="link" size="small" onClick={() => openDetail(req)} style={{ padding: 0 }}>
+                  Chi tiết
+                </Button>
+              ),
+            },
+          ]}
+          dataSource={filteredRequests}
+          loading={loading}
+          pagination={false}
+          size="small"
+        />
 
-        <div className="pagination-container">
-          <div className="pagination-info">
-            Hiển thị {totalElements === 0 ? 0 : startIndex} đến {endIndex} của {totalElements} kết quả
-          </div>
-          <div className="pagination-controls">
-            <button
-              type="button"
-              className="page-btn text-btn"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-            >
-              Trang trước
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                type="button"
-                className={`page-btn number-btn ${currentPage === page ? 'active' : ''}`}
-                onClick={() => setCurrentPage(page)}
-              >
-                {page}
-              </button>
-            ))}
-            <button
-              type="button"
-              className="page-btn text-btn"
-              disabled={currentPage === totalPages || totalPages === 0}
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Trang sau
-            </button>
-          </div>
+        <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+          <Pagination
+            current={currentPage}
+            total={totalElements}
+            pageSize={pageSize}
+            onChange={(page) => setCurrentPage(page)}
+            showSizeChanger={false}
+          />
         </div>
-      </div>
-
+      </Card>
       <Modal
         className="request-history-detail-modal"
         title={`${isEditing ? 'Chỉnh sửa yêu cầu' : 'Chi tiết yêu cầu'} #${selectedRequest?.id ?? ''}`}

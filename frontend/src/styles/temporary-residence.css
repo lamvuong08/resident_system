@@ -1,0 +1,362 @@
+.temporary-residence-page {
+  display: grid;
+  gap: 12px;
+}
+
+.temporary-residence-page.profile-household-page .ph-page-intro {
+  margin-top: 8px;
+}
+
+.temporary-residence-page.profile-household-page .ph-page-stack {
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.temporary-residence-shell .ant-card-body {
+  padding: 12px 14px 14px;
+}
+
+.temporary-residence-apartment {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.temporary-residence-apartment__label {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.temporary-residence-apartment__value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+.temporary-residence-apartment__note {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.temporary-residence-tabs .ant-tabs-nav {
+  margin-bottom: 10px;
+}
+
+.temporary-residence-tab {
+  display: grid;
+  gap: 12px;
+}
+
+.temporary-residence-form-card,
+.temporary-residence-list-card {
+  border-radius: 14px;
+}
+
+.temporary-residence-form-grid {
+  display: grid;
+  gap: 10px 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.temporary-residence-page .temporary-residence-form-card .ant-card-head,
+.temporary-residence-page .temporary-residence-list-card .ant-card-head {
+  min-height: 38px;
+  padding: 0 14px 6px;
+}
+
+.temporary-residence-page .temporary-residence-form-card .ant-card-head-wrapper,
+.temporary-residence-page .temporary-residence-list-card .ant-card-head-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.temporary-residence-page .temporary-residence-form-card .ant-card-head-title,
+.temporary-residence-page .temporary-residence-list-card .ant-card-head-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-text-primary, #0a0a0a);
+  text-align: center;
+  justify-self: auto;
+  grid-column: auto;
+  padding: 0;
+  flex: 0 1 auto;
+}
+
+.temporary-residence-page .temporary-residence-form-card .ant-card-body,
+.temporary-residence-page .temporary-residence-list-card .ant-card-body {
+  padding: 8px 14px 14px;
+}
+
+.temporary-residence-page .temporary-residence-form-card .ant-form-item {
+  margin-bottom: 12px;
+}
+
+.temporary-residence-page .ant-btn {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.temporary-residence-page .ant-btn-sm {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.temporary-residence-page .ant-input:not(textarea) {
+  height: 32px;
+}
+
+.temporary-residence-page textarea.ant-input {
+  height: auto;
+  min-height: auto;
+}
+
+.temporary-residence-page .ant-picker {
+  height: 32px;
+  padding: 4px 10px;
+}
+
+.temporary-residence-page .ant-picker .ant-picker-input>input {
+  font-size: 13px;
+}
+
+.temporary-residence-page .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.temporary-residence-page .ant-select-single .ant-select-selector .ant-select-selection-item,
+.temporary-residence-page .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+  line-height: 30px;
+}
+
+.temporary-residence-page .temporary-residence-table .ant-table-cell {
+  padding: 8px 10px;
+  vertical-align: top;
+}
+
+.temporary-residence-page .temporary-residence-table .ant-table-cell:has(.temporary-residence-actions) {
+  white-space: nowrap;
+}
+
+.temporary-residence-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.temporary-residence-actions .ant-btn {
+  flex: 0 0 auto;
+}
+
+.temporary-residence-date-picker {
+  width: 100%;
+}
+
+.temporary-residence-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.temporary-residence-person-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.temporary-residence-person-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.temporary-residence-table .ant-table-thead>tr>th {
+  background: #f8fafc;
+  font-weight: 700;
+  color: #475569;
+}
+
+.temporary-residence-detail {
+  display: grid;
+  gap: 10px;
+}
+
+.temporary-residence-detail-modal .ant-modal-body {
+  padding: 12px 16px 10px;
+}
+
+.temporary-residence-detail-modal .ant-modal-header {
+  padding: 12px 16px 8px;
+}
+
+.temporary-residence-detail-modal .ant-modal-title {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.temporary-residence-detail-modal .ant-modal-header .ant-modal-title {
+  width: 100%;
+  text-align: center;
+}
+
+.temporary-residence-detail__meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+
+.temporary-residence-detail__row {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid #e8edf5;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.temporary-residence-detail__row--wide {
+  grid-column: 1 / -1;
+}
+
+.temporary-residence-detail__tag.ant-tag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline-end: 0;
+  padding: 0 10px;
+  border-radius: 999px;
+  line-height: 22px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.temporary-residence-detail__tag--type.ant-tag {
+  background: rgba(24, 144, 255, 0.12);
+  border-color: rgba(24, 144, 255, 0.22);
+  color: #096dd9;
+}
+
+.temporary-residence-detail__tag--status.ant-tag {
+  background: rgba(82, 196, 26, 0.12);
+  border-color: rgba(82, 196, 26, 0.22);
+  color: #389e0d;
+}
+
+.temporary-residence-detail__reason {
+  margin-bottom: 0 !important;
+  white-space: pre-wrap;
+}
+
+.temporary-residence-detail-modal .ant-modal-footer {
+  padding: 10px 16px 14px;
+}
+
+.temporary-residence-detail__footer-btn.ant-btn {
+  height: 32px;
+  min-height: 32px;
+  min-width: 104px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-body-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-body {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-paragraph {
+  width: 100%;
+  margin-inline-start: 12px;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-body>.anticon {
+  margin-inline-end: 0;
+  font-size: 22px;
+  margin-top: 2px;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-title {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-content {
+  text-align: left;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.temporary-residence-confirm-modal .ant-modal-confirm-btns .ant-btn+.ant-btn {
+  margin-inline-start: 0;
+}
+
+.temporary-residence-confirm-modal .temporary-residence-confirm-modal__btn.ant-btn {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 992px) {
+  .temporary-residence-apartment {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .temporary-residence-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .temporary-residence-detail__meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .temporary-residence-detail-modal .ant-modal-body {
+    padding: 10px 12px 8px;
+  }
+
+  .temporary-residence-detail-modal .ant-modal-header {
+    padding: 10px 12px 6px;
+  }
+
+  .temporary-residence-detail-modal .ant-modal-footer {
+    padding: 8px 12px 12px;
+  }
+
+  .temporary-residence-detail__footer-btn.ant-btn {
+    min-width: 0;
+  }
+}

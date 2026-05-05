@@ -22,6 +22,7 @@ public class ResidenceRecordRowResponse {
     public String guestName;
     public String guestCccd;
     public String guestPhone;
+    public String guestRelationship;
     public LocalDate startDate;
     public LocalDate endDate;
 }
