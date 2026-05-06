@@ -204,7 +204,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
           <h2>Lịch sử yêu cầu</h2>
           <p>Danh sách các phản hồi và yêu cầu bạn đã gửi đến Ban quản lý</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={onCreateNew}>
+        <Button type="primary" className="fix-height-32" icon={<PlusOutlined />} onClick={onCreateNew}>
           Tạo yêu cầu mới
         </Button>
       </div>
@@ -335,7 +335,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
             isEditing ? (
               <Space size={10} className="request-detail-footer-actions">
                 <Button
-                  className="request-detail-footer-btn"
+                  className="request-detail-footer-btn fix-height-32"
                   onClick={() => {
                     setIsEditing(false)
                     setEditKeepStored(selectedRequest.attachments?.map((a) => a.storedFileName) ?? [])
@@ -345,20 +345,20 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
                 >
                   Hủy sửa
                 </Button>
-                <Button className="request-detail-footer-btn" type="primary" onClick={() => void handleUpdate()}>
+                <Button className="request-detail-footer-btn fix-height-32" type="primary" onClick={() => void handleUpdate()}>
                   Lưu thay đổi
                 </Button>
               </Space>
             ) : (
               <Space size={10} className="request-detail-footer-actions">
-                <Button className="request-detail-footer-btn" onClick={closeModal}>
+                <Button className="request-detail-footer-btn fix-height-32" onClick={closeModal}>
                   Đóng
                 </Button>
-                <Button className="request-detail-footer-btn" danger disabled={selectedRequest.status !== 'PENDING'} onClick={handleDelete}>
+                <Button className="request-detail-footer-btn fix-height-32" danger disabled={selectedRequest.status !== 'PENDING'} onClick={handleDelete}>
                   Xóa
                 </Button>
                 <Button
-                  className="request-detail-footer-btn"
+                  className="request-detail-footer-btn fix-height-32"
                   type="primary"
                   disabled={selectedRequest.status !== 'PENDING'}
                   onClick={() => {
@@ -382,7 +382,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
               <div className="request-detail-row__value">
                 {isEditing ? (
                   <Select
-                    className="request-detail-type-select"
+                    className="request-detail-type-select fix-height-32"
                     classNames={{ popup: { root: 'request-detail-type-select-dropdown' } }}
                     value={editForm.type}
                     onChange={(v) => setEditForm({ ...editForm, type: v })}

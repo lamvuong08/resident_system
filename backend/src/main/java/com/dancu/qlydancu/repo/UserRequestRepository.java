@@ -6,11 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.query.Param;
 
 import com.dancu.qlydancu.model.UserRequest;
 
-public interface UserRequestRepository extends JpaRepository<UserRequest, Long> {
+public interface UserRequestRepository extends JpaRepository<UserRequest, Long>, JpaSpecificationExecutor<UserRequest> {
     @Query(value = """
             SELECT r.*
             FROM requests r
@@ -32,4 +33,5 @@ public interface UserRequestRepository extends JpaRepository<UserRequest, Long> 
     long countByHouseholdIdAndStatus(
             @Param("householdId") Long householdId,
             @Param("status") com.dancu.qlydancu.model.enums.RequestStatus status);
+
 }

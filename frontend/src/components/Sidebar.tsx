@@ -45,7 +45,7 @@ const Sidebar: React.FC = () => {
       if (path.startsWith('/admin/quan-ly-can-ho')) return 'quan-ly-can-ho'
       if (path.startsWith('/admin/quan-ly-cu-tru') || path.startsWith('/admin/quan-ly-ho-khau')) return 'quan-ly-cu-tru'
       if (path.startsWith('/admin/quan-ly-cu-dan') || path.startsWith('/admin/quan-ly-dan-cu')) return 'quan-ly-cu-dan'
-      if (path.startsWith('/admin/yeu-cau-nguoi-dan')) return 'yeu-cau-nguoi-dan'
+      if (path.startsWith('/admin/requests')) return 'requests'
       if (path.startsWith('/admin/quan-ly-thanh-toan')) return 'quan-ly-thanh-toan'
       if (path.startsWith('/admin/thong-ke')) return 'thong-ke'
       if (path.startsWith('/admin/quan-ly-tai-khoan')) return 'quan-ly-tai-khoan'
@@ -95,7 +95,7 @@ const Sidebar: React.FC = () => {
     { key: 'quan-ly-can-ho', icon: <HomeOutlined />, label: 'Quản lý căn hộ' },
     { key: 'quan-ly-cu-tru', icon: <BankOutlined />, label: 'Quản lý cư trú' },
     { key: 'quan-ly-cu-dan', icon: <TeamOutlined />, label: 'Quản lý cư dân' },
-    { key: 'yeu-cau-nguoi-dan', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
+    { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
     { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán' },
     { key: 'thong-ke', icon: <BarChartOutlined />, label: 'Thống kê' },
     { key: 'thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },

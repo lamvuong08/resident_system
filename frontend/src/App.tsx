@@ -16,6 +16,7 @@ import ResidenceManagement from './pages/admin/ResidenceManagement'
 import ResidentManagement from './pages/admin/ResidentManagement'
 import AccountManagement from './pages/admin/AccountManagement'
 import NotificationManagement from './pages/admin/NotificationManagement'
+import RequestManagement from './pages/admin/RequestManagement'
 import User from './pages/user/User'
 import ProfileHousehold from './pages/user/ProfileHousehold'
 import Payment from './pages/user/Payment'
@@ -90,6 +91,7 @@ function App() {
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
           <Route path="quan-ly-tai-khoan" element={<AccountManagement />} />
           <Route path="thong-bao" element={<NotificationManagement />} />
+          <Route path="requests" element={<RequestManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route index element={<Home />} />
