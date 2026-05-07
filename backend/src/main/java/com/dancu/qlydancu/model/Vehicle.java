@@ -32,6 +32,12 @@ public class Vehicle {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "file_url", length = 512)
+    private String fileUrl;
+
+    @Column(name = "file_created_at")
+    private LocalDateTime fileCreatedAt;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Household getHousehold() { return household; }
@@ -44,4 +50,8 @@ public class Vehicle {
     public void setStatus(VehicleStatus status) { this.status = status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+    public LocalDateTime getFileCreatedAt() { return fileCreatedAt; }
+    public void setFileCreatedAt(LocalDateTime fileCreatedAt) { this.fileCreatedAt = fileCreatedAt; }
 }

@@ -17,10 +17,12 @@ import ResidentManagement from './pages/admin/ResidentManagement'
 import AccountManagement from './pages/admin/AccountManagement'
 import NotificationManagement from './pages/admin/NotificationManagement'
 import RequestManagement from './pages/admin/RequestManagement'
+import VehicleManagement from './pages/admin/VehicleManagement'
 import User from './pages/user/User'
 import ProfileHousehold from './pages/user/ProfileHousehold'
 import Payment from './pages/user/Payment'
 import SupportPage from './pages/user/support/SupportPage'
+import Vehicle from './pages/user/Vehicle'
 import Notifications from './pages/user/Notifications'
 import TemporaryResidence from './pages/user/TemporaryResidence'
 import Settings from './pages/user/Settings'
@@ -92,12 +94,16 @@ function App() {
           <Route path="quan-ly-tai-khoan" element={<AccountManagement />} />
           <Route path="thong-bao" element={<NotificationManagement />} />
           <Route path="requests" element={<RequestManagement />} />
+          <Route path="vehicles" element={<VehicleManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route index element={<Home />} />
           <Route path="profile-household" element={<ProfileHousehold />} />
           <Route path="payment" element={<Payment />} />
           <Route path="requests" element={<SupportPage />} />
+          <Route path="ho-khau" element={<ProfileHousehold />} />
+          <Route path="thanh-toan" element={<Payment />} />
+          <Route path="vehicles" element={<Vehicle />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="notifications/:id" element={<Notifications />} />
           <Route path="temporary" element={<TemporaryResidence />} />

@@ -1,9 +1,19 @@
 {
   "properties": [
     {
+      "name": "app.upload.root-dir",
+      "type": "java.lang.String",
+      "description": "Base directory used for local file uploads"
+    },
+    {
       "name": "app.upload.user-requests-dir",
       "type": "java.lang.String",
       "description": "Directory used to store uploaded user request files"
+    },
+    {
+      "name": "app.upload.vehicles-dir",
+      "type": "java.lang.String",
+      "description": "Directory used to store vehicle image uploads"
     },
     {
       "name": "app.jwt.secret",

@@ -499,7 +499,6 @@ body {
     padding: 16px;
   }
 }
-/* Fix height 32px for ant components without text overflow */
 .fix-height-32, .fix-height-32.ant-btn {
   height: 32px !important;
   min-height: 32px !important;
@@ -517,5 +516,11 @@ body {
 .fix-height-32.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
   height: 32px !important;
   align-items: center !important;
+}
+
+.fix-height-24, .fix-height-24.ant-btn {
+  height: 24px !important;
+  min-height: 24px !important;
+  line-height: 22px !important;
 }
 

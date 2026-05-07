@@ -61,6 +61,7 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.PUT, "/api/users/me/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/users/change-password").authenticated()
                         .requestMatchers("/api/users/email/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     .requestMatchers("/api/users/**").hasRole("ADMIN")
                     .requestMatchers("/api/dashboard/**", "/api/apartments/**", "/api/residents/**").hasRole("ADMIN")

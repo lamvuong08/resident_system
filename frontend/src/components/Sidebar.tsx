@@ -17,6 +17,7 @@ import {
   BarChartOutlined,
   CalendarOutlined,
   BellOutlined,
+  CarOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
@@ -46,6 +47,7 @@ const Sidebar: React.FC = () => {
       if (path.startsWith('/admin/quan-ly-cu-tru') || path.startsWith('/admin/quan-ly-ho-khau')) return 'quan-ly-cu-tru'
       if (path.startsWith('/admin/quan-ly-cu-dan') || path.startsWith('/admin/quan-ly-dan-cu')) return 'quan-ly-cu-dan'
       if (path.startsWith('/admin/requests')) return 'requests'
+      if (path.startsWith('/admin/vehicles')) return 'vehicles'
       if (path.startsWith('/admin/quan-ly-thanh-toan')) return 'quan-ly-thanh-toan'
       if (path.startsWith('/admin/thong-ke')) return 'thong-ke'
       if (path.startsWith('/admin/quan-ly-tai-khoan')) return 'quan-ly-tai-khoan'
@@ -58,6 +60,7 @@ const Sidebar: React.FC = () => {
       if (path.startsWith('/user/profile-household')) return 'profile-household'
       if (path.startsWith('/user/payment')) return 'payment'
       if (path.startsWith('/user/requests')) return 'requests'
+      if (path.startsWith('/user/vehicles')) return 'vehicles'
       if (path.startsWith('/user/notifications')) return 'notifications'
       if (path.startsWith('/user/temporary')) return 'temporary'
       if (path.startsWith('/user/settings')) return 'settings'
@@ -73,6 +76,7 @@ const Sidebar: React.FC = () => {
     'profile-household': '/user/profile-household',
     payment: '/user/payment',
     requests: '/user/requests',
+    vehicles: '/user/vehicles',
     notifications: '/user/notifications',
     temporary: '/user/temporary',
     settings: '/user/settings',
@@ -96,6 +100,7 @@ const Sidebar: React.FC = () => {
     { key: 'quan-ly-cu-tru', icon: <BankOutlined />, label: 'Quản lý cư trú' },
     { key: 'quan-ly-cu-dan', icon: <TeamOutlined />, label: 'Quản lý cư dân' },
     { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
+    { key: 'vehicles', icon: <CarOutlined />, label: 'Quản lý phương tiện' },
     { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán' },
     { key: 'thong-ke', icon: <BarChartOutlined />, label: 'Thống kê' },
     { key: 'thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },
@@ -108,6 +113,7 @@ const Sidebar: React.FC = () => {
     { key: 'profile-household', icon: <ApartmentOutlined />, label: 'Hồ sơ & Hộ khẩu' },
     { key: 'payment', icon: <CreditCardOutlined />, label: 'Thanh toán' },
     { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu & Hỗ trợ' },
+    { key: 'vehicles', icon: <CarOutlined />, label: 'Phương tiện của tôi' },
     { key: 'notifications', icon: <BellOutlined />, label: 'Thông báo' },
     { key: 'temporary', icon: <CalendarOutlined />, label: 'Tạm trú / Tạm vắng' },
     { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
