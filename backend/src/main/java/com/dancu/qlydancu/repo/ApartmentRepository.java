@@ -13,5 +13,8 @@ public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
     long countByStatus(ApartmentStatus status);
     List<Apartment> findByBuilding_Id(Long buildingId);
     List<Apartment> findByBuilding_Code(String buildingCode);
+    List<Apartment> findByBuilding_IdAndFloorNumber(Long buildingId, Integer floorNumber);
+    List<Apartment> findByBuilding_CodeAndFloorNumber(String buildingCode, Integer floorNumber);
+    List<Apartment> findByFloorNumber(Integer floorNumber);
     Optional<Apartment> findByCode(String code);
 }

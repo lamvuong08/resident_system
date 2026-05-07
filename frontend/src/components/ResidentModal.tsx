@@ -4,7 +4,6 @@ import dayjs from 'dayjs'
 import { normalizeResident } from '../utils/resident'
 import type { Resident } from '../types/api'
 
-const { Option } = Select
 
 const toInputDate = (value?: string | null) => {
   if (!value) return undefined
@@ -46,13 +45,13 @@ const sanitizeField = (value?: string | null) => {
 }
 
 const ResidentModal: React.FC<{
-  visible?: boolean
+  open?: boolean
   onCancel?: () => void
   onSave: (values: Partial<Resident>) => Promise<void>
   initial?: Partial<Resident> | null
   householdId?: number | null
   loading?: boolean
-}> = ({ visible, onCancel, onSave, initial, householdId, loading }) => {
+}> = ({ open, onCancel, onSave, initial, householdId, loading }) => {
   const [form] = Form.useForm()
 
   React.useEffect(() => {
@@ -76,7 +75,7 @@ const ResidentModal: React.FC<{
       gender: 'OTHER',
       relationship: 'OTHER',
     })
-  }, [initial, form, visible, householdId])
+  }, [initial, form, open, householdId])
 
   const handleOk = async () => {
     const values = await form.validateFields()
@@ -86,7 +85,7 @@ const ResidentModal: React.FC<{
   return (
     <Modal
       forceRender
-      open={visible}
+      open={open}
       confirmLoading={loading}
       onCancel={onCancel}
       onOk={handleOk}
@@ -102,11 +101,11 @@ const ResidentModal: React.FC<{
           </Col>
           <Col span={12}>
             <Form.Item name="gender" label="Giới tính" rules={[{ required: true, message: 'Vui lòng chọn giới tính' }]}>
-              <Select>
-                <Option value="MALE">Nam</Option>
-                <Option value="FEMALE">Nữ</Option>
-                <Option value="OTHER">Khác</Option>
-              </Select>
+              <Select options={[
+                { value: 'MALE', label: 'Nam' },
+                { value: 'FEMALE', label: 'Nữ' },
+                { value: 'OTHER', label: 'Khác' }
+              ]} />
             </Form.Item>
           </Col>
         </Row>
@@ -119,13 +118,13 @@ const ResidentModal: React.FC<{
           </Col>
           <Col span={12}>
             <Form.Item name="relationship" label="Vai trò trong hộ" rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}>
-              <Select>
-                <Option value="HEAD">Chủ hộ</Option>
-                <Option value="SPOUSE">Vợ / Chồng</Option>
-                <Option value="CHILD">Con</Option>
-                <Option value="PARENT">Cha / Mẹ</Option>
-                <Option value="OTHER">Khác</Option>
-              </Select>
+              <Select options={[
+                { value: 'HEAD', label: 'Chủ hộ' },
+                { value: 'SPOUSE', label: 'Vợ / Chồng' },
+                { value: 'CHILD', label: 'Con' },
+                { value: 'PARENT', label: 'Cha / Mẹ' },
+                { value: 'OTHER', label: 'Khác' }
+              ]} />
             </Form.Item>
           </Col>
         </Row>

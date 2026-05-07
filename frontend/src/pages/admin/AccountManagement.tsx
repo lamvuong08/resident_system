@@ -188,7 +188,7 @@ const AccountManagement: React.FC = () => {
       />
 
       <AccountFormModal
-        visible={modalVisible}
+        open={modalVisible}
         initialData={editingAccount}
         onCancel={() => setModalVisible(false)}
         onSuccess={() => fetchData(pagination.current)}

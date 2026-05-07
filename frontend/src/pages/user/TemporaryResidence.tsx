@@ -742,7 +742,7 @@ const TemporaryResidence = () => {
         title="Chi tiết hồ sơ"
         width={760}
         className="temporary-residence-detail-modal"
-        destroyOnHidden
+        destroyOnClose
         footer={
           detailRecord
             ? isPendingDetail

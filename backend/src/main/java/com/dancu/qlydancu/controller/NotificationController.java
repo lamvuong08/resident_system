@@ -138,7 +138,7 @@ public class NotificationController {
         notificationRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-
+    
     @PostMapping
     @Transactional
     public ResponseEntity<NotificationResponse> createNotification(

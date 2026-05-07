@@ -399,7 +399,7 @@ const ProfileHousehold = () => {
 
       <ResidentModal
 
-        visible={editorOpen}
+        open={editorOpen}
 
         onCancel={() => {
 

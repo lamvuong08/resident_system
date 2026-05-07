@@ -47,7 +47,7 @@ const HouseholdResidentDetailModal = ({
       size="default"
       onClose={onClose}
       open={open}
-      destroyOnHidden
+      destroyOnClose
       className="profile-household__resident-drawer"
     >
       {resident && role ? (

@@ -213,7 +213,7 @@ const VehicleManagement: React.FC = () => {
 
     return (
         <div className="vehicle-management-page">
-            <Card className="vehicle-filter-card" style={{ marginBottom: 16 }} bodyStyle={{ padding: 16 }}>
+            <Card className="vehicle-filter-card" style={{ marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
                 <Row gutter={[12, 12]} align="middle">
                     <Col xs={24} md={10} lg={8}>
                         <Input

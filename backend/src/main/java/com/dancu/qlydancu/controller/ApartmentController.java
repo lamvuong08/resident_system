@@ -61,6 +61,33 @@ public class ApartmentController {
         return apartmentRepository.findAll();
     }
 
+    @GetMapping("/filter")
+    public List<Apartment> filter(
+            @RequestParam(required = false) String buildingId,
+            @RequestParam(required = false, name = "floor") Integer floor
+    ) {
+        if (buildingId != null && !buildingId.isBlank()) {
+            try {
+                Long id = Long.parseLong(buildingId);
+                if (floor != null) {
+                    return apartmentRepository.findByBuilding_IdAndFloorNumber(id, floor);
+                } else {
+                    return apartmentRepository.findByBuilding_Id(id);
+                }
+            } catch (NumberFormatException e) {
+                // If not numeric, treat as building code
+                if (floor != null) {
+                    return apartmentRepository.findByBuilding_CodeAndFloorNumber(buildingId, floor);
+                } else {
+                    return apartmentRepository.findByBuilding_Code(buildingId);
+                }
+            }
+        } else if (floor != null) {
+            return apartmentRepository.findByFloorNumber(floor);
+        }
+        return apartmentRepository.findAll();
+    }
+
     @GetMapping("/{idOrCode}")
     public ResponseEntity<ApartmentResponse> get(@PathVariable String idOrCode) {
         Apartment apartment = findApartmentByIdOrCode(idOrCode);

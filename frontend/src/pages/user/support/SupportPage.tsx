@@ -60,7 +60,7 @@ const SupportPage = () => {
             activeKey={activeTab}
             onChange={(key) => setActiveTab(key as 'create' | 'history')}
             items={tabItems}
-            destroyOnHidden
+            destroyInactiveTabPane
           />
         </Card>
       </div>

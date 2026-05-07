@@ -207,7 +207,7 @@ const RequestManagement: React.FC = () => {
 
     return (
         <div className="request-management-page">
-            <Card className="request-filter-card" style={{ marginBottom: 16 }} bodyStyle={{ padding: 16 }}>
+            <Card className="request-filter-card" style={{ marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
                 <Row gutter={[12, 12]} align="middle">
                     <Col xs={24} md={10} lg={8}>
                         <Input
@@ -241,7 +241,7 @@ const RequestManagement: React.FC = () => {
                 </Row>
             </Card>
 
-            <Card className="request-table-card" bodyStyle={{ padding: '0 16px 16px' }}>
+            <Card className="request-table-card" styles={{ body: { padding: '0 16px 16px' } }}>
                 <Tabs
                     activeKey={activeTab}
                     onChange={setActiveTab}

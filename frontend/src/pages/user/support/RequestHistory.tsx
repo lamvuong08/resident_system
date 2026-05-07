@@ -258,7 +258,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
         </Space>
       </div>
 
-      <Card className="resident-requests-card" bodyStyle={{ padding: 20 }}>
+      <Card className="resident-requests-card" styles={{ body: { padding: 20 } }}>
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -328,7 +328,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
         open={isModalOpen && !!selectedRequest}
         onCancel={closeModal}
         width={640}
-        destroyOnHidden
+        destroyOnClose
         styles={{ body: { colorScheme: 'light' } }}
         footer={
           selectedRequest ? (

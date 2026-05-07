@@ -57,11 +57,21 @@ public class DashboardController {
         return buildingSummaries;
     }
 
-    @GetMapping("/buildings/{id}")
-    public Map<String, Object> buildingDetail(@PathVariable String id) {
-        Building building = buildingRepository.findByCode(id);
+    @GetMapping("/buildings/{idOrCode}")
+    public Map<String, Object> buildingDetail(@PathVariable String idOrCode) {
+        Building building = null;
+        try {
+            Long id = Long.parseLong(idOrCode);
+            building = buildingRepository.findById(id).orElse(null);
+        } catch (NumberFormatException e) {
+        }
+
         if (building == null) {
-            return emptyBuildingDetail(id);
+            building = buildingRepository.findByCode(idOrCode);
+        }
+
+        if (building == null) {
+            return emptyBuildingDetail(idOrCode);
         }
 
         List<Apartment> apartments = apartmentRepository.findByBuilding_Code(building.getCode());
@@ -80,7 +90,8 @@ public class DashboardController {
 
     private Map<String, Object> toBuildingSummary(Building building) {
         Map<String, Object> summary = new HashMap<>();
-        summary.put("id", building.getCode());
+        summary.put("id", building.getId());
+        summary.put("code", building.getCode());
         summary.put("name", building.getName());
         summary.put("floors", building.getFloors());
         summary.put("apartments", apartmentRepository.findByBuilding_Code(building.getCode()).size());

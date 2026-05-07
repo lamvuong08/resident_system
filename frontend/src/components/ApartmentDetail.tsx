@@ -360,7 +360,7 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
       </Row>
 
       <ResidentModal
-        visible={modalVisible}
+        open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onSave={handleSave}
         initial={editing}

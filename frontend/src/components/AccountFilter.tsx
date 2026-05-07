@@ -2,8 +2,6 @@ import React from 'react'
 import { Input, Select, Button, Space, Form } from 'antd'
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons'
 
-const { Option } = Select
-
 export interface AccountFilterValues {
   search: string
   role: string
@@ -47,19 +45,27 @@ const AccountFilter: React.FC<AccountFilterProps> = ({ onFilter, onClear, loadin
         </Form.Item>
 
         <Form.Item name="role" style={{ width: 180, marginBottom: 0 }}>
-          <Select className="account-control" placeholder="Vai trò">
-            <Option value="ALL">Tất cả vai trò</Option>
-            <Option value="ADMIN">Admin</Option>
-            <Option value="RESIDENT">Cư dân</Option>
-          </Select>
+          <Select
+            className="account-control"
+            placeholder="Vai trò"
+            options={[
+              { value: 'ALL', label: 'Tất cả vai trò' },
+              { value: 'ADMIN', label: 'Admin' },
+              { value: 'RESIDENT', label: 'Cư dân' },
+            ]}
+          />
         </Form.Item>
 
         <Form.Item name="status" style={{ width: 180, marginBottom: 0 }}>
-          <Select className="account-control" placeholder="Trạng thái">
-            <Option value="ALL">Tất cả trạng thái</Option>
-            <Option value="ACTIVE">Hoạt động</Option>
-            <Option value="DISABLED">Vô hiệu hóa</Option>
-          </Select>
+          <Select
+            className="account-control"
+            placeholder="Trạng thái"
+            options={[
+              { value: 'ALL', label: 'Tất cả trạng thái' },
+              { value: 'ACTIVE', label: 'Hoạt động' },
+              { value: 'DISABLED', label: 'Vô hiệu hóa' },
+            ]}
+          />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0 }}>
