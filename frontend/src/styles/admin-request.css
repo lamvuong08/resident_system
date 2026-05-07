@@ -1,0 +1,238 @@
+.req-container {
+  padding: 24px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.req-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.req-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1b1e;
+  margin: 0 0 8px 0;
+}
+
+.req-subtitle {
+  font-size: 18px;
+  color: #6c757d;
+  margin: 0;
+}
+
+/* ĐÃ XÓA CSS CỦA NÚT XUẤT BÁO CÁO Ở ĐÂY */
+
+.req-table-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.req-tabs {
+  display: flex;
+  gap: 32px;
+  padding: 0 24px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.req-tab {
+  padding: 16px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6c757d;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.req-tab:hover {
+  color: #495057;
+}
+
+.req-tab-active {
+  color: #0d6efd;
+  border-bottom-color: #0d6efd;
+}
+
+.req-filter-section {
+  display: flex;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e9ecef;
+  align-items: center;
+}
+
+/* Ép màu nền trắng và chữ đen cho ô Input để không bị lỗi tối màu */
+.req-search-input {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 250px;
+  outline: none;
+  background-color: #ffffff; 
+  color: #1a1b1e;
+}
+
+.req-search-input::placeholder {
+  color: #adb5bd;
+}
+
+.req-search-input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.req-search-btn {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.req-search-btn:hover {
+  background-color: #e9ecef;
+}
+
+.req-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.req-table th {
+  text-align: left !important;
+  padding: 16px 24px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.req-table td {
+  text-align: left !important;
+  padding: 16px 24px;
+  vertical-align: middle;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 14px;
+}
+
+/* CĂN GIỮA RIÊNG CHO CỘT THAO TÁC ĐỂ TRÔNG CÂN ĐỐI HƠN */
+.req-id {
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.req-apartment-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.req-apartment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.req-apartment-label {
+  font-weight: 600;
+  color: #1a1b1e;
+}
+
+.req-apartment-sub {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.req-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.req-status-select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  background-color: white;
+}
+
+.req-status-select:focus {
+  border-color: #0d6efd;
+}
+
+.req-pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #e9ecef;
+}
+
+.req-pagination-info {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.req-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.req-page-btn {
+  padding: 6px 12px;
+  border: 1px solid #dee2e6;
+  background-color: white;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.req-page-btn:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.req-page-btn:disabled {
+  background-color: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+  border-color: #e9ecef;
+}
+
+.req-page-current {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1b1e;
+}

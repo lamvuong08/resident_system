@@ -1,25 +1,26 @@
-import React from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import Header from './components/Header'
-import Admin from './pages/admin/Admin'
+import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import Header from './components/Header';
+import AccountManagement from './pages/admin/AccountManagement';
+import Admin from './pages/admin/Admin';
+import ApartmentManagement from './pages/admin/ApartmentManagement';
+import BuildingManagement from './pages/admin/BuildingManagement';
+import Dashboard from './pages/admin/Dashboard';
 import NotificationManagement from './pages/admin/NotificationManagement';
-import ConfirmRegister from './pages/auth/ConfirmRegister'
-import Forgot from './pages/auth/Forgot'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import Reset from './pages/auth/Reset'
-import Home from './pages/user/Home'
-import Dashboard from './pages/admin/Dashboard'
-import ApartmentManagement from './pages/admin/ApartmentManagement'
-import BuildingManagement from './pages/admin/BuildingManagement'
-import ResidenceManagement from './pages/admin/ResidenceManagement'
-import ResidentManagement from './pages/admin/ResidentManagement'
-import AccountManagement from './pages/admin/AccountManagement'
-import User from './pages/user/User'
-import ResidentSupport from './pages/user/ResidentSupport';
+import RequestManagement from './pages/admin/RequestManagement';
+import ResidenceManagement from './pages/admin/ResidenceManagement';
+import ResidentManagement from './pages/admin/ResidentManagement';
+import ConfirmRegister from './pages/auth/ConfirmRegister';
+import Forgot from './pages/auth/Forgot';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import Reset from './pages/auth/Reset';
+import Home from './pages/user/Home';
 import ResidentRequestHistory from './pages/user/ResidentRequestHistory';
-import './styles/App.css'
-import { getStoredRole, hasToken } from './utils/authStorage'
+import ResidentSupport from './pages/user/ResidentSupport';
+import User from './pages/user/User';
+import './styles/App.css';
+import { getStoredRole, hasToken } from './utils/authStorage';
 
 type RoleKey = 'ADMIN' | 'USER'
 
@@ -86,6 +87,7 @@ function App() {
           <Route path="quan-ly-toa-nha" element={<BuildingManagement />} />
           <Route path="thong-bao" element={<NotificationManagement />} />
           <Route path="quan-ly-tai-khoan" element={<AccountManagement />} />
+          <Route path="yeu-cau-nguoi-dan" element={<RequestManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route path="send-request" element={<ResidentSupport />} />

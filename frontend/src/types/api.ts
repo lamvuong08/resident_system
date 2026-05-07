@@ -46,3 +46,21 @@ export interface Building {
 export interface ApiResponse<T = unknown> {
   data: T
 }
+
+export interface UserRequestResponse {
+  id: number;
+  type: 'REPAIR' | 'COMPLAINT' | 'SUPPORT';
+  apartmentCode?: string; // Tích hợp từ Backend
+  description: string;
+  status: 'PENDING' | 'PROCESSING' | 'DONE' | 'REJECTED';
+  createdAt: string;
+}
+
+// Interface chuẩn để parse cục Page<T> của Spring Boot trả về
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}

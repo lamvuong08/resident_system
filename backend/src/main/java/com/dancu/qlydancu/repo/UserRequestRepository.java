@@ -20,9 +20,16 @@ public interface UserRequestRepository extends JpaRepository<UserRequest, Long> 
     List<UserRequest> findByApartmentId(@Param("apartmentId") Long apartmentId);
 
     Page<UserRequest> findByHouseholdId(Long householdId, Pageable pageable);
+
     List<UserRequest> findByHouseholdIdOrderByCreatedAtDesc(Long householdId);
 
     long countByHouseholdId(Long householdId);
-    
+
     long countByHouseholdIdAndStatus(Long householdId, com.dancu.qlydancu.model.enums.RequestStatus status);
+
+    @Query(value = "SELECT r FROM UserRequest r LEFT JOIN FETCH r.household h LEFT JOIN FETCH h.apartment a " +
+                   "WHERE (:apartmentCode IS NULL OR LOWER(a.code) LIKE LOWER(CONCAT('%', :apartmentCode, '%')))", 
+           countQuery = "SELECT count(r) FROM UserRequest r LEFT JOIN r.household h LEFT JOIN h.apartment a " +
+                        "WHERE (:apartmentCode IS NULL OR LOWER(a.code) LIKE LOWER(CONCAT('%', :apartmentCode, '%')))")
+    Page<UserRequest> findRequestsByApartmentCode(@Param("apartmentCode") String apartmentCode, Pageable pageable);
 }
