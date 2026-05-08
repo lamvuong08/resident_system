@@ -1,11 +1,22 @@
 package com.dancu.qlydancu.model;
 
+import java.time.LocalDateTime;
+
+import com.dancu.qlydancu.model.enums.BillStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.dancu.qlydancu.model.enums.BillStatus;
-import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "bills")
@@ -36,14 +47,19 @@ public class Bill {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+    
     public Apartment getApartment() { return apartment; }
     public void setApartment(Apartment apartment) { this.apartment = apartment; }
+    
     public String getBillingMonth() { return billingMonth; }
     public void setBillingMonth(String billingMonth) { this.billingMonth = billingMonth; }
+    
     public Long getTotalAmount() { return totalAmount; }
     public void setTotalAmount(Long totalAmount) { this.totalAmount = totalAmount; }
+    
     public BillStatus getStatus() { return status; }
     public void setStatus(BillStatus status) { this.status = status; }
+    
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
