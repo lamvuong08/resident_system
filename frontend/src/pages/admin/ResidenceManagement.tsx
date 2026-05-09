@@ -24,6 +24,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { CheckCircleOutlined, CheckOutlined, CloseCircleOutlined, CloseOutlined, EyeOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import api, { extractApiError } from '../../utils/api'
+import { displayTemporaryStayGuestRelationship, displayTemporaryStayReasonOnly } from '../../utils/userSupportApi'
 import SlidingPaginationFooter from '../../components/SlidingPaginationFooter'
 import { PAGE_SIZE } from '../../utils/pagination'
 import '../../styles/residence-management.css'
@@ -31,7 +32,7 @@ import '../../styles/residence-management.css'
 const { Text } = Typography
 
 type ResidenceRecordType = 'TEMPORARY_STAY' | 'TEMPORARY_ABSENCE'
-type ResidenceRecordStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
+type ResidenceRecordStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 type ResidenceTab = 'ALL' | ResidenceRecordStatus
 
 type ResidenceRecordApi = {
@@ -48,6 +49,7 @@ type ResidenceRecordApi = {
   startDate?: string
   endDate?: string | null
   reason?: string | null
+  guestRelationship?: string | null
   guestCccd?: string | null
   guestPhone?: string | null
   cccd?: string | null
@@ -63,6 +65,7 @@ type ResidenceRecordRow = {
   startDate: string
   endDate: string | null
   reason: string
+  guestRelationship: string
   guestCccd: string
   guestPhone: string
 }
@@ -88,18 +91,21 @@ const STATUS_LABEL: Record<ResidenceRecordStatus, string> = {
   PENDING: 'Chờ duyệt',
   APPROVED: 'Đã duyệt',
   REJECTED: 'Từ chối',
+  CANCELLED: 'Đã huỷ',
 }
 
 const STATUS_COLOR: Record<ResidenceRecordStatus, string> = {
   PENDING: 'gold',
   APPROVED: 'green',
   REJECTED: 'red',
+  CANCELLED: 'default',
 }
 
 const STATUS_SORT_ORDER: Record<ResidenceRecordStatus, number> = {
   PENDING: 1,
   APPROVED: 2,
   REJECTED: 3,
+  CANCELLED: 4,
 }
 
 const parseIntSafe = (value: unknown, fallback = 0) => {
@@ -117,7 +123,7 @@ const toRecordType = (value: unknown): ResidenceRecordType | null => {
 
 const toRecordStatus = (value: unknown): ResidenceRecordStatus | null => {
   const normalized = String(value || '').toUpperCase()
-  if (normalized === 'PENDING' || normalized === 'APPROVED' || normalized === 'REJECTED') {
+  if (normalized === 'PENDING' || normalized === 'APPROVED' || normalized === 'REJECTED' || normalized === 'CANCELLED') {
     return normalized
   }
   return null
@@ -154,6 +160,7 @@ const normalizeResidenceRecord = (source: ResidenceRecordApi): ResidenceRecordRo
     startDate,
     endDate,
     reason: String(source.reason || '').trim() || '-',
+    guestRelationship: String(source.guestRelationship || '').trim(),
     guestCccd: String(source.guestCccd || source.cccd || '').trim() || '-',
     guestPhone: String(source.guestPhone || '').trim() || '-',
   }
@@ -329,6 +336,14 @@ const ResidenceManagement: React.FC = () => {
       ellipsis: true,
     },
     {
+      title: 'Quan hệ CH',
+      key: 'guestRelationship',
+      width: 120,
+      ellipsis: true,
+      render: (_: unknown, record: ResidenceRecordRow) =>
+        record.type === 'TEMPORARY_STAY' ? displayTemporaryStayGuestRelationship(record) : '—',
+    },
+    {
       title: 'Căn hộ',
       dataIndex: 'apartmentCode',
       key: 'apartmentCode',
@@ -352,11 +367,14 @@ const ResidenceManagement: React.FC = () => {
       key: 'reason',
       width: 170,
       ellipsis: true,
-      render: (value: string) => (
-        <Tooltip title={value === '-' ? undefined : value}>
-          <Text>{value}</Text>
-        </Tooltip>
-      ),
+      render: (_: string, record: ResidenceRecordRow) => {
+        const text = record.type === 'TEMPORARY_STAY' ? displayTemporaryStayReasonOnly(record) : record.reason === '-' ? '—' : record.reason
+        return (
+          <Tooltip title={text === '-' || text === '—' ? undefined : text}>
+            <Text>{text}</Text>
+          </Tooltip>
+        )
+      },
     },
     {
       title: 'Trạng thái',
@@ -406,12 +424,14 @@ const ResidenceManagement: React.FC = () => {
     const pending = records.filter((item) => item.status === 'PENDING').length
     const approved = records.filter((item) => item.status === 'APPROVED').length
     const rejected = records.filter((item) => item.status === 'REJECTED').length
+    const cancelled = records.filter((item) => item.status === 'CANCELLED').length
 
     return [
       { key: 'ALL', label: `Tất cả (${records.length})` },
       { key: 'PENDING', label: `Chờ duyệt (${pending})` },
       { key: 'APPROVED', label: `Đã duyệt (${approved})` },
       { key: 'REJECTED', label: `Từ chối (${rejected})` },
+      { key: 'CANCELLED', label: `Đã huỷ (${cancelled})` },
     ]
   }, [records])
 
@@ -581,7 +601,10 @@ const ResidenceManagement: React.FC = () => {
             <Descriptions.Item label="Căn hộ">{selectedRecord.apartmentCode}</Descriptions.Item>
             <Descriptions.Item label="Bắt đầu">{dayjs(selectedRecord.startDate).format('DD/MM/YYYY')}</Descriptions.Item>
             <Descriptions.Item label="Kết thúc">{selectedRecord.endDate ? dayjs(selectedRecord.endDate).format('DD/MM/YYYY') : '-'}</Descriptions.Item>
-            <Descriptions.Item label="Lý do">{selectedRecord.reason}</Descriptions.Item>
+            {selectedRecord.type === 'TEMPORARY_STAY' && (
+              <Descriptions.Item label="Quan hệ với chủ hộ">{displayTemporaryStayGuestRelationship(selectedRecord)}</Descriptions.Item>
+            )}
+            <Descriptions.Item label="Lý do">{selectedRecord.type === 'TEMPORARY_STAY' ? displayTemporaryStayReasonOnly(selectedRecord) : selectedRecord.reason}</Descriptions.Item>
             <Descriptions.Item label="Guest CCCD">{selectedRecord.guestCccd}</Descriptions.Item>
             <Descriptions.Item label="Guest SĐT">{selectedRecord.guestPhone}</Descriptions.Item>
             <Descriptions.Item label="Trạng thái"><Badge color={STATUS_COLOR[selectedRecord.status]} text={STATUS_LABEL[selectedRecord.status]} /></Descriptions.Item>

@@ -9,6 +9,7 @@ public class ResidenceRecordCreateRequest {
     public String guestName;
     public String guestCccd;
     public String guestPhone;
+    public String guestRelationship;
     public String reason;
     public LocalDate startDate;
     public LocalDate endDate;

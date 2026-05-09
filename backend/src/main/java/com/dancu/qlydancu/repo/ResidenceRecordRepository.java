@@ -45,6 +45,60 @@ public interface ResidenceRecordRepository extends JpaRepository<ResidenceRecord
             rr.guest_name AS guestName,
             rr.guest_cccd AS guestCccd,
             rr.guest_phone AS guestPhone,
+            rr.guest_relationship AS guestRelationship,
+            rr.start_date AS startDate,
+            rr.end_date AS endDate
+        FROM residence_records rr
+        LEFT JOIN residents r ON rr.resident_id = r.id
+          JOIN households h ON rr.household_id = h.id
+        JOIN apartments a ON h.apartment_id = a.id
+        JOIN buildings b ON a.building_id = b.id
+        LEFT JOIN (
+            SELECT household_id, MIN(id) AS head_id
+            FROM residents
+            WHERE relationship = 'HEAD'
+            GROUP BY household_id
+        ) head_map ON head_map.household_id = h.id
+        LEFT JOIN residents head ON head.id = head_map.head_id
+        WHERE h.id = :householdId
+        ORDER BY
+          CASE
+            WHEN rr.status = 'PENDING' THEN 1
+            WHEN rr.status = 'APPROVED' THEN 2
+            WHEN rr.status = 'REJECTED' THEN 3
+            WHEN rr.status = 'CANCELLED' THEN 4
+            ELSE 5
+          END ASC,
+          rr.start_date DESC,
+          rr.id DESC
+        """, nativeQuery = true)
+    List<ResidenceRecordRowProjection> findResidenceRowsByHouseholdId(@Param("householdId") Long householdId);
+
+    @Query(value = """
+        SELECT
+            rr.id AS id,
+        rr.id AS recordCode,
+        r.id AS residentId,
+        COALESCE(r.full_name, rr.guest_name) AS residentName,
+        COALESCE(r.full_name, rr.guest_name) AS submittedByName,
+        CASE
+          WHEN rr.type = 'TEMPORARY_STAY' THEN COALESCE(rr.guest_name, r.full_name)
+          ELSE COALESCE(r.full_name, rr.guest_name)
+        END AS relatedPersonName,
+            COALESCE(r.cccd, rr.guest_cccd) AS cccd,
+            b.code AS buildingCode,
+            b.name AS buildingName,
+            a.code AS apartmentCode,
+            a.floor_number AS floorNumber,
+            a.room_number AS roomNumber,
+            COALESCE(head.full_name, '') AS headOfHouseholdName,
+            rr.type AS type,
+            rr.status AS status,
+            rr.reason AS reason,
+            rr.guest_name AS guestName,
+            rr.guest_cccd AS guestCccd,
+            rr.guest_phone AS guestPhone,
+            rr.guest_relationship AS guestRelationship,
             rr.start_date AS startDate,
             rr.end_date AS endDate
         FROM residence_records rr
@@ -70,13 +124,15 @@ public interface ResidenceRecordRepository extends JpaRepository<ResidenceRecord
             :keyword IS NULL
             OR LOWER(COALESCE(r.full_name, rr.guest_name)) LIKE CONCAT('%', LOWER(:keyword), '%')
             OR COALESCE(r.cccd, rr.guest_cccd) LIKE CONCAT('%', :keyword, '%')
+            OR COALESCE(rr.guest_relationship, '') LIKE CONCAT('%', :keyword, '%')
           )
         ORDER BY
           CASE
             WHEN rr.status = 'PENDING' THEN 1
             WHEN rr.status = 'APPROVED' THEN 2
             WHEN rr.status = 'REJECTED' THEN 3
-            ELSE 4
+            WHEN rr.status = 'CANCELLED' THEN 4
+            ELSE 5
           END ASC,
           rr.start_date DESC,
           rr.id DESC

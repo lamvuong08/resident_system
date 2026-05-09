@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,36 +68,30 @@ public class ApartmentController {
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<List<ApartmentResponse>> filterApartments(
-            @RequestParam String buildingId, // Đổi từ Long sang String để hứng cả ID lẫn Mã tòa
-            @RequestParam(required = false) Integer floor) {
-
-        List<Apartment> apartments = new ArrayList<>();
-        
-        try {
-            // Trường hợp 1: Frontend gửi lên dạng số (ID = "1", "2")
-            Long bId = Long.parseLong(buildingId);
-            if (floor != null) {
-                apartments = apartmentRepository.findByBuildingIdAndFloorNumber(bId, floor);
-            } else {
-                apartments = apartmentRepository.findByBuildingId(bId);
+    public List<Apartment> filter(
+            @RequestParam(required = false) String buildingId,
+            @RequestParam(required = false, name = "floor") Integer floor
+    ) {
+        if (buildingId != null && !buildingId.isBlank()) {
+            try {
+                Long id = Long.parseLong(buildingId);
+                if (floor != null) {
+                    return apartmentRepository.findByBuilding_IdAndFloorNumber(id, floor);
+                } else {
+                    return apartmentRepository.findByBuilding_Id(id);
+                }
+            } catch (NumberFormatException e) {
+                // If not numeric, treat as building code
+                if (floor != null) {
+                    return apartmentRepository.findByBuilding_CodeAndFloorNumber(buildingId, floor);
+                } else {
+                    return apartmentRepository.findByBuilding_Code(buildingId);
+                }
             }
-        } catch (NumberFormatException ex) {
-            // Trường hợp 2: Frontend gửi lên dạng chữ (Code = "A1", "A2") -> Ép kiểu Long thất bại sẽ nhảy vào đây
-            if (floor != null) {
-                apartments = apartmentRepository.findByBuilding_CodeAndFloorNumber(buildingId, floor);
-            } else {
-                apartments = apartmentRepository.findByBuilding_Code(buildingId); // Hàm này có sẵn trong Repo của bạn
-            }
+        } else if (floor != null) {
+            return apartmentRepository.findByFloorNumber(floor);
         }
-
-        // Sử dụng hàm toApartmentResponse (đã có sẵn trong file của bạn) để map DTO.
-        // Việc dùng toApartmentResponse giúp lấy được thông tin Chủ hộ, Số người và tránh lỗi 500 Lazy Load.
-        List<ApartmentResponse> response = apartments.stream()
-                .map(this::toApartmentResponse)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
+        return apartmentRepository.findAll();
     }
 
     @GetMapping("/{idOrCode}")

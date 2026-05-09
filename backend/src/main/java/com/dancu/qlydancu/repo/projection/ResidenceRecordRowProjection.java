@@ -22,6 +22,7 @@ public interface ResidenceRecordRowProjection {
     String getGuestName();
     String getGuestCccd();
     String getGuestPhone();
+    String getGuestRelationship();
     LocalDate getStartDate();
     LocalDate getEndDate();
 }

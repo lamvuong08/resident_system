@@ -11,7 +11,7 @@ import com.dancu.qlydancu.model.enums.NotificationType;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     @Query("SELECT n FROM Notification n " +
-           "LEFT JOIN FETCH n.createdBy " + // Tránh lỗi N+1 Query
+           "LEFT JOIN FETCH n.createdBy " + 
            "WHERE (:type IS NULL OR n.type = :type) " +
            "ORDER BY n.createdAt DESC")
     Page<Notification> findNotifications(@Param("type") NotificationType type, Pageable pageable);

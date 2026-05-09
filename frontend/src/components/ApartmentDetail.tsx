@@ -334,7 +334,7 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 16 }}>
               <div>
                 <Title level={5} style={{ textAlign: 'left', margin: 0 }}>Thông tin cư dân</Title>
-                <div style={{ color: 'rgba(0,0,0,0.45)', fontSize: 13, marginTop: 4 }}>Danh sách cư dân thật từ database</div>
+                <div style={{ color: 'rgba(0,0,0,0.45)', fontSize: 13, marginTop: 4 }}>Danh sách cư dân trong căn hộ</div>
               </div>
               <div className="apartment-actions">
                 <Space wrap>
@@ -360,7 +360,7 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
       </Row>
 
       <ResidentModal
-        visible={modalVisible}
+        open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onSave={handleSave}
         initial={editing}

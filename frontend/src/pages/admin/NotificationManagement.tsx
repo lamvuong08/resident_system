@@ -6,7 +6,6 @@ import {
   Input,
   message,
   Modal,
-  Popconfirm,
   Row,
   Select,
   Space,
@@ -139,7 +138,6 @@ const NotificationManagement: React.FC = () => {
     }
   };
 
-  // URL-Driven Logic: Tự động fetch khi URL thay đổi
   useEffect(() => {
     const fetchApts = async () => {
       if (buildingIdParam) {
@@ -169,7 +167,6 @@ const NotificationManagement: React.FC = () => {
   useEffect(() => {
     if (isCreateModalOpen && buildingList.length === 0) loadBuildings();
 
-    // Đồng bộ form với URL khi mở modal (Bỏ Number() đi, dùng String trực tiếp)
     if (isCreateModalOpen && buildingIdParam) {
       createForm.setFieldsValue({
         selectedBuildingId: buildingIdParam,
@@ -181,7 +178,7 @@ const NotificationManagement: React.FC = () => {
   const handleOpenCreate = () => {
     createForm.resetFields();
     setSelectedAptIds([]);
-    setSearchParams({}); // Xóa params khi bắt đầu tạo mới
+    setSearchParams({});
     setIsCreateModalOpen(true);
   };
 
@@ -263,6 +260,20 @@ const NotificationManagement: React.FC = () => {
     }
   };
 
+  const showDeleteConfirm = () => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc chắn muốn xóa thông báo này? Thao tác này không thể hoàn tác.",
+      okText: "Xóa",
+      cancelText: "Hủy",
+      okType: "danger",
+      centered: true,
+      okButtonProps: { style: { height: 32 } },
+      cancelButtonProps: { style: { height: 32 } },
+      onOk: handleDelete,
+    });
+  };
+
   const columns = [
     { title: "Thông báo", dataIndex: "title", key: "title" },
     {
@@ -286,7 +297,7 @@ const NotificationManagement: React.FC = () => {
       key: "action",
       width: 120,
       render: (_: any, record: Notification) => (
-        <Button type="link" onClick={() => handleOpenDetails(record)}>
+        <Button type="link" onClick={() => handleOpenDetails(record)} style={{ height: 32 }}>
           Chi tiết
         </Button>
       ),
@@ -320,6 +331,7 @@ const NotificationManagement: React.FC = () => {
             (t) => (
               <Button
                 key={t}
+                style={{ height: 32 }}
                 type={
                   selectedType === t || (t === "Tất cả" && !selectedType)
                     ? "primary"
@@ -351,7 +363,7 @@ const NotificationManagement: React.FC = () => {
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         footer={[
-          <Button key="cancel" onClick={() => setIsCreateModalOpen(false)}>
+          <Button key="cancel" onClick={() => setIsCreateModalOpen(false)} style={{ height: 32 }}>
             Hủy
           </Button>,
           <Button
@@ -359,6 +371,7 @@ const NotificationManagement: React.FC = () => {
             type="primary"
             loading={isSubmitting}
             onClick={handleCreateSubmit}
+            style={{ height: 32 }}
           >
             Gửi đi
           </Button>,
@@ -429,7 +442,6 @@ const NotificationManagement: React.FC = () => {
                   >
                     <Select
                       placeholder="Chọn tòa..."
-                      // Ép kiểu ID về String để Ant Design map chính xác với URL Params (luôn là string)
                       options={buildingList.map((b) => ({
                         label: b.name || b.code,
                         value: String(b.id),
@@ -437,7 +449,6 @@ const NotificationManagement: React.FC = () => {
                       onChange={(val) => {
                         setSearchParams({ b: val });
                         setSelectedAptIds([]);
-                        // Ép Form update theo giá trị chuỗi
                         createForm.setFieldsValue({ selectedBuildingId: val });
                       }}
                     />
@@ -469,7 +480,6 @@ const NotificationManagement: React.FC = () => {
                 <div style={{ marginTop: 15 }}>
                   <div style={{ marginBottom: 10, fontWeight: 600 }}>
                     {(() => {
-                      // So sánh bằng String để đảm bảo không lệch type (id=1 vs b="1")
                       const building = buildingList.find(
                         (b) => String(b.id) === String(buildingIdParam),
                       );
@@ -490,7 +500,6 @@ const NotificationManagement: React.FC = () => {
                     <div
                       style={{
                         display: "grid",
-                        // Tăng minmax từ 80px lên 100px để chứa vừa mã căn hộ dài (VD: B1-0501)
                         gridTemplateColumns:
                           "repeat(auto-fill, minmax(100px, 1fr))",
                         gap: "10px",
@@ -506,18 +515,16 @@ const NotificationManagement: React.FC = () => {
                           }
                           onClick={() => toggleApartment(apt.id)}
                           style={{
-                            height: "45px",
+                            height: 32,
                             fontWeight: "bold",
                             background: selectedAptIds.includes(apt.id)
                               ? "#1890ff"
                               : "#fff",
-                            // Thêm thuộc tính này để chữ không bị tràn nếu màn hình quá nhỏ
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                           }}
                         >
-                          {/* Đổi từ apt.roomNumber sang hiển thị toàn bộ mã Code */}
                           {apt.code}
                         </Button>
                       ))}
@@ -554,14 +561,10 @@ const NotificationManagement: React.FC = () => {
         open={isDetailModalOpen}
         onCancel={() => setIsDetailModalOpen(false)}
         footer={[
-          <Popconfirm
-            key="del"
-            title="Xóa thông báo này?"
-            onConfirm={handleDelete}
-          >
-            <Button danger>Xóa thông báo</Button>
-          </Popconfirm>,
-          <Button key="close" onClick={() => setIsDetailModalOpen(false)}>
+          <Button key="del" danger style={{ height: 32 }} onClick={showDeleteConfirm}>
+            Xóa thông báo
+          </Button>,
+          <Button key="close" onClick={() => setIsDetailModalOpen(false)} style={{ height: 32 }}>
             Đóng
           </Button>,
           <Button
@@ -569,6 +572,7 @@ const NotificationManagement: React.FC = () => {
             type="primary"
             disabled={!isDirty}
             onClick={handleUpdate}
+            style={{ height: 32 }}
           >
             Cập nhật
           </Button>,

@@ -16,10 +16,12 @@ import {
   CreditCardOutlined,
   BarChartOutlined,
   CalendarOutlined,
-  HistoryOutlined,
+  BellOutlined,
+  CarOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
+import { displayInitials } from '../utils/displayInitials'
 
 import '../styles/sidebar.css'
 
@@ -44,7 +46,8 @@ const Sidebar: React.FC = () => {
       if (path.startsWith('/admin/quan-ly-can-ho')) return 'quan-ly-can-ho'
       if (path.startsWith('/admin/quan-ly-cu-tru') || path.startsWith('/admin/quan-ly-ho-khau')) return 'quan-ly-cu-tru'
       if (path.startsWith('/admin/quan-ly-cu-dan') || path.startsWith('/admin/quan-ly-dan-cu')) return 'quan-ly-cu-dan'
-      if (path.startsWith('/admin/yeu-cau-nguoi-dan')) return 'yeu-cau-nguoi-dan'
+      if (path.startsWith('/admin/requests')) return 'requests'
+      if (path.startsWith('/admin/vehicles')) return 'vehicles'
       if (path.startsWith('/admin/quan-ly-thanh-toan')) return 'quan-ly-thanh-toan'
       if (path.startsWith('/admin/thong-ke')) return 'thong-ke'
       if (path.startsWith('/admin/quan-ly-tai-khoan')) return 'quan-ly-tai-khoan'
@@ -53,15 +56,14 @@ const Sidebar: React.FC = () => {
     }
 
     if (rawRole !== 'ADMIN') {
-      if (path === '/user' || path === '/user/') return 'home'
-      if (path.startsWith('/user/profile')) return 'profile'
-      if (path.startsWith('/user/hokhau')) return 'hokhau'
+      if (path === '/user' || path === '/user/') return 'dashboard'
+      if (path.startsWith('/user/profile-household')) return 'profile-household'
       if (path.startsWith('/user/payment')) return 'payment'
-      if (path.startsWith('/user/send-request')) return 'send-request'
-      if (path.startsWith('/user/tam-tru')) return 'tam-tru'
+      if (path.startsWith('/user/requests')) return 'requests'
+      if (path.startsWith('/user/vehicles')) return 'vehicles'
       if (path.startsWith('/user/notifications')) return 'notifications'
-      if (path.startsWith('/user/history')) return 'history'
-      if (path.startsWith('/user/account-settings')) return 'account-settings'
+      if (path.startsWith('/user/temporary')) return 'temporary'
+      if (path.startsWith('/user/settings')) return 'settings'
     }
 
     return ''
@@ -70,15 +72,14 @@ const Sidebar: React.FC = () => {
   const activeKey = getActiveKeyFromPath(location.pathname)
 
   const userRouteMap: Record<string, string> = {
-    home: '/user',
-    profile: '/user/profile',
-    hokhau: '/user/hokhau',
+    dashboard: '/user',
+    'profile-household': '/user/profile-household',
     payment: '/user/payment',
-    'send-request': '/user/send-request',
-    'tam-tru': '/user/tam-tru',
+    requests: '/user/requests',
+    vehicles: '/user/vehicles',
     notifications: '/user/notifications',
-    history: '/user/history',
-    'account-settings': '/user/account-settings',
+    temporary: '/user/temporary',
+    settings: '/user/settings',
   }
 
   const navigateByKey = (key: string) => {
@@ -98,7 +99,8 @@ const Sidebar: React.FC = () => {
     { key: 'quan-ly-can-ho', icon: <HomeOutlined />, label: 'Quản lý căn hộ' },
     { key: 'quan-ly-cu-tru', icon: <BankOutlined />, label: 'Quản lý cư trú' },
     { key: 'quan-ly-cu-dan', icon: <TeamOutlined />, label: 'Quản lý cư dân' },
-    { key: 'yeu-cau-nguoi-dan', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
+    { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
+    { key: 'vehicles', icon: <CarOutlined />, label: 'Quản lý phương tiện' },
     { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán' },
     { key: 'thong-ke', icon: <BarChartOutlined />, label: 'Thống kê' },
     { key: 'thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },
@@ -107,22 +109,21 @@ const Sidebar: React.FC = () => {
   ]
 
   const userItems = [
-    { key: 'home', icon: <HomeOutlined />, label: 'Trang chủ' },
-    { key: 'profile', icon: <UserOutlined />, label: 'Hồ sơ cá nhân' },
-    { key: 'hokhau', icon: <HomeOutlined />, label: 'Thông tin hộ khẩu' },
+    { key: 'dashboard', icon: <DashboardOutlined />, label: 'Trang chủ' },
+    { key: 'profile-household', icon: <ApartmentOutlined />, label: 'Hồ sơ & Hộ khẩu' },
     { key: 'payment', icon: <CreditCardOutlined />, label: 'Thanh toán' },
-    { key: 'send-request', icon: <FileTextOutlined />, label: 'Gửi yêu cầu' },
-    { key: 'tam-tru', icon: <CalendarOutlined />, label: 'Tạm trú / Tạm vắng' },
-    { key: 'notifications', icon: <NotificationOutlined />, label: 'Thông báo' },
-    { key: 'history', icon: <HistoryOutlined />, label: 'Lịch sử yêu cầu' },
-    { key: 'account-settings', icon: <SettingOutlined />, label: 'Cài đặt tài khoản' },
+    { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu & Hỗ trợ' },
+    { key: 'vehicles', icon: <CarOutlined />, label: 'Phương tiện của tôi' },
+    { key: 'notifications', icon: <BellOutlined />, label: 'Thông báo' },
+    { key: 'temporary', icon: <CalendarOutlined />, label: 'Tạm trú / Tạm vắng' },
+    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
   ]
 
   const items = rawRole === 'ADMIN' ? adminItems : userItems
+  const sidebarClassName = `app-sidebar ${collapsed ? 'collapsed' : ''} ${rawRole === 'ADMIN' ? 'admin-sidebar' : 'resident-sidebar'}`
 
   return (
-    <aside className={`app-sidebar ${collapsed ? 'collapsed' : ''}`}>
-
+    <aside className={sidebarClassName}>
       <nav className="sidebar-menu">
         <Menu
           mode="inline"
@@ -136,7 +137,13 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-footer">
         <div className="user-info">
-          <Avatar size={collapsed ? 36 : 40} style={{ backgroundColor: '#2f6f8f' }} icon={<UserOutlined />} />
+          <Avatar
+            size={collapsed ? 36 : 40}
+            style={{ backgroundColor: 'var(--resident-user-avatar-bg, #185FA5)' }}
+            icon={rawRole === 'ADMIN' ? <UserOutlined /> : undefined}
+          >
+            {rawRole !== 'ADMIN' ? displayInitials(user.name) : null}
+          </Avatar>
           {!collapsed && (
             <div className="user-meta">
               <div className="user-name">{user.name || 'Người dùng'}</div>

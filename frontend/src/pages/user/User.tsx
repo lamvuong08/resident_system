@@ -4,7 +4,7 @@ import '../../styles/sidebar.css'
 
 const UserPage = () => {
   return (
-    <div className="admin-root">
+    <div className="admin-root resident-user-shell">
       <Sidebar />
       <main className="admin-main">
         <Outlet />

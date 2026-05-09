@@ -16,9 +16,8 @@ public class ResidenceRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resident_id")
+    @JoinColumn(name = "resident_id", nullable = true)
     @JsonIgnore
     private Resident resident;
 
@@ -37,6 +36,8 @@ public class ResidenceRecord {
 
     @Column(name = "guest_phone")
     private String guestPhone;
+    @Column(name = "guest_relationship")
+    private String guestRelationship;
 
     @Column(name = "reason")
     private String reason;
@@ -65,6 +66,8 @@ public class ResidenceRecord {
     public void setGuestCccd(String guestCccd) { this.guestCccd = guestCccd; }
     public String getGuestPhone() { return guestPhone; }
     public void setGuestPhone(String guestPhone) { this.guestPhone = guestPhone; }
+    public String getGuestRelationship() { return guestRelationship; }
+    public void setGuestRelationship(String guestRelationship) { this.guestRelationship = guestRelationship; }
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }
     public LocalDate getStartDate() { return startDate; }

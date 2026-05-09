@@ -1,16 +1,35 @@
 package com.dancu.qlydancu.service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.dancu.qlydancu.dto.UserRequestAttachmentDto;
 import com.dancu.qlydancu.dto.UserRequestCreateRequest;
 import com.dancu.qlydancu.dto.UserRequestResponse;
 import com.dancu.qlydancu.model.Household;
@@ -20,224 +39,353 @@ import com.dancu.qlydancu.model.enums.RequestStatus;
 import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.UserRepository;
 import com.dancu.qlydancu.repo.UserRequestRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class UserRequestService {
 
-        @Autowired
-        private UserRequestRepository userRequestRepository;
+    private static final Set<String> ALLOWED_EXT = Set.of(".jpg", ".jpeg", ".png", ".pdf");
+    private static final long MAX_BYTES = 5L * 1024 * 1024;
+    private static final int MAX_FILES = 10;
 
-        @Autowired
-        private UserRepository userRepository;
+    @Autowired
+    private UserRequestRepository userRequestRepository;
 
-        @Autowired
-        private HouseholdRepository householdRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-        @Transactional
-        public UserRequestResponse createRequest(UserRequestCreateRequest dto, String email) {
-                // 1. Tìm thông tin User từ email
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + email));
+    @Autowired
+    private HouseholdRepository householdRepository;
 
-                // 2. Tìm hộ khẩu (Household) mà User này quản lý/thuộc về
-                // Dựa trên db_qldc.sql: households có cột user_id
-                Household household = householdRepository.findByUser_Id(user.getId())
-                                .orElseThrow(() -> new RuntimeException(
-                                                "Tài khoản chưa được liên kết với hộ khẩu nào."));
+    @Autowired
+    private ObjectMapper objectMapper;
 
-                // 3. Khởi tạo Entity UserRequest và gán dữ liệu
-                UserRequest userRequest = new UserRequest();
-                userRequest.setHousehold(household);
-                userRequest.setType(dto.getType());
-                userRequest.setDescription(dto.getDescription());
-                userRequest.setStatus(RequestStatus.PENDING);
+    @Value("${app.upload.user-requests-dir:uploads/user-requests}")
+    private String userRequestsUploadDir;
 
-                // 4. Lưu vào Database
-                UserRequest savedRequest = userRequestRepository.save(userRequest);
+    private Path baseUploadDir() {
+        return Paths.get(userRequestsUploadDir).toAbsolutePath().normalize();
+    }
 
-                // 5. Chuyển đổi sang Response DTO để trả về Frontend
-                return new UserRequestResponse(
-                                savedRequest.getId(),
-                                savedRequest.getType(),
-                                savedRequest.getDescription(),
-                                savedRequest.getStatus(),
-                                savedRequest.getCreatedAt());
+    private Path resolveRequestDir(Long requestId) {
+        return baseUploadDir().resolve(String.valueOf(requestId));
+    }
+
+    private void validateStoredFileName(String name) {
+        if (name == null || name.isBlank() || name.contains("..") || name.contains("/") || name.contains("\\")) {
+            throw new IllegalArgumentException("Tên tệp không hợp lệ.");
+        }
+    }
+
+    private String extension(String filename) {
+        if (filename == null) return "";
+        int dot = filename.lastIndexOf('.');
+        if (dot < 0) return "";
+        return filename.substring(dot).toLowerCase(Locale.ROOT);
+    }
+
+    private void validateFile(MultipartFile file) {
+        if (file.getSize() > MAX_BYTES) {
+            throw new IllegalArgumentException("Mỗi tệp tối đa 5MB.");
+        }
+        String name = file.getOriginalFilename() != null ? file.getOriginalFilename() : "";
+        String ext = extension(name);
+        if (!ALLOWED_EXT.contains(ext)) {
+            throw new IllegalArgumentException("Chỉ chấp nhận JPG, PNG hoặc PDF.");
+        }
+    }
+
+    private List<UserRequestAttachmentDto> saveAttachmentsIfAny(Long requestId, MultipartFile[] files) throws IOException {
+        if (files == null || files.length == 0) {
+            return List.of();
+        }
+        long nonEmpty = java.util.Arrays.stream(files).filter(f -> f != null && !f.isEmpty()).count();
+        if (nonEmpty > MAX_FILES) {
+            throw new IllegalArgumentException("Tối đa " + MAX_FILES + " tệp đính kèm.");
+        }
+        Path dir = resolveRequestDir(requestId);
+        Files.createDirectories(dir);
+        List<UserRequestAttachmentDto> out = new ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            validateFile(file);
+            String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "file";
+            String ext = extension(original);
+            String stored = UUID.randomUUID() + ext;
+            Path target = dir.resolve(stored).normalize();
+            if (!target.startsWith(dir.normalize())) {
+                throw new IllegalArgumentException("Tên tệp không hợp lệ.");
+            }
+            file.transferTo(target);
+            String ct = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+            out.add(new UserRequestAttachmentDto(original, stored, ct, file.getSize()));
+        }
+        return out;
+    }
+
+    private void deleteSingleAttachmentFile(Long requestId, String storedFileName) {
+        validateStoredFileName(storedFileName);
+        Path base = resolveRequestDir(requestId).normalize();
+        Path path = base.resolve(storedFileName).normalize();
+        if (!path.startsWith(base)) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void deleteAttachmentDir(Long requestId) {
+        try {
+            Path dir = resolveRequestDir(requestId);
+            if (Files.isDirectory(dir)) {
+                Files.walk(dir)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try {
+                                Files.deleteIfExists(p);
+                            } catch (IOException ignored) {
+                            }
+                        });
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    private List<UserRequestAttachmentDto> parseAttachmentsJson(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<UserRequestAttachmentDto>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
+
+    private UserRequestResponse toResponse(UserRequest req) {
+        UserRequestResponse r = new UserRequestResponse(
+                req.getId(),
+                req.getType(),
+                req.getDescription(),
+                req.getStatus(),
+                req.getCreatedAt());
+        r.setAttachments(parseAttachmentsJson(req.getAttachmentsJson()));
+        return r;
+    }
+
+    private Household requireHouseholdForEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng."));
+        return householdRepository.findByUser_Id(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Tài khoản chưa được liên kết hộ khẩu. Vui lòng hoàn tất hồ sơ hộ khẩu trước."));
+    }
+
+    @Transactional
+    public UserRequestResponse createRequest(UserRequestCreateRequest dto, String email, MultipartFile[] files) {
+        Household household = requireHouseholdForEmail(email);
+
+        UserRequest userRequest = new UserRequest();
+        userRequest.setHousehold(household);
+        userRequest.setType(dto.getType());
+        userRequest.setDescription(dto.getDescription());
+        userRequest.setStatus(RequestStatus.PENDING);
+
+        UserRequest savedRequest = userRequestRepository.save(userRequest);
+
+        try {
+            List<UserRequestAttachmentDto> metas = saveAttachmentsIfAny(savedRequest.getId(), files);
+            if (!metas.isEmpty()) {
+                savedRequest.setAttachmentsJson(objectMapper.writeValueAsString(metas));
+                userRequestRepository.save(savedRequest);
+            }
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu tệp đính kèm.", e);
         }
 
-        @Transactional(readOnly = true)
-        public List<UserRequestResponse> getRequestHistory(String email) {
-                // 1. Tìm thông tin User
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+        return toResponse(userRequestRepository.findById(savedRequest.getId()).orElse(savedRequest));
+    }
 
-                // 2. Tìm Household của User
-                Household household = householdRepository.findByUser_Id(user.getId())
-                                .orElseThrow(() -> new RuntimeException("Tài khoản chưa được liên kết hộ khẩu."));
+    @Transactional(readOnly = true)
+    public List<UserRequestResponse> getRequestHistory(String email) {
+        Household household = requireHouseholdForEmail(email);
 
-                // 3. Lấy danh sách Request theo householdId và sắp xếp mới nhất lên đầu
-                List<UserRequest> requests = userRequestRepository
-                                .findByHouseholdIdOrderByCreatedAtDesc(household.getId());
+        List<UserRequest> requests = userRequestRepository.findByHouseholdIdOrderByCreatedAtDesc(household.getId());
 
-                // 4. Map sang DTO Response
-                return requests.stream().map(req -> new UserRequestResponse(
-                                req.getId(),
-                                req.getType(),
-                                req.getDescription(),
-                                req.getStatus(),
-                                req.getCreatedAt())).collect(Collectors.toList());
+        return requests.stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserRequestResponse> getRequestHistory(String email, Pageable pageable) {
+        Household household = requireHouseholdForEmail(email);
+
+        Page<UserRequest> requestPage = userRequestRepository.findByHouseholdId(household.getId(), pageable);
+
+        return requestPage.map(this::toResponse);
+    }
+
+    @Transactional
+    public void deleteRequest(Long requestId, String email) {
+        Household household = requireHouseholdForEmail(email);
+
+        UserRequest request = userRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Không tìm thấy yêu cầu với ID: " + requestId));
+
+        if (!request.getHousehold().getId().equals(household.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xóa yêu cầu này.");
         }
 
-        @Transactional(readOnly = true)
-        public Page<UserRequestResponse> getRequestHistory(String email, Pageable pageable) {
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
-
-                Household household = householdRepository.findByUser_Id(user.getId())
-                                .orElseThrow(() -> new RuntimeException("Tài khoản chưa được liên kết hộ khẩu."));
-
-                // Lấy dữ liệu phân trang từ DB
-                Page<UserRequest> requestPage = userRequestRepository.findByHouseholdId(household.getId(), pageable);
-
-                // Map sang DTO Page
-                return requestPage.map(req -> new UserRequestResponse(
-                                req.getId(),
-                                req.getType(),
-                                req.getDescription(),
-                                req.getStatus(),
-                                req.getCreatedAt()));
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể xóa yêu cầu ở trạng thái Chờ xử lý.");
         }
 
-        @Transactional
-        public void deleteRequest(Long requestId, String email) {
-                // 1. Tìm User từ email
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+        userRequestRepository.delete(request);
+        deleteAttachmentDir(requestId);
+    }
 
-                // 2. Tìm Household của User
-                Household household = householdRepository.findByUser_Id(user.getId())
-                                .orElseThrow(() -> new RuntimeException("Tài khoản chưa được liên kết hộ khẩu."));
+    @Transactional
+    public UserRequestResponse updateRequest(
+            Long requestId,
+            UserRequestCreateRequest dto,
+            String email,
+            MultipartFile[] newFiles,
+            String keepStoredFileNamesJson) {
 
-                // 3. Tìm Request cần xóa
-                UserRequest request = userRequestRepository.findById(requestId)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu với ID: " + requestId));
+        Household household = requireHouseholdForEmail(email);
 
-                // 4. KIỂM TRA BẢO MẬT: Request này có thuộc về Hộ khẩu của User này không?
-                if (!request.getHousehold().getId().equals(household.getId())) {
-                        throw new RuntimeException("Bạn không có quyền xóa yêu cầu này.");
-                }
+        UserRequest request = userRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu: " + requestId));
 
-                // 5. KIỂM TRA TRẠNG THÁI: Chỉ được xóa khi còn đang PENDING
-                if (request.getStatus() != RequestStatus.PENDING) {
-                        throw new RuntimeException("Chỉ có thể xóa yêu cầu ở trạng thái Chờ xử lý.");
-                }
-
-                // 6. Thực hiện xóa khỏi Database
-                userRequestRepository.delete(request);
+        if (!request.getHousehold().getId().equals(household.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền chỉnh sửa yêu cầu này.");
         }
 
-        @Transactional
-        public UserRequestResponse updateRequest(Long requestId, UserRequestCreateRequest dto, String email) {
-                // 1. Tìm thông tin User và Household
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
-
-                Household household = householdRepository.findByUser_Id(user.getId())
-                                .orElseThrow(() -> new RuntimeException("Tài khoản chưa được liên kết hộ khẩu."));
-
-                // 2. Tìm yêu cầu cần sửa
-                UserRequest request = userRequestRepository.findById(requestId)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu: " + requestId));
-
-                // 3. Kiểm tra bảo mật: Đúng chủ sở hữu mới được sửa
-                if (!request.getHousehold().getId().equals(household.getId())) {
-                        throw new RuntimeException("Bạn không có quyền chỉnh sửa yêu cầu này.");
-                }
-
-                // 4. Kiểm tra trạng thái: Chỉ cho phép sửa khi đang PENDING
-                if (request.getStatus() != com.dancu.qlydancu.model.enums.RequestStatus.PENDING) {
-                        throw new RuntimeException("Chỉ có thể chỉnh sửa yêu cầu đang ở trạng thái 'Chờ xử lý'.");
-                }
-
-                // 5. Cập nhật dữ liệu mới
-                request.setType(dto.getType());
-                request.setDescription(dto.getDescription());
-
-                // 6. Lưu và trả về DTO
-                UserRequest updatedRequest = userRequestRepository.save(request);
-                return new UserRequestResponse(
-                                updatedRequest.getId(),
-                                updatedRequest.getType(),
-                                updatedRequest.getDescription(),
-                                updatedRequest.getStatus(),
-                                updatedRequest.getCreatedAt());
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Chỉ có thể chỉnh sửa yêu cầu đang ở trạng thái 'Chờ xử lý'.");
         }
 
-        @Transactional(readOnly = true)
-        public Map<String, Long> getRequestStats(String email) {
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+        List<UserRequestAttachmentDto> current = parseAttachmentsJson(request.getAttachmentsJson());
+        Set<String> allowedStored = current.stream()
+                .map(UserRequestAttachmentDto::getStoredFileName)
+                .collect(Collectors.toSet());
 
-                Household household = householdRepository.findByUser_Id(user.getId())
-                                .orElseThrow(() -> new RuntimeException("Tài khoản chưa được liên kết hộ khẩu."));
-
-                Long householdId = household.getId();
-
-                long total = userRequestRepository.countByHouseholdId(householdId);
-                long done = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.DONE);
-                long pending = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.PENDING);
-                long processing = userRequestRepository.countByHouseholdIdAndStatus(householdId,
-                                RequestStatus.PROCESSING);
-                long rejected = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.REJECTED);
-
-                Map<String, Long> stats = new HashMap<>();
-                stats.put("total", total);
-                stats.put("done", done);
-                stats.put("processing", pending + processing); // Gộp Chờ xử lý và Đang xử lý
-                stats.put("rejected", rejected);
-
-                return stats;
+        Set<String> keepSet;
+        if (keepStoredFileNamesJson == null || keepStoredFileNamesJson.isBlank()) {
+            keepSet = new HashSet<>(allowedStored);
+        } else {
+            try {
+                List<String> requested = objectMapper.readValue(keepStoredFileNamesJson, new TypeReference<List<String>>() {});
+                keepSet = requested.stream()
+                        .filter(allowedStored::contains)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Danh sách tệp giữ lại không hợp lệ.");
+            }
         }
 
-        @Transactional(readOnly = true)
-        public Page<UserRequestResponse> getAllRequestsWithDetails(String apartmentCode, Pageable pageable) {
-                // Gọi hàm mới từ Repository
-                Page<UserRequest> requestPage = userRequestRepository.findRequestsByApartmentCode(apartmentCode,
-                                pageable);
-
-                return requestPage.map(req -> {
-                        String aptCode = (req.getHousehold() != null && req.getHousehold().getApartment() != null)
-                                        ? req.getHousehold().getApartment().getCode()
-                                        : null;
-
-                        return new UserRequestResponse(
-                                        req.getId(),
-                                        req.getType(),
-                                        aptCode,
-                                        req.getDescription(),
-                                        req.getStatus(),
-                                        req.getCreatedAt());
-                });
+        for (UserRequestAttachmentDto a : current) {
+            if (!keepSet.contains(a.getStoredFileName())) {
+                deleteSingleAttachmentFile(requestId, a.getStoredFileName());
+            }
         }
 
-        @Transactional
-        public UserRequestResponse updateRequestStatus(Long requestId, RequestStatus newStatus) {
-                UserRequest request = userRequestRepository.findById(requestId)
-                                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu: " + requestId));
+        List<UserRequestAttachmentDto> kept = current.stream()
+                .filter(a -> keepSet.contains(a.getStoredFileName()))
+                .collect(Collectors.toList());
 
-                request.setStatus(newStatus);
-                UserRequest savedRequest = userRequestRepository.save(request);
-
-                String aptCode = (savedRequest.getHousehold() != null
-                                && savedRequest.getHousehold().getApartment() != null)
-                                                ? savedRequest.getHousehold().getApartment().getCode()
-                                                : null;
-
-                return new UserRequestResponse(
-                                savedRequest.getId(),
-                                savedRequest.getType(),
-                                aptCode,
-                                savedRequest.getDescription(),
-                                savedRequest.getStatus(),
-                                savedRequest.getCreatedAt());
+        MultipartFile[] safeNew = newFiles != null ? newFiles : new MultipartFile[0];
+        long newNonEmpty = Arrays.stream(safeNew).filter(f -> f != null && !f.isEmpty()).count();
+        if (kept.size() + newNonEmpty > MAX_FILES) {
+            throw new IllegalArgumentException("Tối đa " + MAX_FILES + " tệp đính kèm.");
         }
+
+        List<UserRequestAttachmentDto> added;
+        try {
+            added = saveAttachmentsIfAny(requestId, safeNew);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu tệp đính kèm.", e);
+        }
+
+        List<UserRequestAttachmentDto> merged = new ArrayList<>(kept);
+        merged.addAll(added);
+
+        request.setType(dto.getType());
+        request.setDescription(dto.getDescription());
+        try {
+            if (merged.isEmpty()) {
+                request.setAttachmentsJson(null);
+            } else {
+                request.setAttachmentsJson(objectMapper.writeValueAsString(merged));
+            }
+        } catch (JsonProcessingException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu metadata tệp đính kèm.", e);
+        }
+
+        UserRequest updatedRequest = userRequestRepository.save(request);
+        return toResponse(updatedRequest);
+    }
+
+    @Transactional(readOnly = true)
+    public UserRequestAttachmentPayload getAttachmentPayload(Long requestId, String storedFileName, String email) {
+        validateStoredFileName(storedFileName);
+
+        Household household = requireHouseholdForEmail(email);
+
+        UserRequest request = userRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu."));
+
+        if (!request.getHousehold().getId().equals(household.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập tệp này.");
+        }
+
+        UserRequestAttachmentDto meta = parseAttachmentsJson(request.getAttachmentsJson()).stream()
+                .filter(a -> storedFileName.equals(a.getStoredFileName()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy tệp."));
+
+        Path base = resolveRequestDir(requestId).normalize();
+        Path path = base.resolve(storedFileName).normalize();
+        if (!path.startsWith(base)) {
+            throw new IllegalArgumentException("Tên tệp không hợp lệ.");
+        }
+
+        try {
+            Resource resource = new UrlResource(path.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không đọc được tệp.");
+            }
+            return new UserRequestAttachmentPayload(resource, meta.getContentType(), meta.getOriginalName());
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không đọc được tệp.", e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getRequestStats(String email) {
+        Household household = requireHouseholdForEmail(email);
+
+        Long householdId = household.getId();
+
+        long total = userRequestRepository.countByHouseholdId(householdId);
+        long done = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.DONE);
+        long pending = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.PENDING);
+        long processing = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.PROCESSING);
+        long rejected = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.REJECTED);
+
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total", total);
+        stats.put("done", done);
+        stats.put("processing", pending + processing);
+        stats.put("rejected", rejected);
+
+        return stats;
+    }
 }

@@ -1,0 +1,64 @@
+.user-vehicle-page {
+  max-width: 1400px;
+  margin: 0;
+  padding: 0;
+  color: #0a0a0a;
+  text-align: left;
+}
+
+.user-vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.user-vehicle-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  width: 100%;
+}
+
+.user-vehicle-header-left h2 {
+  color: #10233d !important;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+  text-align: left;
+}
+
+.user-vehicle-header-left p {
+  color: #6b7d90;
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+  width: 100%;
+  text-align: right;
+}
+
+.user-vehicle-card {
+  border-radius: 12px;
+}
+
+.user-vehicle-table-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .user-vehicle-header {
+    margin-bottom: 16px;
+  }
+
+  .user-vehicle-table-toolbar {
+    justify-content: stretch;
+  }
+
+  .user-vehicle-table-toolbar .ant-btn {
+    width: 100%;
+  }
+}

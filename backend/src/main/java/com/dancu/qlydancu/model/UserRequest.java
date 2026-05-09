@@ -35,6 +35,9 @@ public class UserRequest {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "attachments_json", columnDefinition = "LONGTEXT")
+    private String attachmentsJson;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private RequestStatus status;
@@ -50,8 +53,6 @@ public class UserRequest {
             this.status = RequestStatus.PENDING;
         }
     }
-
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -63,6 +64,9 @@ public class UserRequest {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getAttachmentsJson() { return attachmentsJson; }
+    public void setAttachmentsJson(String attachmentsJson) { this.attachmentsJson = attachmentsJson; }
 
     public RequestStatus getStatus() { return status; }
     public void setStatus(RequestStatus status) { this.status = status; }

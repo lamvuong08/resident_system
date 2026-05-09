@@ -2,10 +2,8 @@ import React, { useEffect } from 'react'
 import { Modal, Form, Input, Select, Button } from 'antd'
 import type { AccountItem, AccountUpsertRequest } from '../utils/account'
 
-const { Option } = Select
-
 interface AccountFormModalProps {
-  visible: boolean
+  open: boolean
   onCancel: () => void
   onSuccess: () => void
   initialData?: AccountItem | null
@@ -14,7 +12,7 @@ interface AccountFormModalProps {
 }
 
 const AccountFormModal: React.FC<AccountFormModalProps> = ({
-  visible,
+  open,
   onCancel,
   initialData,
   loading,
@@ -25,7 +23,7 @@ const AccountFormModal: React.FC<AccountFormModalProps> = ({
   const isEdit = !!initialData
 
   useEffect(() => {
-    if (visible) {
+    if (open) {
       if (initialData) {
         form.setFieldsValue({
           name: initialData.fullName,
@@ -43,7 +41,7 @@ const AccountFormModal: React.FC<AccountFormModalProps> = ({
         })
       }
     }
-  }, [visible, initialData, form])
+  }, [open, initialData, form])
 
   const handleFinish = (values: any) => {
     onSubmit(values)
@@ -52,10 +50,10 @@ const AccountFormModal: React.FC<AccountFormModalProps> = ({
   return (
     <Modal
       title={isEdit ? 'Chỉnh sửa tài khoản' : 'Thêm tài khoản mới'}
-      open={visible}
+      open={open}
       onCancel={onCancel}
       footer={null}
-      destroyOnHidden
+      destroyOnClose
     >
       <Form
         form={form}
@@ -126,10 +124,13 @@ const AccountFormModal: React.FC<AccountFormModalProps> = ({
           label="Vai trò"
           rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
         >
-          <Select placeholder="Chọn vai trò">
-            <Option value="ADMIN">Admin</Option>
-            <Option value="RESIDENT">Cư dân</Option>
-          </Select>
+          <Select
+            placeholder="Chọn vai trò"
+            options={[
+              { value: 'ADMIN', label: 'Admin' },
+              { value: 'RESIDENT', label: 'Cư dân' },
+            ]}
+          />
         </Form.Item>
 
         <Form.Item
@@ -137,10 +138,13 @@ const AccountFormModal: React.FC<AccountFormModalProps> = ({
           label="Trạng thái"
           rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
         >
-          <Select placeholder="Chọn trạng thái">
-            <Option value="ACTIVE">Hoạt động</Option>
-            <Option value="DISABLED">Vô hiệu hóa</Option>
-          </Select>
+          <Select
+            placeholder="Chọn trạng thái"
+            options={[
+              { value: 'ACTIVE', label: 'Hoạt động' },
+              { value: 'DISABLED', label: 'Vô hiệu hóa' },
+            ]}
+          />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>

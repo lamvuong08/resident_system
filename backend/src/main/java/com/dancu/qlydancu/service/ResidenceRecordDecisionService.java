@@ -9,6 +9,8 @@ import com.dancu.qlydancu.model.enums.ResidentCategory;
 import com.dancu.qlydancu.model.enums.ResidentRelationship;
 import com.dancu.qlydancu.repo.ResidenceRecordRepository;
 import com.dancu.qlydancu.repo.ResidentRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,8 @@ import java.util.Optional;
 
 @Service
 public class ResidenceRecordDecisionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ResidenceRecordDecisionService.class);
 
     private final ResidenceRecordRepository residenceRecordRepository;
     private final ResidentRepository residentRepository;
@@ -33,6 +37,7 @@ public class ResidenceRecordDecisionService {
 
         ResidenceRecordStatus targetStatus = resolveTargetStatus(action);
         record.setStatus(targetStatus);
+        log.info("Saving residence record decision flow id={} status={}", record.getId(), record.getStatus() != null ? record.getStatus().name() : null);
         residenceRecordRepository.save(record);
 
         if (targetStatus == ResidenceRecordStatus.APPROVED) {

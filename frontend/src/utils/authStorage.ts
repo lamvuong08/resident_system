@@ -2,6 +2,8 @@ export type StoredUser = {
   email?: string
   role?: string
   name?: string
+  phone?: string
+  status?: string
 }
 
 const STORAGE_KEYS = {
@@ -46,6 +48,13 @@ export const hasToken = (): boolean => {
 
 export const setAuthSession = (token: string, user: StoredUser) => {
   localStorage.setItem(STORAGE_KEYS.token, token)
+  if (user.role) {
+    localStorage.setItem(STORAGE_KEYS.role, user.role)
+  }
+  localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user))
+}
+
+export const setStoredUser = (user: StoredUser) => {
   if (user.role) {
     localStorage.setItem(STORAGE_KEYS.role, user.role)
   }

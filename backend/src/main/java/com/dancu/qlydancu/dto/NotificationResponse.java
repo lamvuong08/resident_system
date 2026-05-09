@@ -7,6 +7,6 @@ public record NotificationResponse(
     String title,
     String content,
     String type,
-    String createdBy, // Chỉ trả về tên người tạo, không trả nguyên Object User
+    String createdBy, 
     LocalDateTime createdAt
 ) {}

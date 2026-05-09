@@ -13,7 +13,6 @@ public class UserRequestCreateRequest {
     @NotBlank(message = "Nội dung mô tả không được để trống")
     private String description;
 
-    // Constructors
     public UserRequestCreateRequest() {}
 
     public UserRequestCreateRequest(RequestType type, String description) {
@@ -21,7 +20,6 @@ public class UserRequestCreateRequest {
         this.description = description;
     }
 
-    // Getters and Setters
     public RequestType getType() { return type; }
     public void setType(RequestType type) { this.type = type; }
 

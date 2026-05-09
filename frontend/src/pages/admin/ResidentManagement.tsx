@@ -202,7 +202,7 @@ const ResidentManagement: React.FC = () => {
     const normalized = payload
       .map((item: unknown) => {
         const it = item as Record<string, unknown>
-        const idOrCode = String(it.id ?? it.code ?? '')
+        const idOrCode = String(it.code ?? it.id ?? '')
         return {
           code: idOrCode.toUpperCase().trim(),
           name: String(it.name ?? '').trim() || idOrCode.toUpperCase().trim(),
@@ -284,12 +284,12 @@ const ResidentManagement: React.FC = () => {
   const displayedRows = useMemo(() => {
     return rows
       .filter((row) => {
-      if (viewFilter === 'LIVING') return row.occupancyStatus === 'LIVING' && row.residentCategory === 'OFFICIAL'
-      if (viewFilter === 'TEMP_ABSENT') return row.occupancyStatus === 'TEMP_ABSENT'
-      if (viewFilter === 'TEMPORARY') return row.residentCategory === 'TEMPORARY' && row.occupancyStatus === 'LIVING'
-      if (viewFilter === 'EXPIRED') return row.occupancyStatus === 'EXPIRED'
-      return true
-    })
+        if (viewFilter === 'LIVING') return row.occupancyStatus === 'LIVING' && row.residentCategory === 'OFFICIAL'
+        if (viewFilter === 'TEMP_ABSENT') return row.occupancyStatus === 'TEMP_ABSENT'
+        if (viewFilter === 'TEMPORARY') return row.residentCategory === 'TEMPORARY' && row.occupancyStatus === 'LIVING'
+        if (viewFilter === 'EXPIRED') return row.occupancyStatus === 'EXPIRED'
+        return true
+      })
       .sort((a, b) => {
         const buildingCompare = apartmentCodeCollator.compare(a.buildingCode || '', b.buildingCode || '')
         if (buildingCompare !== 0) return buildingCompare
@@ -392,11 +392,11 @@ const ResidentManagement: React.FC = () => {
       const payload = Array.isArray(response.data) ? response.data : []
       const normalized = payload
         .map((item: unknown) => {
-              const it = item as Record<string, unknown>
-              const code = normalizeApartmentCode(it?.code)
+          const it = item as Record<string, unknown>
+          const code = normalizeApartmentCode(it?.code)
           if (!code) return null
           return {
-                id: toNumberSafe(it?.id) ?? undefined,
+            id: toNumberSafe(it?.id) ?? undefined,
             code,
             buildingCode,
           } as ApartmentOption
