@@ -12,6 +12,22 @@ import type {
 const REQUEST_IN_PROGRESS_STATUSES = new Set(['IN_PROGRESS', 'PROCESSING', 'PENDING', 'DANG_XU_LY'])
 const PAYMENT_UNPAID_STATUSES = new Set(['UNPAID', 'PENDING', 'DUE', 'UNPAID_INVOICE'])
 
+const formatDate = (isoString: unknown): string | null => {
+  if (typeof isoString !== 'string' || !isoString.trim()) return null;
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return null;
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  } catch {
+    return null;
+  }
+}
+
 const toArray = (input: unknown): unknown[] => {
   if (Array.isArray(input)) {
     return input
@@ -136,9 +152,33 @@ export const getResidentNotifications = async (): Promise<DashboardNotification[
   }))
 }
 
+// Thêm import api nếu chưa có (trong file hiện tại đã có: import api from './api')
+
 export const getResidentPayments = async (): Promise<DashboardPayment[]> => {
-  const rows = await requestFirstArray(['/households/me/payments', '/payments/me', '/payments'])
-  return rows.map(mapPayment)
+  try {
+    const response = await api.get('/bills/user/details?statuses=UNPAID,PENDING');
+    const rows = toArray(response.data);
+
+    return rows.map((item): DashboardPayment => {
+      const row = toObject(item) || {};
+      
+      const feeName = safeString(row.feeTypeName, 'Khoản phí');
+      const month = safeString(row.billingMonth, '');
+      const rawStatus = safeString(row.status, 'UNPAID').toUpperCase();
+
+      return {
+        id: String(row.detailId ?? crypto.randomUUID()),
+        title: month ? `${feeName} (Tháng ${month})` : feeName,
+        amount: toNumber(row.amount),
+        // SỬA TẠI ĐÂY: Lấy trường dueDate từ BE và format thành ngày/tháng/năm
+        dueDate: formatDate(row.dueDate), 
+        status: rawStatus,
+      };
+    });
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách thanh toán Dashboard:", error);
+    return [];
+  }
 }
 
 export const getResidentRequests = async (): Promise<DashboardRequest[]> => {

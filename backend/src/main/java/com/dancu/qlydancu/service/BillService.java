@@ -11,39 +11,47 @@ import com.dancu.qlydancu.dto.BillDetailRowResponse;
 import com.dancu.qlydancu.model.BillDetail;
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.User;
+import com.dancu.qlydancu.model.enums.BillDetailStatus;
 import com.dancu.qlydancu.repo.BillDetailRepository;
 import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.UserRepository;
 
 @Service
 public class BillService {
-    @Autowired private BillDetailRepository billDetailRepository;
-    @Autowired private HouseholdRepository householdRepository;
-    @Autowired private UserRepository userRepository;
+    @Autowired
+    private BillDetailRepository billDetailRepository;
+    @Autowired
+    private HouseholdRepository householdRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    public List<BillDetailRowResponse> getBillDetailsForCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public List<BillDetailRowResponse> getBillDetailsForCurrentUser(List<BillDetailStatus> statuses) {
+        String identity = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsernameOrEmail(identity, identity)
+                .orElseThrow(() -> new RuntimeException("User not found: " + identity));
 
         Household household = householdRepository.findByUser_Id(user.getId())
                 .orElseThrow(() -> new RuntimeException("Tài khoản chưa gắn với hộ gia đình"));
 
         Long apartmentId = household.getApartment().getId();
 
-        // Lấy toàn bộ chi tiết phí của căn hộ (Join qua Bill -> Apartment)
-        List<BillDetail> details = billDetailRepository.findAll().stream()
-                .filter(d -> d.getBill().getApartment().getId().equals(apartmentId))
-                .toList();
+        List<BillDetail> details;
+        if (statuses != null && !statuses.isEmpty()) {
+            details = billDetailRepository.findByBill_Apartment_IdAndBill_StatusIn(apartmentId, statuses);
+        } else {
+            details = billDetailRepository.findByBill_Apartment_Id(apartmentId);
+        }
 
+        // CẬP NHẬT PHẦN MAP DƯỚI ĐÂY
         return details.stream().map(d -> new BillDetailRowResponse(
                 d.getId(),
-                d.getBill().getBillingMonth(), // Lấy tháng từ Bill cha
-                d.getFeeType().getName(),      // Lấy tên phí (Điện, Nước...) từ FeeType
+                d.getBill().getBillingMonth(), 
+                d.getFeeType().getName(),      
                 d.getAmount(),
-                d.getBill().getStatus(),       // Trạng thái thanh toán của Bill cha
+                d.getStatus(),       
                 d.getBill().getId(),
-                d.getBill().getCreatedAt()
+                d.getBill().getCreatedAt(),
+                d.getDueDate()
         )).collect(Collectors.toList());
     }
 }

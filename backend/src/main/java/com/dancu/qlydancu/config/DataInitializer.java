@@ -19,10 +19,8 @@ import com.dancu.qlydancu.model.ApartmentNote;
 import com.dancu.qlydancu.model.Bill;
 import com.dancu.qlydancu.model.Building;
 import com.dancu.qlydancu.model.Household;
-import com.dancu.qlydancu.model.Payment;
 import com.dancu.qlydancu.model.Resident;
-import com.dancu.qlydancu.model.enums.BillStatus;
-import com.dancu.qlydancu.model.enums.PaymentMethod;
+import com.dancu.qlydancu.model.enums.BillDetailStatus;
 import com.dancu.qlydancu.model.status.ApartmentStatus;
 import com.dancu.qlydancu.repo.ApartmentContractRepository;
 import com.dancu.qlydancu.repo.ApartmentFinanceRepository;
@@ -171,18 +169,18 @@ public class DataInitializer implements CommandLineRunner {
                 bill.setApartment(ap);
                 bill.setBillingMonth(month);
                 bill.setTotalAmount(totalBillAmount);
-                bill.setStatus(BillStatus.PAID);
+                bill.setStatus(BillDetailStatus.PAID);
                 bill.setCreatedAt(LocalDateTime.now());
                 bill = billRepository.save(bill);
 
                 // ================= PAYMENT =================
-                Payment pay = new Payment(
-                    totalBillAmount,
-                        LocalDate.now().minusDays(rnd.nextInt(30))
-                );
-                pay.setBill(bill);
-                pay.setPaymentMethod(PaymentMethod.CASH);
-                paymentRepository.save(pay);
+                // Payment pay = new Payment(
+                //     totalBillAmount,
+                //         LocalDate.now().minusDays(rnd.nextInt(30))
+                // );
+                // pay.setBill(bill);
+                // pay.setPaymentMethod(PaymentMethod.CASH);
+                // paymentRepository.save(pay);
 
                 // // ================= MAINTENANCE =================
                 // UserRequest m = new UserRequest();

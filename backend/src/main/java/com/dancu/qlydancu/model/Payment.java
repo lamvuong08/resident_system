@@ -1,23 +1,21 @@
 package com.dancu.qlydancu.model;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.dancu.qlydancu.model.enums.PaymentMethod;
 import com.dancu.qlydancu.model.enums.PaymentStatus;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -27,10 +25,9 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bill_id")
-    @JsonIgnore
-    private Bill bill;
+    // QUAN TRỌNG: Đã xóa liên kết với Bill, thay bằng liên kết với PaymentDetail
+    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PaymentDetail> paymentDetails = new ArrayList<>();
 
     private Long amount;
 
@@ -45,27 +42,8 @@ public class Payment {
     @Column(name = "status")
     private PaymentStatus status = PaymentStatus.PENDING;
 
-    // Mã giao dịch từ MoMo / Ngân hàng
     @Column(name = "transaction_code", length = 100)
     private String transactionCode;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        if (this.status == null)
-            this.status = PaymentStatus.PENDING;
-    }
-
-    public Payment() {
-    }
-
-    public Payment(Long amount, LocalDate date) {
-        this.amount = amount;
-        this.paidAt = date != null ? date.atStartOfDay() : null;
-    }
 
     public Long getId() {
         return id;
@@ -75,28 +53,18 @@ public class Payment {
         this.id = id;
     }
 
-    public Long getBillId() {
-        return bill != null ? bill.getId() : null;
+    public List<PaymentDetail> getPaymentDetails() {
+        return paymentDetails;
     }
 
-    public void setBillId(Long billId) {
-        if (billId == null) {
-            this.bill = null;
-            return;
-        }
-
-        if (this.bill == null) {
-            this.bill = new Bill();
-        }
-        this.bill.setId(billId);
+    public void setPaymentDetails(List<PaymentDetail> paymentDetails) {
+        this.paymentDetails = paymentDetails;
     }
 
-    public Bill getBill() {
-        return bill;
-    }
-
-    public void setBill(Bill bill) {
-        this.bill = bill;
+    // Helper method để code gọn hơn
+    public void addPaymentDetail(BillDetail billDetail) {
+        PaymentDetail pd = new PaymentDetail(this, billDetail);
+        this.paymentDetails.add(pd);
     }
 
     public Long getAmount() {
@@ -129,14 +97,6 @@ public class Payment {
 
     public void setTransactionCode(String transactionCode) {
         this.transactionCode = transactionCode;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     public LocalDateTime getPaidAt() {

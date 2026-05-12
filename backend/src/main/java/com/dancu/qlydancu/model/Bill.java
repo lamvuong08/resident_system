@@ -2,7 +2,7 @@ package com.dancu.qlydancu.model;
 
 import java.time.LocalDateTime;
 
-import com.dancu.qlydancu.model.enums.BillStatus;
+import com.dancu.qlydancu.model.enums.BillDetailStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -40,7 +40,7 @@ public class Bill {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private BillStatus status;
+    private BillDetailStatus status;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -57,8 +57,8 @@ public class Bill {
     public Long getTotalAmount() { return totalAmount; }
     public void setTotalAmount(Long totalAmount) { this.totalAmount = totalAmount; }
     
-    public BillStatus getStatus() { return status; }
-    public void setStatus(BillStatus status) { this.status = status; }
+    public BillDetailStatus getStatus() { return status; }
+    public void setStatus(BillDetailStatus status) { this.status = status; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

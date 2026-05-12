@@ -1,6 +1,6 @@
 package com.dancu.qlydancu.model.enums;
 
-public enum BillStatus {
+public enum BillDetailStatus {
     UNPAID,
     PENDING,
     PAID

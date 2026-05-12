@@ -28,9 +28,6 @@ public class PaymentController {
     @Autowired
     private PaymentService paymentService;
 
-    /**
-     * API dành cho Cư dân: Gửi yêu cầu xác nhận đã chuyển tiền
-     */
     @PostMapping("/submit")
     public ResponseEntity<?> submitPayment(@Valid @RequestBody PaymentRequestDTO request) {
         try {
@@ -41,9 +38,6 @@ public class PaymentController {
         }
     }
 
-    /**
-     * API dành cho Admin: Lấy danh sách các khoản thanh toán đang chờ duyệt
-     */
     @GetMapping("/pending")
     public ResponseEntity<List<PaymentResponseDTO>> getPendingPayments() {
         List<Payment> pendingList = paymentService.getPendingPayments();
@@ -53,9 +47,6 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * API dành cho Admin: Phê duyệt thanh toán (Tiền đã khớp)
-     */
     @PostMapping("/{id}/approve")
     public ResponseEntity<?> approvePayment(@PathVariable Long id) {
         try {
@@ -66,9 +57,6 @@ public class PaymentController {
         }
     }
 
-    /**
-     * API dành cho Admin: Từ chối thanh toán (Sai thông tin hoặc chưa nhận được tiền)
-     */
     @PostMapping("/{id}/reject")
     public ResponseEntity<?> rejectPayment(@PathVariable Long id) {
         try {
