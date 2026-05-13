@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.dancu.qlydancu.dto.AdminBillDetailResponse;
 import com.dancu.qlydancu.dto.BillDetailFilterRequest;
@@ -51,23 +52,22 @@ public class BillService {
         // CẬP NHẬT PHẦN MAP DƯỚI ĐÂY
         return details.stream().map(d -> new BillDetailRowResponse(
                 d.getId(),
-                d.getBill().getBillingMonth(), 
-                d.getFeeType().getName(),      
+                d.getBill().getBillingMonth(),
+                d.getFeeType().getName(),
                 d.getAmount(),
-                d.getStatus(),       
+                d.getStatus(),
                 d.getBill().getId(),
                 d.getBill().getCreatedAt(),
-                d.getDueDate()
-        )).collect(Collectors.toList());
+                d.getDueDate())).collect(Collectors.toList());
     }
 
     public Page<AdminBillDetailResponse> getAdminBillDetails(BillDetailFilterRequest filter, Pageable pageable) {
         // 1. Gắn bộ lọc động
         Specification<BillDetail> spec = BillDetailSpecification.filterByCriteria(filter);
-        
+
         // 2. Query Database có phân trang
         Page<BillDetail> page = billDetailRepository.findAll(spec, pageable);
-        
+
         // 3. Map sang DTO trả về cho Admin
         return page.map(d -> new AdminBillDetailResponse(
                 d.getId(),
@@ -78,7 +78,19 @@ public class BillService {
                 d.getStatus(),
                 d.getBill().getId(),
                 d.getBill().getCreatedAt(),
-                d.getDueDate()
-        ));
+                d.getDueDate()));
+    }
+
+    @Transactional
+    public void updateBillDetailStatus(Long detailId, BillDetailStatus newStatus) {
+        BillDetail detail = billDetailRepository.findById(detailId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết hóa đơn ID: " + detailId));
+
+        detail.setStatus(newStatus);
+        billDetailRepository.save(detail);
+
+        // Lưu ý: Bạn có thể thêm logic cập nhật trạng thái của Hóa đơn tổng (Bill) tại
+        // đây
+        // nếu tất cả các BillDetail đều đã chuyển sang PAID.
     }
 }

@@ -104,6 +104,30 @@ const AdminPaymentManagement: React.FC = () => {
     fetchBills(currentPage);
   }, [currentPage]);
 
+  const handleToggleStatus = async (record: AdminBillDetailResponse) => {
+    const newStatus = record.status === "PAID" ? "UNPAID" : "PAID";
+    const actionText =
+      newStatus === "PAID"
+        ? "xác nhận đã thanh toán"
+        : "hủy xác nhận thanh toán";
+
+    try {
+      await axiosInstance.put(
+        `/bills/admin/details/${record.detailId}/status`,
+        null,
+        {
+          params: { status: newStatus },
+        },
+      );
+      message.success(`Đã ${actionText} cho căn hộ ${record.apartmentCode}`);
+      // Load lại dữ liệu tại trang hiện tại để cập nhật UI
+      fetchBills(currentPage);
+    } catch (error) {
+      console.error("Lỗi cập nhật trạng thái:", error);
+      message.error("Không thể cập nhật trạng thái hóa đơn.");
+    }
+  };
+
   // Hành động khi nhấn nút Lọc
   const handleFilter = () => {
     if (currentPage === 1) {
@@ -128,22 +152,26 @@ const AdminPaymentManagement: React.FC = () => {
       title: "Căn hộ",
       dataIndex: "apartmentCode",
       key: "apartmentCode",
+      align: "center",
       render: (text) => <strong>{text}</strong>,
     },
     {
       title: "Tháng",
       dataIndex: "billingMonth",
       key: "billingMonth",
+      align: "center",
     },
     {
       title: "Loại phí",
       dataIndex: "feeTypeName",
       key: "feeTypeName",
+      align: "center",
     },
     {
       title: "Số tiền",
       dataIndex: "amount",
       key: "amount",
+      align: "center",
       render: (value: number) => (
         <span style={{ color: "#cf1322", fontWeight: "bold" }}>
           {formatCurrency(value)}
@@ -154,12 +182,14 @@ const AdminPaymentManagement: React.FC = () => {
       title: "Hạn thanh toán",
       dataIndex: "dueDate",
       key: "dueDate",
+      align: "center",
       render: (value: string) => formatDate(value),
     },
     {
       title: "Trạng thái",
       dataIndex: "status",
       key: "status",
+      align: "center",
       render: (status: string) => {
         let color = "default";
         let text = status;
@@ -174,6 +204,31 @@ const AdminPaymentManagement: React.FC = () => {
           text = "Chờ duyệt";
         }
         return <Tag color={color}>{text}</Tag>;
+      },
+    },
+    {
+      title: "Hành động",
+      key: "action",
+      align: "center", // Căn giữa
+      render: (_, record) => {
+        const isPaid = record.status === 'PAID';
+        
+        return (
+          <Button 
+            className="admin-payment-control"
+            // Dùng type="default" để bỏ background đặc, biến nó thành nút nền trong suốt có viền
+            type="default" 
+            danger={isPaid} // Nếu đã trả -> viền đỏ (Hủy)
+            style={
+              !isPaid 
+                ? { color: '#52c41a', borderColor: '#52c41a', background: 'transparent' } // Nếu chưa trả -> viền xanh lá
+                : { background: 'transparent' }
+            }
+            onClick={() => handleToggleStatus(record)}
+          >
+            {isPaid ? 'Hủy xác nhận' : 'Xác nhận đã trả'}
+          </Button>
+        );
       },
     },
   ];
