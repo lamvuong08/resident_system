@@ -25,7 +25,7 @@ import SupportPage from './pages/user/support/SupportPage'
 import Vehicle from './pages/user/Vehicle'
 import Notifications from './pages/user/Notifications'
 import TemporaryResidence from './pages/user/TemporaryResidence'
-import UserBill from './pages/user/Bill'
+import AdminPaymentManagement from './pages/admin/AdminPaymentManagement'
 import Settings from './pages/user/Settings'
 import { getStoredRole, hasToken } from './utils/authStorage'
 
@@ -96,6 +96,7 @@ function App() {
           <Route path="thong-bao" element={<NotificationManagement />} />
           <Route path="requests" element={<RequestManagement />} />
           <Route path="vehicles" element={<VehicleManagement />} />
+          <Route path="quan-ly-thanh-toan" element={<AdminPaymentManagement />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route index element={<Home />} />

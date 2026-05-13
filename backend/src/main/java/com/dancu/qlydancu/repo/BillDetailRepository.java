@@ -3,11 +3,12 @@ package com.dancu.qlydancu.repo;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.dancu.qlydancu.model.BillDetail;
 import com.dancu.qlydancu.model.enums.BillDetailStatus;
 
-public interface BillDetailRepository extends JpaRepository<BillDetail, Long> {
+public interface BillDetailRepository extends JpaRepository<BillDetail, Long>, JpaSpecificationExecutor<BillDetail> {
     List<BillDetail> findByBill_Id(Long billId);
 
     // Tối ưu: Chỉ lấy chi tiết hóa đơn của một căn hộ

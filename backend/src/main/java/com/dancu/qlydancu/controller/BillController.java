@@ -3,13 +3,20 @@ package com.dancu.qlydancu.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dancu.qlydancu.dto.AdminBillDetailResponse;
+import com.dancu.qlydancu.dto.BillDetailFilterRequest;
 import com.dancu.qlydancu.dto.BillDetailRowResponse;
 import com.dancu.qlydancu.model.enums.BillDetailStatus;
 import com.dancu.qlydancu.service.BillService;
@@ -22,10 +29,6 @@ public class BillController {
     @Autowired
     private BillService billService;
 
-    /**
-     * API dành cho User lấy danh sách chi tiết từng loại phí (Phẳng hóa)
-     * Đã sửa kiểu trả về thành List để khớp với Service và Frontend
-     */
     @GetMapping("/my-apartment/details")
     public ResponseEntity<List<BillDetailRowResponse>> getMyBillDetails() {
         try {
@@ -43,5 +46,16 @@ public class BillController {
             @RequestParam(required = false) List<BillDetailStatus> statuses) {
         // Truyền thẳng tham số xuống Service
         return ResponseEntity.ok(billService.getBillDetailsForCurrentUser(statuses));
+    }
+
+    @GetMapping("/admin/details")
+    public ResponseEntity<Page<AdminBillDetailResponse>> getAdminBillDetails(
+            @ModelAttribute BillDetailFilterRequest filter, // Lấy toàn bộ tham số URL map vào Object
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        
+        return ResponseEntity.ok(billService.getAdminBillDetails(filter, pageable));
     }
 }
