@@ -56,7 +56,6 @@ export interface UserRequestResponse {
   createdAt: string;
 }
 
-// Interface chuẩn để parse cục Page<T> của Spring Boot trả về
 export interface PageResponse<T> {
   content: T[];
   totalElements: number;

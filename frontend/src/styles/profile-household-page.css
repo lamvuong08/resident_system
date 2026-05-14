@@ -534,7 +534,6 @@
   color: var(--color-text-primary);
 }
 
-/* Ant / inherit từ OS dark: ép chữ tối trong vùng trang */
 .profile-household-page .ant-alert-message,
 .profile-household-page .ant-alert-description {
   color: var(--color-text-primary);
@@ -732,7 +731,6 @@
   vertical-align: middle;
 }
 
-/* Drawer render portal — không bọc trong .profile-household-page */
 .profile-household__resident-drawer .ant-drawer-header {
   display: none;
 }

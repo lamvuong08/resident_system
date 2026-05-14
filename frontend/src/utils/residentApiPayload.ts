@@ -1,5 +1,3 @@
-/** Chuẩn hóa payload gửi lên API Resident (admin) hoặc /households/me/residents (cư dân). */
-
 export const normalizeGenderForApi = (gender?: string | null) => {
   const value = (gender || '').toUpperCase().trim()
   if (value === 'M') return 'MALE'

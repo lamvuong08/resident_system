@@ -17,7 +17,6 @@ public class PaymentRequestDTO {
 
     private String transactionCode;
 
-    // Getters and Setters
     public List<Long> getBillDetailIds() { return billDetailIds; }
     public void setBillDetailIds(List<Long> billDetailIds) { this.billDetailIds = billDetailIds; }
 

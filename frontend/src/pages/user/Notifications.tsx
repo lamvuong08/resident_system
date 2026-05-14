@@ -65,7 +65,6 @@ const Notifications = () => {
   const truncateContent = (value: string, maxLength = 140) =>
     value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
 
-  // Apply filters
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (showUnreadOnly && item.isRead) return false

@@ -10,13 +10,10 @@
   margin-bottom: 20px;
 }
 
-/* 1. Ép chiều cao cố định 34px cho TẤT CẢ các component */
 .admin-payment-wrapper .admin-payment-control {
   height: 34px !important;
 }
 
-/* 2. SỬA LỖI Ô INPUT MÃ CĂN HỘ (Có allowClear) */
-/* Bật flexbox cho lớp vỏ và căn giữa trục dọc (align-items: center) */
 .admin-payment-wrapper .ant-input-affix-wrapper.admin-payment-control {
   display: inline-flex !important;
   align-items: center !important;
@@ -24,23 +21,20 @@
   padding-bottom: 0 !important;
 }
 
-/* Trả lại trạng thái tự nhiên cho thẻ input bên trong để flexbox tự động làm việc */
 .admin-payment-wrapper .admin-payment-control input {
   line-height: normal !important;
   height: 100% !important;
 }
 
-/* 3. ĐỒNG BỘ SELECT VÀ INPUT NUMBER */
 .admin-payment-wrapper .ant-select.admin-payment-control .ant-select-selector {
   height: 34px !important;
   align-items: center !important;
 }
 
 .admin-payment-wrapper .ant-input-number.admin-payment-control .ant-input-number-input {
-  height: 32px !important; /* Nhỏ hơn vỏ 2px để bù cho viền (border) */
+  height: 32px !important; 
 }
 
-/* 4. ĐỒNG BỘ BUTTON */
 .admin-payment-wrapper button.admin-payment-control {
   display: inline-flex !important;
   align-items: center !important;

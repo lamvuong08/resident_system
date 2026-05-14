@@ -22,7 +22,6 @@ const UserBill: React.FC = () => {
             .finally(() => setLoading(false));
     }, []);
 
-    // Thống kê dựa trên BillId duy nhất để tránh đếm trùng nếu 1 bill có nhiều phí
     const uniqueBills = Array.from(new Set(details.map(d => d.billId))).map(id => 
         details.find(d => d.billId === id)
     );
@@ -33,7 +32,6 @@ const UserBill: React.FC = () => {
 
     return (
         <div className="user-bill-container">
-            {/* 2 THẺ THỐNG KÊ CĂN GIỮA */}
             <div className="user-bill-stats-wrapper">
                 <div className="user-bill-stat-card user-bill-card-paid">
                     <div className="user-bill-stat-title">Hóa đơn đã thanh toán</div>
@@ -45,7 +43,6 @@ const UserBill: React.FC = () => {
                 </div>
             </div>
 
-            {/* BẢNG DỮ LIỆU ĐỔ TỪ MOCK DATA */}
             <div className="user-bill-table-container">
                 <table className="user-bill-table">
                     <thead>

@@ -48,7 +48,6 @@ public class BillDetail {
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
-    // Getters / Setters cho trường mới
     public BillDetailStatus getStatus() { return status; }
     public void setStatus(BillDetailStatus status) { this.status = status; }
 

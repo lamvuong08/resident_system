@@ -13,7 +13,6 @@ const PAYMENT_UNPAID_STATUSES = new Set([
   "UNPAID_INVOICE",
 ]);
 
-// Hàm phụ trợ format tiền tệ hiển thị trong Popup
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -26,7 +25,6 @@ const Payment = () => {
   const [error, setError] = useState<string | null>(null);
   const [payments, setPayments] = useState<DashboardPayment[]>([]);
 
-  // STATE QUẢN LÝ POPUP THANH TOÁN
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -74,14 +72,14 @@ const Payment = () => {
         totalUnpaidAmount={totalUnpaidAmount}
         // KÍCH HOẠT MỞ MODAL KHI CLICK
         onPayNow={() => setIsModalOpen(true)}
+        showAll={true}
       />
 
-      {/* POPUP HIỂN THỊ MÃ QR */}
       <Modal
         title="Thanh toán qua ví MoMo"
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
-        footer={null} // Ẩn các nút OK/Cancel mặc định vì đây chỉ là popup thông tin
+        footer={null} 
         centered
         width={400}
       >

@@ -44,8 +44,6 @@ public class DataInitializer implements CommandLineRunner {
     private final HouseholdRepository householdRepository;
     private final BillRepository billRepository;
     private final ApartmentFinanceRepository financeRepository;
-    private final PaymentRepository paymentRepository;
-    // private final UserRequestRepository maintenanceRepository;
     private final ApartmentContractRepository contractRepository;
     private final ApartmentNoteRepository noteRepository;
 
@@ -65,8 +63,6 @@ public class DataInitializer implements CommandLineRunner {
         this.householdRepository = householdRepository;
         this.billRepository = billRepository;
         this.financeRepository = financeRepository;
-        this.paymentRepository = paymentRepository;
-        // this.maintenanceRepository = maintenanceRepository;
         this.contractRepository = contractRepository;
         this.noteRepository = noteRepository;
     }
@@ -172,25 +168,6 @@ public class DataInitializer implements CommandLineRunner {
                 bill.setStatus(BillDetailStatus.PAID);
                 bill.setCreatedAt(LocalDateTime.now());
                 bill = billRepository.save(bill);
-
-                // ================= PAYMENT =================
-                // Payment pay = new Payment(
-                //     totalBillAmount,
-                //         LocalDate.now().minusDays(rnd.nextInt(30))
-                // );
-                // pay.setBill(bill);
-                // pay.setPaymentMethod(PaymentMethod.CASH);
-                // paymentRepository.save(pay);
-
-                // // ================= MAINTENANCE =================
-                // UserRequest m = new UserRequest();
-                // m.setTitle("Yêu cầu sửa chữa");
-                // m.setDescription("Mô tả lỗi mẫu");
-                // m.setType(RequestType.REPAIR);
-                // m.setStatus(rnd.nextBoolean() ? RequestStatus.PENDING : RequestStatus.DONE);
-                // m.setCreatedAt(LocalDateTime.now().minusDays(rnd.nextInt(90)));
-                // m.setHouseholdId(household.getId());
-                // maintenanceRepository.save(m);
 
                 // ================= CONTRACT =================
                 ApartmentContract c = new ApartmentContract();

@@ -533,32 +533,6 @@
   }
 }
 
-/* Style thong bao cu dan */
-/* 
-.apt-card.emergency {
-  background: #fef2f2;
-  border: 2px solid #ef4444;
-}
-
-.apt-card.payment-alert {
-  border-left: 6px solid #dc2626;
-}
-
-.apt-card.maintenance-alert {
-  border-left: 6px solid #1e6efc;
-  border-top: none;
-  border-right: none;
-  border-bottom: none;
-  background: #f8fafc;
-}
-
-.search-input.custom-textarea {
-  height: 120px;
-  padding-top: 12px;
-  resize: vertical;
-  font-family: inherit;
-  line-height: 1.5;
-} */
 @media (max-width:720px){
   .section-title{
     margin:0 0 12px;

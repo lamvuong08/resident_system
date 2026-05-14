@@ -3,7 +3,7 @@ package com.dancu.qlydancu.dto;
 import java.util.List;
 
 public record UserBillSummaryResponse(
-        long paidCount, // Số hóa đơn xanh
-        long unpaidCount, // Số hóa đơn đỏ (Gồm UNPAID và PENDING)
+        long paidCount, 
+        long unpaidCount,
         List<BillResponseDTO> bills) {
 }

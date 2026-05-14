@@ -34,11 +34,9 @@ public class BillController {
     @GetMapping("/my-apartment/details")
     public ResponseEntity<List<BillDetailRowResponse>> getMyBillDetails() {
         try {
-            // Service trả về List<BillDetailRowResponse>
             List<BillDetailRowResponse> details = billService.getBillDetailsForCurrentUser(null);
             return ResponseEntity.ok(details);
         } catch (Exception e) {
-            // Log lỗi nếu cần
             return ResponseEntity.badRequest().build();
         }
     }
@@ -54,13 +52,12 @@ public class BillController {
     @GetMapping("/user/details")
     public ResponseEntity<List<BillDetailRowResponse>> getUserBillDetails(
             @RequestParam(required = false) List<BillDetailStatus> statuses) {
-        // Truyền thẳng tham số xuống Service
         return ResponseEntity.ok(billService.getBillDetailsForCurrentUser(statuses));
     }
 
     @GetMapping("/admin/details")
     public ResponseEntity<Page<AdminBillDetailResponse>> getAdminBillDetails(
-            @ModelAttribute BillDetailFilterRequest filter, // Lấy toàn bộ tham số URL map vào Object
+            @ModelAttribute BillDetailFilterRequest filter, 
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
         

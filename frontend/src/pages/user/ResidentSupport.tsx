@@ -33,7 +33,6 @@ const ResidentSupport: React.FC = () => {
     );
   };
 
-  // HÀM ĐÃ ĐƯỢC SỬA ĐỂ GỌI API THẬT
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -44,8 +43,6 @@ const ResidentSupport: React.FC = () => {
     };
 
     try {
-      // Lấy token từ localStorage (hoặc nơi bạn lưu trữ token đăng nhập)
-      // Nếu dự án của bạn dùng session cookie, có thể không cần dòng này
       const token = localStorage.getItem("token");
 
       const response = await fetch(
@@ -54,7 +51,6 @@ const ResidentSupport: React.FC = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // Gắn token vào header để Backend xác thực UserDetails
             Authorization: token ? `Bearer ${token}` : "",
           },
           body: JSON.stringify(payload),
@@ -63,13 +59,10 @@ const ResidentSupport: React.FC = () => {
 
       if (response.ok) {
         alert("Gửi yêu cầu thành công!");
-        // Reset form
         setDescription("");
         setSelectedFiles([]);
-        // Chuyển hướng sang trang lịch sử yêu cầu để xem
         navigate("/user/history");
       } else {
-        // Xử lý lỗi từ Backend trả về
         const errorData = await response.json().catch(() => ({}));
         alert(
           "Lỗi khi gửi yêu cầu: " +
@@ -99,7 +92,6 @@ const ResidentSupport: React.FC = () => {
 
       <div className="support-card">
         <form onSubmit={handleSubmit} className="support-form">
-          {/* Loại yêu cầu */}
           <div className="form-group">
             <label>
               Loại yêu cầu <span className="required">*</span>
@@ -118,7 +110,6 @@ const ResidentSupport: React.FC = () => {
             </select>
           </div>
 
-          {/* Nội dung chi tiết */}
           <div className="form-group">
             <label>
               Nội dung chi tiết <span className="required">*</span>
@@ -136,7 +127,6 @@ const ResidentSupport: React.FC = () => {
             </p>
           </div>
 
-          {/* Khu vực Upload Ảnh (Tạm thời Frontend chỉ nhận UI, BE chưa xử lý file) */}
           <div className="form-group">
             <label>Đính kèm hình ảnh / Tài liệu</label>
             <div
@@ -177,7 +167,6 @@ const ResidentSupport: React.FC = () => {
             )}
           </div>
 
-          {/* Actions */}
           <div className="form-actions">
             <button
               type="submit"

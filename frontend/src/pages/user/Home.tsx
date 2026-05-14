@@ -95,7 +95,11 @@ const Home = () => {
           onViewAll={() => navigate('/user/notifications')}
           onItemClick={(id) => navigate(`/user/notifications/${id}`)}
         />
-        <RequestListCard loading={loading} items={dashboardData.requests} />
+        <RequestListCard
+          loading={loading}
+          items={dashboardData.requests}
+          onItemClick={(id) => navigate('/user/requests', { state: { requestId: id } })}
+        />
       </div>
     </div>
   )

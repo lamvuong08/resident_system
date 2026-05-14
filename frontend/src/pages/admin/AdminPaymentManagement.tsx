@@ -16,7 +16,6 @@ import axiosInstance from "../../utils/api";
 
 const { Option } = Select;
 
-// Định nghĩa kiểu dữ liệu trả về từ Backend
 interface AdminBillDetailResponse {
   detailId: number;
   apartmentCode: string;
@@ -29,7 +28,6 @@ interface AdminBillDetailResponse {
   dueDate: string;
 }
 
-// Kiểu dữ liệu phân trang của Spring Boot
 interface SpringPage<T> {
   content: T[];
   totalElements: number;
@@ -55,28 +53,23 @@ const formatDate = (isoString: string | null) => {
 };
 
 const AdminPaymentManagement: React.FC = () => {
-  // State quản lý dữ liệu bảng
   const [data, setData] = useState<AdminBillDetailResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalElements, setTotalElements] = useState(0);
 
-  // State quản lý Phân trang (Antd bắt đầu từ 1, Spring bắt đầu từ 0)
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5; // Cố định 5 dòng 1 trang theo yêu cầu
+  const pageSize = 5; 
 
-  // State quản lý Bộ lọc
   const [filterApartmentCode, setFilterApartmentCode] = useState<string>("");
   const [filterMonth, setFilterMonth] = useState<number | null>(null);
   const [filterYear, setFilterYear] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
 
-  // Hàm gọi API
   const fetchBills = async (page: number) => {
     setLoading(true);
     try {
-      // Build object params, loại bỏ các giá trị null/undefined
       const params: Record<string, any> = {
-        page: page - 1, // Chuyển đổi thành 0-based index cho Spring
+        page: page - 1, 
         size: pageSize,
       };
 
@@ -99,7 +92,6 @@ const AdminPaymentManagement: React.FC = () => {
     }
   };
 
-  // Tự động fetch khi Load trang hoặc khi đổi Trang (currentPage)
   useEffect(() => {
     fetchBills(currentPage);
   }, [currentPage]);
@@ -120,7 +112,6 @@ const AdminPaymentManagement: React.FC = () => {
         },
       );
       message.success(`Đã ${actionText} cho căn hộ ${record.apartmentCode}`);
-      // Load lại dữ liệu tại trang hiện tại để cập nhật UI
       fetchBills(currentPage);
     } catch (error) {
       console.error("Lỗi cập nhật trạng thái:", error);
@@ -128,25 +119,22 @@ const AdminPaymentManagement: React.FC = () => {
     }
   };
 
-  // Hành động khi nhấn nút Lọc
   const handleFilter = () => {
     if (currentPage === 1) {
       fetchBills(1);
     } else {
-      setCurrentPage(1); // Set về 1 sẽ tự động trigger useEffect
+      setCurrentPage(1); 
     }
   };
 
-  // Hành động khi nhấn Xóa bộ lọc
   const handleClearFilter = () => {
     setFilterApartmentCode("");
     setFilterMonth(null);
     setFilterYear(null);
     setFilterStatus(null);
-    setCurrentPage(1); // Đưa về trang 1 (trigger fetch)
+    setCurrentPage(1); 
   };
 
-  // Định nghĩa các cột của Bảng
   const columns: ColumnsType<AdminBillDetailResponse> = [
     {
       title: "Căn hộ",
@@ -209,19 +197,18 @@ const AdminPaymentManagement: React.FC = () => {
     {
       title: "Hành động",
       key: "action",
-      align: "center", // Căn giữa
+      align: "center", 
       render: (_, record) => {
         const isPaid = record.status === 'PAID';
         
         return (
           <Button 
             className="admin-payment-control"
-            // Dùng type="default" để bỏ background đặc, biến nó thành nút nền trong suốt có viền
             type="default" 
-            danger={isPaid} // Nếu đã trả -> viền đỏ (Hủy)
+            danger={isPaid}
             style={
               !isPaid 
-                ? { color: '#52c41a', borderColor: '#52c41a', background: 'transparent' } // Nếu chưa trả -> viền xanh lá
+                ? { color: '#52c41a', borderColor: '#52c41a', background: 'transparent' }
                 : { background: 'transparent' }
             }
             onClick={() => handleToggleStatus(record)}
@@ -243,10 +230,9 @@ const AdminPaymentManagement: React.FC = () => {
       }
       style={{ margin: "20px" }}
     >
-      {/* THANH BỘ LỌC (TOOLBAR) */}
       <Space wrap className="admin-payment-toolbar">
         <Input
-          className="admin-payment-control" /* Gắn class vào đây */
+          className="admin-payment-control" 
           placeholder="Mã căn hộ"
           value={filterApartmentCode}
           onChange={(e) => setFilterApartmentCode(e.target.value)}
@@ -255,7 +241,7 @@ const AdminPaymentManagement: React.FC = () => {
         />
 
         <Select
-          className="admin-payment-control" /* Gắn class vào đây */
+          className="admin-payment-control" 
           placeholder="Tháng"
           value={filterMonth}
           onChange={(val) => setFilterMonth(val)}
@@ -270,7 +256,7 @@ const AdminPaymentManagement: React.FC = () => {
         </Select>
 
         <InputNumber
-          className="admin-payment-control" /* Gắn class vào đây */
+          className="admin-payment-control" 
           placeholder="Năm"
           value={filterYear}
           onChange={(val) => setFilterYear(val)}
@@ -278,7 +264,7 @@ const AdminPaymentManagement: React.FC = () => {
         />
 
         <Select
-          className="admin-payment-control" /* Gắn class vào đây */
+          className="admin-payment-control"
           placeholder="Trạng thái"
           value={filterStatus}
           onChange={(val) => setFilterStatus(val)}
@@ -302,7 +288,6 @@ const AdminPaymentManagement: React.FC = () => {
         </Button>
       </Space>
 
-      {/* BẢNG DỮ LIỆU */}
       <Table
         columns={columns}
         dataSource={data}
@@ -312,7 +297,7 @@ const AdminPaymentManagement: React.FC = () => {
           current: currentPage,
           pageSize: pageSize,
           total: totalElements,
-          showSizeChanger: false, // Tắt tính năng đổi số dòng/trang vì bạn fix cứng 5 dòng
+          showSizeChanger: false, 
           onChange: (page) => setCurrentPage(page),
         }}
       />

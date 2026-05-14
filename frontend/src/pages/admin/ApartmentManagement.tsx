@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Tabs, Button, Card, Select, Space, Empty, Typography, Alert, Spin } from 'antd'
+import { Button, Card, Select, Space, Empty, Typography, Alert, Spin } from 'antd'
 import ApartmentDetail from '../../components/ApartmentDetail'
 import api from '../../utils/api'
 import type { Apartment, Building } from '../../types/api'
@@ -218,31 +218,7 @@ const ApartmentManagement: React.FC = () => {
       </Card>
 
       <div style={{ marginTop: 18 }}>
-        <Tabs
-          defaultActiveKey="1"
-          items={[
-            {
-              key: '1',
-              label: 'Tổng quan',
-              children: <ApartmentDetail apartment={aptData} onApartmentReload={reloadApartmentDetail} />,
-            },
-            { key: '2', label: 'Cư dân', children: (
-                <div style={{ padding: 12 }}>
-                  <Button
-                    type="primary"
-                    disabled={!activeApartmentCode}
-                    onClick={() => navigate(`/admin/quan-ly-cu-tru?apt=${activeApartmentCode || ''}`)}
-                  >
-                    Mở quản lý cư trú
-                  </Button>
-                </div>
-              )
-            },
-            { key: '3', label: 'Thanh toán', children: 'Thanh toán (placeholder)' },
-            { key: '4', label: 'Yêu cầu', children: 'Yêu cầu (placeholder)' },
-            { key: '5', label: 'Lịch sử', children: 'Lịch sử (placeholder)' }
-          ]}
-        />
+        <ApartmentDetail apartment={aptData} onApartmentReload={reloadApartmentDetail} />
       </div>
     </div>
   )

@@ -6,7 +6,7 @@ import com.dancu.qlydancu.model.enums.BillDetailStatus;
 
 public record AdminBillDetailResponse(
     Long detailId,
-    String apartmentCode, // Cột Mã căn hộ dành cho Admin
+    String apartmentCode,
     String billingMonth,
     String feeTypeName,
     Long amount,

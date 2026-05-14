@@ -23,6 +23,8 @@ export type DashboardPayment = {
   amount: number
   dueDate: string | null
   status: string
+  billingMonth?: number
+  billingYear?: number
 }
 
 export type DashboardRequest = {

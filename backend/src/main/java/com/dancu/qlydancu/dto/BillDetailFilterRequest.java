@@ -8,7 +8,6 @@ public class BillDetailFilterRequest {
     private Integer year;
     private BillDetailStatus status;
 
-    // Getters and Setters
     public String getApartmentCode() { return apartmentCode; }
     public void setApartmentCode(String apartmentCode) { this.apartmentCode = apartmentCode; }
 

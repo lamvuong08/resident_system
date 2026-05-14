@@ -81,7 +81,6 @@ public class ApartmentController {
                     return apartmentRepository.findByBuilding_Id(id);
                 }
             } catch (NumberFormatException e) {
-                // If not numeric, treat as building code
                 if (floor != null) {
                     return apartmentRepository.findByBuilding_CodeAndFloorNumber(buildingId, floor);
                 } else {
@@ -174,19 +173,9 @@ public class ApartmentController {
     }
 
     private ApartmentResponse toApartmentResponse(Apartment apartment) {
-        // 1. Sử dụng Constructor đã có (tự động map id, code, floor, area, status,
-        // building info)
         ApartmentResponse apartmentResponse = new ApartmentResponse(apartment);
-
-        // 2. Bổ sung các thông tin mà Entity Apartment không có sẵn (phải truy vấn từ
-        // Repo khác)
-        // Lấy tên chủ hộ
         apartmentResponse.ownerName = residentRepository.findOwnerNameByApartmentCode(apartment.getCode());
-
-        // Đếm số thành viên
         apartmentResponse.peopleCount = (int) residentRepository.countByApartmentCode(apartment.getCode());
-
-        // Tìm householdId (vì Apartment không có liên kết tới Household)
         apartmentResponse.householdId = householdRepository.findByApartment_Code(apartment.getCode())
                 .map(Household::getId)
                 .orElse(null);
@@ -200,17 +189,4 @@ public class ApartmentController {
         response.put("apartmentCode", apartment.getCode());
         return response;
     }
-
-    // public ResponseEntity<List<ApartmentResponse>> getApartmentsByBuildingAndFloor(
-    //         @PathVariable Long buildingId,
-    //         @PathVariable Integer floorNumber) {
-
-    //     List<Apartment> apartments = apartmentRepository.findByBuildingIdAndFloorNumber(buildingId, floorNumber);
-
-    //     List<ApartmentResponse> response = apartments.stream()
-    //             .map(ApartmentResponse::new)
-    //             .collect(Collectors.toList());
-
-    //     return ResponseEntity.ok(response);
-    // }
 }

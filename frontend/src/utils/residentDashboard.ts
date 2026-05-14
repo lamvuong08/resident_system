@@ -12,16 +12,21 @@ import type {
 const REQUEST_IN_PROGRESS_STATUSES = new Set(['IN_PROGRESS', 'PROCESSING', 'PENDING', 'DANG_XU_LY'])
 const PAYMENT_UNPAID_STATUSES = new Set(['UNPAID', 'PENDING', 'DUE', 'UNPAID_INVOICE'])
 
+export function formatBillingPeriod(month?: number, year?: number) {
+  if (!month || !year) return ''
+  return `(Tháng ${String(month).padStart(2, '0')} - ${year})`
+}
+
 const formatDate = (isoString: unknown): string | null => {
   if (typeof isoString !== 'string' || !isoString.trim()) return null;
   try {
     const date = new Date(isoString);
     if (isNaN(date.getTime())) return null;
-    
+
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-    
+
     return `${day}/${month}/${year}`;
   } catch {
     return null;
@@ -152,8 +157,6 @@ export const getResidentNotifications = async (): Promise<DashboardNotification[
   }))
 }
 
-// Thêm import api nếu chưa có (trong file hiện tại đã có: import api from './api')
-
 export const getResidentPayments = async (): Promise<DashboardPayment[]> => {
   try {
     const response = await api.get('/bills/user/details?statuses=UNPAID,PENDING');
@@ -161,18 +164,46 @@ export const getResidentPayments = async (): Promise<DashboardPayment[]> => {
 
     return rows.map((item): DashboardPayment => {
       const row = toObject(item) || {};
-      
+
       const feeName = safeString(row.feeTypeName, 'Khoản phí');
-      const month = safeString(row.billingMonth, '');
+      const billingMonthStr = safeString(row.billingMonth, '');
       const rawStatus = safeString(row.status, 'UNPAID').toUpperCase();
+
+      let bMonth: number | undefined;
+      let bYear: number | undefined;
+
+      if (billingMonthStr.includes('/')) {
+        const [m, y] = billingMonthStr.split('/');
+        bMonth = parseInt(m, 10);
+        bYear = parseInt(y, 10);
+      } else if (billingMonthStr.includes('-')) {
+        const parts = billingMonthStr.split('-');
+        if (parts[0].length === 4) {
+          bYear = parseInt(parts[0], 10);
+          bMonth = parseInt(parts[1], 10);
+        } else {
+          bMonth = parseInt(parts[0], 10);
+          bYear = parseInt(parts[1], 10);
+        }
+      } else if (billingMonthStr) {
+        bMonth = parseInt(billingMonthStr, 10);
+        const createdAtStr = safeString(row.createdAt || '', '');
+        if (createdAtStr) {
+          const date = new Date(createdAtStr);
+          if (!isNaN(date.getTime())) {
+            bYear = date.getFullYear();
+          }
+        }
+      }
 
       return {
         id: String(row.detailId ?? crypto.randomUUID()),
-        title: month ? `${feeName} (Tháng ${month})` : feeName,
+        title: feeName,
         amount: toNumber(row.amount),
-        // SỬA TẠI ĐÂY: Lấy trường dueDate từ BE và format thành ngày/tháng/năm
-        dueDate: formatDate(row.dueDate), 
+        dueDate: formatDate(row.dueDate),
         status: rawStatus,
+        billingMonth: bMonth,
+        billingYear: bYear,
       };
     });
   } catch (error) {

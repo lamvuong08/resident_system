@@ -1,4 +1,3 @@
-/** Lấy 1–2 chữ cái đầu từ họ tên (UI avatar). */
 export const displayInitials = (name?: string | null): string => {
   const t = (name || '').trim()
   if (!t) return '?'

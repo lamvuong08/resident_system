@@ -4,7 +4,6 @@
     min-height: 100vh;
 }
 
-/* Căn giữa 2 thẻ thống kê */
 .user-bill-stats-wrapper {
     display: flex;
     justify-content: center;
@@ -41,7 +40,6 @@
 .user-bill-value-paid { color: #28a745; }
 .user-bill-value-unpaid { color: #dc3545; }
 
-/* Filter Section */
 .user-bill-filter-section {
     background: white;
     padding: 15px 20px;
@@ -60,7 +58,6 @@
     outline: none;
 }
 
-/* Table Style */
 .user-bill-table-container {
     background: white;
     border-radius: 8px;

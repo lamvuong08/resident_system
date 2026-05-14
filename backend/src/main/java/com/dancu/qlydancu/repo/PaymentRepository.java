@@ -16,7 +16,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             "JOIN bd.bill b " +
             "WHERE b.apartment.id = :apartmentId")
     List<Payment> findByApartmentId(@Param("apartmentId") Long apartmentId);
-
-    // Tìm các giao dịch theo trạng thái (dùng cho Admin lấy danh sách chờ duyệt)
     List<Payment> findByStatus(PaymentStatus status);
 }

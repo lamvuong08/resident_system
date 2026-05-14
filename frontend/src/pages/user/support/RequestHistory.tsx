@@ -27,6 +27,7 @@ type RequestHistoryProps = {
   pageSize: number
   refreshAll: () => Promise<void>
   onCreateNew: () => void
+  initialRequestId?: number
 }
 
 const AttachmentPreview: React.FC<{ requestId: number; att: UserRequestAttachment }> = ({ requestId, att }) => {
@@ -78,6 +79,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
   pageSize,
   refreshAll,
   onCreateNew,
+  initialRequestId,
 }) => {
   const [activeTab, setActiveTab] = useState<string>('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -127,6 +129,15 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
     setEditNewFiles([])
     setIsModalOpen(true)
   }
+
+  useEffect(() => {
+    if (initialRequestId && items.length > 0) {
+      const match = items.find((r) => r.id === initialRequestId)
+      if (match) {
+        openDetail(match)
+      }
+    }
+  }, [initialRequestId, items])
 
   const closeModal = () => {
     setIsModalOpen(false)

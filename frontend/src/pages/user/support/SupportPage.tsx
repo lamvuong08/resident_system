@@ -3,13 +3,16 @@ import { Alert, Card, Tabs } from 'antd'
 import type { TabsProps } from 'antd'
 import CreateRequest from './CreateRequest'
 import RequestHistory from './RequestHistory'
+import { useLocation } from 'react-router-dom'
 import { useUserRequests } from '../../../hooks/useUserRequests'
 import '../../../styles/resident-dashboard.css'
 import '../../../styles/profile-household-page.css'
 import '../../../styles/support-page.css'
 
 const SupportPage = () => {
-  const req = useUserRequests({ pageSize: 5 })
+  const req = useUserRequests({ pageSize: 20 })
+  const location = useLocation()
+  const initialRequestId = location.state?.requestId ? Number(location.state.requestId) : undefined
   const [activeTab, setActiveTab] = useState<'create' | 'history'>('history')
 
   const handleCreated = async () => {
@@ -39,6 +42,7 @@ const SupportPage = () => {
           pageSize={req.pageSize}
           refreshAll={req.refreshAll}
           onCreateNew={() => setActiveTab('create')}
+          initialRequestId={initialRequestId}
         />
       ),
     },

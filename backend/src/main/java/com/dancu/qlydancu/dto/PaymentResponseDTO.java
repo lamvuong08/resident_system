@@ -10,8 +10,7 @@ import com.dancu.qlydancu.model.enums.PaymentStatus;
 
 public class PaymentResponseDTO {
     private Long id;
-    
-    // Đã thay thế billId bằng danh sách các chi tiết phí (Giỏ hàng)
+
     private List<Long> billDetailIds; 
     
     private Long amount;
@@ -21,14 +20,12 @@ public class PaymentResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime paidAt;
 
-    // Factory method để map từ Entity sang DTO
     public static PaymentResponseDTO fromEntity(Payment payment) {
         if (payment == null) return null;
         
         PaymentResponseDTO dto = new PaymentResponseDTO();
         dto.setId(payment.getId());
-        
-        // Lấy danh sách ID của các khoản phí nằm trong giao dịch này
+
         if (payment.getPaymentDetails() != null) {
             List<Long> detailIds = payment.getPaymentDetails().stream()
                     .map(pd -> pd.getBillDetail().getId())
@@ -45,7 +42,6 @@ public class PaymentResponseDTO {
         return dto;
     }
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     

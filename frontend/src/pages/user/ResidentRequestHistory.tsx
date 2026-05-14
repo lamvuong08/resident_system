@@ -14,7 +14,6 @@ interface RequestItem {
 const ResidentRequestHistory: React.FC = () => {
   const navigate = useNavigate();
 
-  // 1. STATE QUẢN LÝ DỮ LIỆU & PHÂN TRANG
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -22,23 +21,17 @@ const ResidentRequestHistory: React.FC = () => {
   const [totalElements, setTotalElements] = useState<number>(0);
   const pageSize = 5;
 
-  // 2. STATE QUẢN LÝ THỐNG KÊ (LẤY TỪ BACKEND)
   const [globalStats, setGlobalStats] = useState({ total: 0, done: 0, processing: 0, rejected: 0 });
 
-  // 3. STATE QUẢN LÝ BỘ LỌC
   const [activeTab, setActiveTab] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filterType, setFilterType] = useState<string>("ALL");
 
-  // 4. STATE QUẢN LÝ MODAL & CHỈNH SỬA
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editForm, setEditForm] = useState({ type: "REPAIR", description: "" });
 
-  // ================= API CALLS =================
-
-  // API Lấy Thống Kê Tổng
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -55,7 +48,6 @@ const ResidentRequestHistory: React.FC = () => {
     }
   };
 
-  // API Lấy Danh Sách Theo Trang
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
@@ -90,17 +82,14 @@ const ResidentRequestHistory: React.FC = () => {
     }
   };
 
-  // Chạy khi Load trang
   useEffect(() => {
     fetchStats();
   }, []);
 
-  // Chạy khi đổi trang
   useEffect(() => {
     fetchHistory();
   }, [currentPage]);
 
-  // API Xóa Yêu Cầu
   const handleDelete = async () => {
     if (!selectedRequest) return;
     const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa yêu cầu này?");
@@ -116,8 +105,8 @@ const ResidentRequestHistory: React.FC = () => {
       if (response.ok) {
         alert("Xóa yêu cầu thành công!");
         closeModal();
-        fetchHistory(); // Tải lại bảng
-        fetchStats();   // Cập nhật lại số liệu thống kê
+        fetchHistory();
+        fetchStats(); 
       } else {
         const errorData = await response.json().catch(() => ({}));
         alert("Lỗi khi xóa: " + (errorData.message || "Không thể xóa."));
@@ -127,7 +116,6 @@ const ResidentRequestHistory: React.FC = () => {
     }
   };
 
-  // API Cập Nhật Yêu Cầu
   const handleUpdate = async () => {
     if (!selectedRequest) return;
     
@@ -148,9 +136,8 @@ const ResidentRequestHistory: React.FC = () => {
       if (response.ok) {
         alert("Cập nhật yêu cầu thành công!");
         setIsEditing(false); 
-        fetchHistory(); // Tải lại bảng
-        
-        // Làm mới UI trên Modal
+        fetchHistory(); 
+
         setSelectedRequest({
           ...selectedRequest,
           type: editForm.type as RequestTypeValues,
@@ -199,7 +186,6 @@ const ResidentRequestHistory: React.FC = () => {
     }
   };
 
-  // Lọc dữ liệu trên trang hiện tại
   const filteredRequests = useMemo(() => {
     return requests.filter((req) => {
       const matchTab = activeTab === "ALL" || req.status === activeTab;
@@ -216,7 +202,6 @@ const ResidentRequestHistory: React.FC = () => {
 
   return (
     <div className="history-container">
-      {/* HEADER */}
       <div className="history-header">
         <div className="header-left">
           <h2>Lịch sử yêu cầu</h2>
@@ -227,7 +212,6 @@ const ResidentRequestHistory: React.FC = () => {
         </button>
       </div>
 
-      {/* STATS (Sử dụng globalStats từ Backend) */}
       <div className="stats-grid">
         <div className="stat-card">
           <p className="stat-label">Tổng số đã gửi</p>
@@ -247,7 +231,6 @@ const ResidentRequestHistory: React.FC = () => {
         </div>
       </div>
 
-      {/* FILTER TABS */}
       <div className="filter-section">
         <div className="filter-tabs">
           <button className={`filter-tab ${activeTab === "ALL" ? "active" : ""}`} onClick={() => setActiveTab("ALL")}>Tất cả</button>
@@ -267,7 +250,6 @@ const ResidentRequestHistory: React.FC = () => {
         </div>
       </div>
 
-      {/* TABLE */}
       <div className="table-card">
         <table className="history-table">
           <thead>
@@ -298,7 +280,6 @@ const ResidentRequestHistory: React.FC = () => {
           </tbody>
         </table>
 
-        {/* PAGINATION */}
         <div className="pagination-container">
           <div className="pagination-info">
             Hiển thị {totalElements === 0 ? 0 : startIndex} đến {endIndex} của {totalElements} kết quả
@@ -313,7 +294,6 @@ const ResidentRequestHistory: React.FC = () => {
         </div>
       </div>
 
-      {/* MODAL CHI TIẾT & SỬA */}
       {isModalOpen && selectedRequest && (
         <div className="modal-overlay">
           <div className="modal-content">

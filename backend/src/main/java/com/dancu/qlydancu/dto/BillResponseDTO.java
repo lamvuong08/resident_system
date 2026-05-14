@@ -11,6 +11,6 @@ public record BillResponseDTO(
                 Long totalAmount,
                 BillDetailStatus status,
                 LocalDateTime createdAt,
-                Map<String, Long> details // Key: Tên loại phí (Điện, Nước...), Value: Số tiền
+                Map<String, Long> details 
 ) {
 }

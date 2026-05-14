@@ -25,7 +25,6 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // QUAN TRỌNG: Đã xóa liên kết với Bill, thay bằng liên kết với PaymentDetail
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PaymentDetail> paymentDetails = new ArrayList<>();
 
@@ -61,7 +60,6 @@ public class Payment {
         this.paymentDetails = paymentDetails;
     }
 
-    // Helper method để code gọn hơn
     public void addPaymentDetail(BillDetail billDetail) {
         PaymentDetail pd = new PaymentDetail(this, billDetail);
         this.paymentDetails.add(pd);
