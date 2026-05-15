@@ -48,8 +48,6 @@ public class Resident {
     @Column(name = "household_id", nullable = false)
     private Long householdId;
 
-    @Column(name = "user_id")
-    private Long userId;
 
 
     @Transient
@@ -206,13 +204,5 @@ public class Resident {
 
     public void setApartment(Apartment apartment) {
         this.apartment = apartment;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
     }
 }

@@ -53,7 +53,7 @@ const AssignApartmentModal: React.FC<AssignApartmentModalProps> = ({ open, accou
             setLoading(true)
             await accountApi.assignApartment(account.id, {
                 apartmentId: values.apartmentId,
-                relationship: values.relationship,
+                relationship: 'HEAD',
             })
             message.success('Gán căn hộ thành công')
             onSuccess()
@@ -117,19 +117,6 @@ const AssignApartmentModal: React.FC<AssignApartmentModalProps> = ({ open, accou
                                 label: `${apt.buildingCode ? apt.buildingCode + '-' : ''}${apt.code}`
                             }))}
                         />
-                    </Form.Item>
-                    <Form.Item
-                        name="relationship"
-                        label="Vai trò"
-                        rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
-                    >
-                        <Select placeholder="Chọn vai trò" disabled={noAvailableApartments}>
-                            <Select.Option value="HEAD">Chủ hộ</Select.Option>
-                            <Select.Option value="SPOUSE">Vợ / Chồng</Select.Option>
-                            <Select.Option value="CHILD">Con</Select.Option>
-                            <Select.Option value="PARENT">Cha / Mẹ</Select.Option>
-                            <Select.Option value="OTHER">Thành viên khác / Người thuê</Select.Option>
-                        </Select>
                     </Form.Item>
                 </Form>
             )}
