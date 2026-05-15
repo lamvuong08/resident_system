@@ -13,6 +13,10 @@ import com.dancu.qlydancu.repo.MaintenanceRequestRepository;
 import com.dancu.qlydancu.repo.NotificationReceiverRepository;
 import com.dancu.qlydancu.repo.PaymentRepository;
 import com.dancu.qlydancu.repo.ResidentRepository;
+import com.dancu.qlydancu.repo.UserRepository;
+import com.dancu.qlydancu.model.User;
+
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -41,17 +45,20 @@ public class HouseholdController {
     private final PaymentRepository paymentRepository;
     private final MaintenanceRequestRepository maintenanceRequestRepository;
     private final NotificationReceiverRepository notificationReceiverRepository;
+    private final UserRepository userRepository;
 
     public HouseholdController(HouseholdRepository householdRepository,
                                ResidentRepository residentRepository,
                                PaymentRepository paymentRepository,
                                MaintenanceRequestRepository maintenanceRequestRepository,
-                               NotificationReceiverRepository notificationReceiverRepository) {
+                               NotificationReceiverRepository notificationReceiverRepository,
+                               UserRepository userRepository) {
         this.householdRepository = householdRepository;
         this.residentRepository = residentRepository;
         this.paymentRepository = paymentRepository;
         this.maintenanceRequestRepository = maintenanceRequestRepository;
         this.notificationReceiverRepository = notificationReceiverRepository;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/me/summary")
@@ -189,7 +196,21 @@ public class HouseholdController {
         if (authentication == null || authentication.getName() == null) {
             return null;
         }
-        return householdRepository.findByUser_Email(authentication.getName()).orElse(null);
+        
+        Optional<Household> headHousehold = householdRepository.findByUser_Email(authentication.getName());
+        if (headHousehold.isPresent()) {
+            return headHousehold.get();
+        }
+        
+        Optional<User> user = userRepository.findByEmail(authentication.getName());
+        if (user.isPresent()) {
+            Optional<Resident> resident = residentRepository.findByUserId(user.get().getId());
+            if (resident.isPresent() && resident.get().getHouseholdId() != null) {
+                return householdRepository.findById(resident.get().getHouseholdId()).orElse(null);
+            }
+        }
+        
+        return null;
     }
 
     private Map<String, Object> toHouseholdSummary(Household household, List<Resident> residents) {

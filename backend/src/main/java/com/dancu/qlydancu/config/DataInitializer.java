@@ -13,18 +13,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import com.dancu.qlydancu.model.Apartment;
-import com.dancu.qlydancu.model.ApartmentContract;
-import com.dancu.qlydancu.model.ApartmentFinance;
-import com.dancu.qlydancu.model.ApartmentNote;
 import com.dancu.qlydancu.model.Bill;
 import com.dancu.qlydancu.model.Building;
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.Resident;
 import com.dancu.qlydancu.model.enums.BillDetailStatus;
 import com.dancu.qlydancu.model.status.ApartmentStatus;
-import com.dancu.qlydancu.repo.ApartmentContractRepository;
-import com.dancu.qlydancu.repo.ApartmentFinanceRepository;
-import com.dancu.qlydancu.repo.ApartmentNoteRepository;
 import com.dancu.qlydancu.repo.ApartmentRepository;
 import com.dancu.qlydancu.repo.BillRepository;
 import com.dancu.qlydancu.repo.BuildingRepository;
@@ -43,28 +37,19 @@ public class DataInitializer implements CommandLineRunner {
     private final ResidentRepository residentRepository;
     private final HouseholdRepository householdRepository;
     private final BillRepository billRepository;
-    private final ApartmentFinanceRepository financeRepository;
-    private final ApartmentContractRepository contractRepository;
-    private final ApartmentNoteRepository noteRepository;
 
     public DataInitializer(BuildingRepository buildingRepository,
                            ApartmentRepository apartmentRepository,
                            ResidentRepository residentRepository,
                            HouseholdRepository householdRepository,
                            BillRepository billRepository,
-                           ApartmentFinanceRepository financeRepository,
                            PaymentRepository paymentRepository,
-                           UserRequestRepository maintenanceRepository,
-                           ApartmentContractRepository contractRepository,
-                           ApartmentNoteRepository noteRepository) {
+                           UserRequestRepository maintenanceRepository) {
         this.buildingRepository = buildingRepository;
         this.apartmentRepository = apartmentRepository;
         this.residentRepository = residentRepository;
         this.householdRepository = householdRepository;
         this.billRepository = billRepository;
-        this.financeRepository = financeRepository;
-        this.contractRepository = contractRepository;
-        this.noteRepository = noteRepository;
     }
 
     @Override
@@ -135,32 +120,12 @@ public class DataInitializer implements CommandLineRunner {
                     residentIdx++;
                 }
 
-                // ================= FINANCE FIXED =================
-                ApartmentFinance f1 = new ApartmentFinance(
-                        "Phí quản lý",
-                        400000L + rnd.nextInt(200000),
-                        month
-                );
-                ApartmentFinance f2 = new ApartmentFinance(
-                        "Tiền điện",
-                        100000L + rnd.nextInt(300000),
-                        month
-                );
-                ApartmentFinance f3 = new ApartmentFinance(
-                        "Tiền nước",
-                        50000L + rnd.nextInt(100000),
-                        month
-                );
+                // ================= BILL SEEDING =================
+                long fee1 = 400000L + rnd.nextInt(200000);
+                long fee2 = 100000L + rnd.nextInt(300000);
+                long fee3 = 50000L + rnd.nextInt(100000);
 
-                f1.setApartment(ap);
-                f2.setApartment(ap);
-                f3.setApartment(ap);
-
-                financeRepository.save(f1);
-                financeRepository.save(f2);
-                financeRepository.save(f3);
-
-                long totalBillAmount = f1.getAmount() + f2.getAmount() + f3.getAmount();
+                long totalBillAmount = fee1 + fee2 + fee3;
                 Bill bill = new Bill();
                 bill.setApartment(ap);
                 bill.setBillingMonth(month);
@@ -168,22 +133,6 @@ public class DataInitializer implements CommandLineRunner {
                 bill.setStatus(BillDetailStatus.PAID);
                 bill.setCreatedAt(LocalDateTime.now());
                 bill = billRepository.save(bill);
-
-                // ================= CONTRACT =================
-                ApartmentContract c = new ApartmentContract();
-                c.setTenantName("Người thuê " + ap.getCode());
-                c.setStartDate(LocalDate.now().minusMonths(3 + rnd.nextInt(12)));
-                c.setEndDate(LocalDate.now().plusMonths(6 + rnd.nextInt(12)));
-                c.setDeposit(1000000L + rnd.nextInt(2000000));
-                c.setApartment(ap);
-                contractRepository.save(c);
-
-                // ================= NOTE =================
-                ApartmentNote n = new ApartmentNote();
-                n.setContent("Ghi chú tự động cho " + ap.getCode());
-                n.setCreatedAt(LocalDateTime.now());
-                n.setApartment(ap);
-                noteRepository.save(n);
 
             } else {
                 ap.setStatus(ApartmentStatus.EMPTY);

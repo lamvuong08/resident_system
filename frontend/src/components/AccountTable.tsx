@@ -1,6 +1,6 @@
 import React from 'react'
 import { Table, Button, Space, Switch, Popconfirm, Tag, Tooltip } from 'antd'
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined, HomeOutlined, SwapOutlined, LogoutOutlined } from '@ant-design/icons'
 import type { AccountItem } from '../utils/account'
 import type { ColumnsType } from 'antd/es/table'
 import SlidingPaginationFooter from './SlidingPaginationFooter'
@@ -17,6 +17,9 @@ interface AccountTableProps {
   onEdit: (record: AccountItem) => void
   onDelete: (id: number) => void
   onToggleStatus: (id: number, checked: boolean) => void
+  onAssign: (record: AccountItem) => void
+  onChangeApartment: (record: AccountItem) => void
+  onRemoveApartment: (record: AccountItem) => void
 }
 
 const AccountTable: React.FC<AccountTableProps> = ({
@@ -27,6 +30,9 @@ const AccountTable: React.FC<AccountTableProps> = ({
   onEdit,
   onDelete,
   onToggleStatus,
+  onAssign,
+  onChangeApartment,
+  onRemoveApartment,
 }) => {
 
   const columns: ColumnsType<AccountItem> = [
@@ -61,6 +67,18 @@ const AccountTable: React.FC<AccountTableProps> = ({
       },
     },
     {
+      title: 'Căn hộ',
+      key: 'apartment',
+      width: 200,
+      render: (_, record) => (
+        record.apartmentCode ? (
+          <strong>{record.apartmentCode}</strong>
+        ) : (
+          <span style={{ color: '#bfbfbf' }}>-</span>
+        )
+      ),
+    },
+    {
       title: 'Trạng thái',
       key: 'status',
       width: 200,
@@ -82,9 +100,45 @@ const AccountTable: React.FC<AccountTableProps> = ({
       width: 100,
       render: (_, record) => (
         <Space size="middle">
+          {record.role === 'RESIDENT' && (
+            record.apartmentCode ? (
+              <>
+                <Tooltip title="Chuyển căn hộ">
+                  <Button
+                    type="primary"
+                    size="small"
+                    icon={<SwapOutlined />}
+                    style={{ height: 24, paddingInline: 6 }}
+                    onClick={() => onChangeApartment(record)}
+                  />
+                </Tooltip>
+                <Tooltip title="Rời căn hộ">
+                  <Button
+                    danger
+                    size="small"
+                    icon={<LogoutOutlined />}
+                    style={{ height: 24, paddingInline: 6 }}
+                    onClick={() => onRemoveApartment(record)}
+                  />
+                </Tooltip>
+              </>
+            ) : (
+              <Tooltip title="Gán căn hộ">
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<HomeOutlined />}
+                  style={{ height: 24, paddingInline: 6 }}
+                  onClick={() => onAssign(record)}
+                />
+              </Tooltip>
+            )
+          )}
           <Button
             type="text"
+            size="small"
             icon={<EditOutlined style={{ color: '#1890ff' }} />}
+            style={{ height: 24, paddingInline: 6 }}
             onClick={() => onEdit(record)}
           />
           <Popconfirm
@@ -99,6 +153,8 @@ const AccountTable: React.FC<AccountTableProps> = ({
               type="text"
               danger
               icon={<DeleteOutlined />}
+              size="small"
+              style={{ height: 24, paddingInline: 6 }}
             />
           </Popconfirm>
         </Space>

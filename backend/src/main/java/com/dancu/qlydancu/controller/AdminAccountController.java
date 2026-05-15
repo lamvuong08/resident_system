@@ -1,5 +1,7 @@
 package com.dancu.qlydancu.controller;
 
+import com.dancu.qlydancu.dto.AdminAccountAssignRequest;
+import com.dancu.qlydancu.dto.AdminAccountChangeApartmentRequest;
 import com.dancu.qlydancu.dto.AdminAccountPageResponse;
 import com.dancu.qlydancu.dto.AdminAccountResponse;
 import com.dancu.qlydancu.dto.AdminAccountStatusPatchRequest;
@@ -54,6 +56,24 @@ public class AdminAccountController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAccount(@PathVariable Long id) {
         accountService.deleteAccount(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/assign-apartment")
+    public ResponseEntity<Void> assignApartment(@PathVariable Long id, @RequestBody AdminAccountAssignRequest request) {
+        accountService.assignApartment(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/change-apartment")
+    public ResponseEntity<Void> changeApartment(@PathVariable Long id, @RequestBody AdminAccountChangeApartmentRequest request) {
+        accountService.changeApartment(id, request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/remove-apartment")
+    public ResponseEntity<Void> removeApartment(@PathVariable Long id) {
+        accountService.removeApartment(id);
         return ResponseEntity.ok().build();
     }
 }

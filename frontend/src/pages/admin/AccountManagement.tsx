@@ -6,6 +6,8 @@ import AccountFilter from '../../components/AccountFilter'
 import type { AccountFilterValues } from '../../components/AccountFilter'
 import AccountTable from '../../components/AccountTable'
 import AccountFormModal from '../../components/AccountFormModal'
+import AssignApartmentModal from '../../components/AssignApartmentModal'
+import ChangeApartmentModal from '../../components/ChangeApartmentModal'
 import { accountApi } from '../../utils/account'
 import type { AccountItem, AccountStats as StatsType, AccountUpsertRequest } from '../../utils/account'
 import { extractApiError } from '../../utils/api'
@@ -21,7 +23,11 @@ const AccountManagement: React.FC = () => {
   const [filters, setFilters] = useState<AccountFilterValues>({ search: '', role: 'ALL', status: 'ALL' })
 
   const [modalVisible, setModalVisible] = useState(false)
+  const [assignModalVisible, setAssignModalVisible] = useState(false)
+  const [changeModalVisible, setChangeModalVisible] = useState(false)
   const [editingAccount, setEditingAccount] = useState<AccountItem | null>(null)
+  const [assigningAccount, setAssigningAccount] = useState<AccountItem | null>(null)
+  const [changingAccount, setChangingAccount] = useState<AccountItem | null>(null)
   const [submitLoading, setSubmitLoading] = useState(false)
 
   const fetchData = async (page = 1, currentFilters = filters) => {
@@ -81,6 +87,49 @@ const AccountManagement: React.FC = () => {
   const handleEdit = (record: AccountItem) => {
     setEditingAccount(record)
     setModalVisible(true)
+  }
+
+  const handleAssign = (record: AccountItem) => {
+    if (record.apartmentCode) {
+      message.info('Tài khoản này đã có căn hộ, không thể gán lại.')
+      return
+    }
+    setAssigningAccount(record)
+    setAssignModalVisible(true)
+  }
+
+  const handleChangeApartment = (record: AccountItem) => {
+    if (!record.apartmentCode) {
+      message.info('Tài khoản này chưa có căn hộ để chuyển.')
+      return
+    }
+    setChangingAccount(record)
+    setChangeModalVisible(true)
+  }
+
+  const handleRemoveApartment = (record: AccountItem) => {
+    if (!record.apartmentCode) {
+      message.info('Tài khoản này chưa có căn hộ để rời.')
+      return
+    }
+
+    Modal.confirm({
+      title: 'Xác nhận rời căn hộ',
+      content: `Bạn có chắc muốn cho tài khoản này rời căn hộ ${record.apartmentCode}?`,
+      okText: 'Xác nhận',
+      okButtonProps: { danger: true },
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await accountApi.removeApartment(record.id)
+          message.success('Đã cập nhật rời căn hộ')
+          fetchData(pagination.current)
+        } catch (error: any) {
+          console.error('Lỗi khi rời căn hộ:', error)
+          message.error(extractApiError(error, 'Không thể rời căn hộ'))
+        }
+      },
+    })
   }
 
   const handleDelete = async (id: number) => {
@@ -185,6 +234,9 @@ const AccountManagement: React.FC = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleStatus={handleToggleStatus}
+        onAssign={handleAssign}
+        onChangeApartment={handleChangeApartment}
+        onRemoveApartment={handleRemoveApartment}
       />
 
       <AccountFormModal
@@ -194,6 +246,26 @@ const AccountManagement: React.FC = () => {
         onSuccess={() => fetchData(pagination.current)}
         loading={submitLoading}
         onSubmit={handleSubmit}
+      />
+
+      <AssignApartmentModal
+        open={assignModalVisible}
+        account={assigningAccount}
+        onCancel={() => setAssignModalVisible(false)}
+        onSuccess={() => {
+          setAssignModalVisible(false)
+          fetchData(pagination.current)
+        }}
+      />
+
+      <ChangeApartmentModal
+        open={changeModalVisible}
+        account={changingAccount}
+        onCancel={() => setChangeModalVisible(false)}
+        onSuccess={() => {
+          setChangeModalVisible(false)
+          fetchData(pagination.current)
+        }}
       />
     </div>
   )

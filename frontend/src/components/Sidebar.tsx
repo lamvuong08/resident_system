@@ -14,7 +14,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   CreditCardOutlined,
-  BarChartOutlined,
   CalendarOutlined,
   BellOutlined,
   CarOutlined,
@@ -102,10 +101,8 @@ const Sidebar: React.FC = () => {
     { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
     { key: 'vehicles', icon: <CarOutlined />, label: 'Quản lý phương tiện' },
     { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán' },
-    { key: 'thong-ke', icon: <BarChartOutlined />, label: 'Thống kê' },
     { key: 'thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },
     { key: 'quan-ly-tai-khoan', icon: <UserOutlined />, label: 'Quản lý tài khoản' },
-    { key: 'cai-dat', icon: <SettingOutlined />, label: 'Cài đặt' },
   ]
 
   const userItems = [

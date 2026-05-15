@@ -22,6 +22,9 @@ public interface HouseholdRepository extends JpaRepository<Household, Long> {
     @Query("SELECT h FROM Household h WHERE h.apartment.id IN :apartmentIds")
     List<Household> findByApartmentIds(@Param("apartmentIds") List<Long> apartmentIds);
 
+    @Query("SELECT h.apartment.id FROM Household h WHERE h.user IS NOT NULL")
+    List<Long> findApartmentIdsWithOwner();
+
     @Query("SELECT h FROM Household h WHERE h.apartment.building.id = :buildingId AND h.apartment.floorNumber = :floorNumber")
     List<Household> findByBuildingAndFloor(@Param("buildingId") Long buildingId,
             @Param("floorNumber") Integer floorNumber);

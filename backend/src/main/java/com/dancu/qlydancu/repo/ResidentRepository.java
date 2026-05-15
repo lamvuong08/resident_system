@@ -16,6 +16,16 @@ import java.util.Optional;
 public interface ResidentRepository extends JpaRepository<Resident, Long> {
     List<Resident> findByHouseholdId(Long householdId);
 
+    Optional<Resident> findByUserId(Long userId);
+
+    @Query(value = """
+        SELECT DISTINCT h.apartment_id
+        FROM residents r
+        JOIN households h ON r.household_id = h.id
+        """, nativeQuery = true)
+    List<Long> findOccupiedApartmentIds();
+
+
         @Query(value = """
                 SELECT COUNT(*)
                 FROM residence_records rr

@@ -164,10 +164,6 @@ public class ResidentController {
         return ResponseEntity.noContent().build();
     }
 
-    private boolean residentExists(Long residentId) {
-        return residentRepository.findById(residentId).isPresent();
-    }
-
     private void validateResidentPayload(Resident resident) {
         if (resident.getName() == null || resident.getName().isBlank()) {
             throw new IllegalArgumentException("Tên cư dân không được để trống");

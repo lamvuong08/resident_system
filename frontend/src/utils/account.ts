@@ -13,6 +13,8 @@ export interface AccountItem {
   phone: string
   role: 'ADMIN' | 'RESIDENT' | string
   status: 'ACTIVE' | 'DISABLED' | string
+  apartmentCode?: string | null
+  apartmentStatus?: string | null
   createdAt: string
 }
 
@@ -59,5 +61,17 @@ export const accountApi = {
 
   deleteAccount: (id: number) => {
     return api.delete(`/admin/accounts/${id}`)
+  },
+
+  assignApartment: (id: number, data: { apartmentId: number; relationship: string }) => {
+    return api.post(`/admin/accounts/${id}/assign-apartment`, data)
+  },
+
+  changeApartment: (id: number, data: { apartmentId: number; reason?: string }) => {
+    return api.put(`/admin/accounts/${id}/change-apartment`, data)
+  },
+
+  removeApartment: (id: number) => {
+    return api.put(`/admin/accounts/${id}/remove-apartment`)
   },
 }

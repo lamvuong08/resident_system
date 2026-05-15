@@ -20,6 +20,7 @@ import com.dancu.qlydancu.model.BillDetail;
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.Payment;
 import com.dancu.qlydancu.model.Resident;
+import com.dancu.qlydancu.model.status.ApartmentStatus;
 import com.dancu.qlydancu.repo.ApartmentRepository;
 import com.dancu.qlydancu.repo.BillDetailRepository;
 import com.dancu.qlydancu.repo.BillRepository;
@@ -54,17 +55,24 @@ public class ApartmentController {
     @GetMapping
     public List<Apartment> list(
             @RequestParam(required = false) Long buildingId,
-            @RequestParam(required = false) String buildingCode
+            @RequestParam(required = false) String buildingCode,
+            @RequestParam(required = false) Boolean available
     ) {
+        List<Apartment> apartments;
+
         if (buildingId != null) {
-            return apartmentRepository.findByBuilding_Id(buildingId);
+            apartments = apartmentRepository.findByBuilding_Id(buildingId);
+        } else if (buildingCode != null && !buildingCode.isBlank()) {
+            apartments = apartmentRepository.findByBuilding_Code(buildingCode.trim().toUpperCase());
+        } else {
+            apartments = apartmentRepository.findAll();
         }
 
-        if (buildingCode != null && !buildingCode.isBlank()) {
-            return apartmentRepository.findByBuilding_Code(buildingCode.trim().toUpperCase());
+        if (Boolean.TRUE.equals(available)) {
+            return filterAvailableApartments(apartments);
         }
 
-        return apartmentRepository.findAll();
+        return apartments;
     }
 
     @GetMapping("/filter")
@@ -188,5 +196,20 @@ public class ApartmentController {
         response.put("householdId", household.getId());
         response.put("apartmentCode", apartment.getCode());
         return response;
+    }
+
+    private List<Apartment> filterAvailableApartments(List<Apartment> apartments) {
+        if (apartments == null || apartments.isEmpty()) {
+            return List.of();
+        }
+
+        var occupiedIds = new java.util.HashSet<>(residentRepository.findOccupiedApartmentIds());
+        var ownerIds = new java.util.HashSet<>(householdRepository.findApartmentIdsWithOwner());
+
+        return apartments.stream()
+                .filter(apartment -> apartment.getStatus() == ApartmentStatus.EMPTY)
+                .filter(apartment -> !occupiedIds.contains(apartment.getId()))
+                .filter(apartment -> !ownerIds.contains(apartment.getId()))
+                .toList();
     }
 }

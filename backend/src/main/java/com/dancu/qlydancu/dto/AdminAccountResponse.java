@@ -9,5 +9,7 @@ public class AdminAccountResponse {
     public String phone;
     public String role;
     public String status;
+    public String apartmentCode;
+    public String apartmentStatus;
     public LocalDateTime createdAt;
 }
