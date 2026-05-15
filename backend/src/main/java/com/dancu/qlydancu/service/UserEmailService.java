@@ -69,7 +69,7 @@ public class UserEmailService {
         otpRepository.save(new Otp(newEmail, generatedOtp, expiryMillis, OtpPurpose.VERIFY_EMAIL));
 
         LOGGER.info("OTP created for email change, email={}", newEmail);
-        emailService.sendSimpleMessage(newEmail, "OTP xác minh email", "Mã OTP: " + generatedOtp + "\nHết hạn sau 5 phút.");
+        emailService.sendSimpleMessage(newEmail, "[Tcons Resident] Mã OTP xác minh email", buildVerifyEmailBody(generatedOtp));
         LOGGER.info("OTP email sent to {}", newEmail);
 
         return Map.of(
@@ -161,5 +161,20 @@ public class UserEmailService {
     private String normalizeEmail(String email) {
         if (email == null) return null;
         return email.trim().toLowerCase();
+    }
+
+    private String buildVerifyEmailBody(String otp) {
+        return "Xin chào,\n\n" +
+               "Chúng tôi nhận được yêu cầu xác minh địa chỉ email cho tài khoản của bạn.\n\n" +
+               "Mã OTP xác minh email là:\n\n" +
+               "━━━━━━━━━━━━━━\n" +
+               otp + "\n" +
+               "━━━━━━━━━━━━━━\n\n" +
+               "Mã có hiệu lực trong 10 phút.\n\n" +
+               "Lưu ý bảo mật:\n\n" +
+               "Không chia sẻ mã OTP với bất kỳ ai.\n" +
+               "Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.\n\n" +
+               "Trân trọng,\n" +
+               "Tcons Resident";
     }
 }

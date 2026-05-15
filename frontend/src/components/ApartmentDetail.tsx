@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Apartment, Resident } from '../types/api'
-import { Row, Col, Card, Typography, Button, Tag, Space, Modal, message, Empty } from 'antd'
+import { Row, Col, Card, Typography, Button, Tag, Space, Modal, message, Empty, Drawer, Avatar } from 'antd'
 import { DownloadOutlined, UserAddOutlined } from '@ant-design/icons'
 import { jsPDF } from 'jspdf'
 import ResidentTable from './ResidentTable'
@@ -8,6 +8,9 @@ import ResidentModal from './ResidentModal'
 import FinancePanel from './FinancePanel'
 import api, { extractApiError } from '../utils/api'
 import { formatDateVN, formatResidentGender, formatResidentRelationship, normalizeResident } from '../utils/resident'
+import { displayInitials } from '../utils/displayInitials'
+import { relationshipRoleBadge, occupancyStatusLabel, occupancyStatusBadgeColor } from '../utils/householdProfile'
+import '../styles/profile-household-page.css'
 
 const { Title } = Typography
 
@@ -131,6 +134,7 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
   const [loadingResidents, setLoadingResidents] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [editing, setEditing] = useState<Resident | null>(null)
+  const [viewingResident, setViewingResident] = useState<Resident | null>(null)
   const [savingResident, setSavingResident] = useState(false)
   const [householdId, setHouseholdId] = useState<number | null>(normalizedApartment?.householdId ?? null)
 
@@ -216,13 +220,32 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
         return
       }
 
+      const relationshipForApi = normalizeRelationshipForApi(values.relationship)
+      const hasHead = residents.some(r => normalizeRelationshipForApi(r.relationship) === 'HEAD')
+
+      if (relationshipForApi === 'HEAD') {
+        if (!editing || normalizeRelationshipForApi(editing.relationship) !== 'HEAD') {
+          if (hasHead) {
+            message.error('Căn hộ này đã có chủ hộ.')
+            setSavingResident(false)
+            return
+          }
+        }
+      } else {
+        if (!hasHead) {
+          message.error('Căn hộ này hiện chưa có chủ hộ. Vui lòng thêm chủ hộ trước.')
+          setSavingResident(false)
+          return
+        }
+      }
+
       const payload = {
         name: values.name,
         gender: normalizeGenderForApi(values.gender),
         dob: values.dob || null,
         cccd: sanitizeOptionalText(values.cccd),
         phone: sanitizeOptionalText(values.phone),
-        relationship: normalizeRelationshipForApi(values.relationship),
+        relationship: relationshipForApi,
         householdId: resolvedHouseholdId,
       }
 
@@ -350,6 +373,7 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
             <ResidentTable
               data={residents}
               loading={loadingResidents}
+              onView={(r) => setViewingResident(r)}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
@@ -367,6 +391,91 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
         householdId={householdId}
         loading={savingResident}
       />
+
+      <Drawer
+        open={Boolean(viewingResident)}
+        onClose={() => setViewingResident(null)}
+        title={null}
+        placement="right"
+        size="default"
+        destroyOnClose
+        className="profile-household__resident-drawer"
+      >
+        {!viewingResident ? null : (
+          (() => {
+            const initials = displayInitials(viewingResident.name || '')
+            const role = relationshipRoleBadge(viewingResident.relationship)
+            const formatChunk = (value: string | null | undefined) => {
+              const raw = String(value || '').replace(/\s+/g, '')
+              if (!raw || raw === '-') return '—'
+              return raw.replace(/(.{4})/g, '$1 ').trim()
+            }
+            const renderRow = (label: string, value: string) => (
+              <div className="ph-drawer-row">
+                <dt>{label}</dt>
+                <dd>{value || '—'}</dd>
+              </div>
+            )
+            return (
+              <div className="ph-drawer-detail">
+                <header className="ph-drawer-hero">
+                  <Avatar size={56} className="ph-drawer-avatar">
+                    {initials}
+                  </Avatar>
+                  <h2 className="ph-drawer-name">{viewingResident.name || 'Cư dân'}</h2>
+                  <Tag color={role.color} className="ph-drawer-role-tag">
+                    {formatResidentRelationship(viewingResident.relationship) || '—'}
+                  </Tag>
+                </header>
+
+                <section className="ph-drawer-section">
+                  <h3 className="ph-drawer-section__label">Thông tin cá nhân</h3>
+                  <dl className="ph-drawer-dl">
+                    {renderRow('Giới tính', formatResidentGender(viewingResident.gender))}
+                    {renderRow('Ngày sinh', formatDateVN(viewingResident.dob))}
+                    {renderRow('CCCD', formatChunk(viewingResident.cccd))}
+                  </dl>
+                </section>
+
+                <section className="ph-drawer-section">
+                  <h3 className="ph-drawer-section__label">Liên hệ</h3>
+                  <dl className="ph-drawer-dl">
+                    {renderRow('Số điện thoại', formatChunk(viewingResident.phone))}
+                  </dl>
+                </section>
+
+                <section className="ph-drawer-section">
+                  <h3 className="ph-drawer-section__label">Hộ khẩu</h3>
+                  <dl className="ph-drawer-dl">
+                    {renderRow('Căn hộ', normalizedApartment?.code || '—')}
+                    <div className="ph-drawer-row">
+                      <dt>Trạng thái</dt>
+                      <dd>
+                        <Tag color={occupancyStatusBadgeColor(viewingResident.status)} className="ph-drawer-status-tag">
+                          {occupancyStatusLabel(viewingResident.status)}
+                        </Tag>
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <div className="ph-drawer-actions">
+                  <Button
+                    type="primary"
+                    className="ph-drawer-btn ph-drawer-btn--primary"
+                    onClick={() => {
+                      setViewingResident(null)
+                      handleEdit(viewingResident)
+                    }}
+                  >
+                    Cập nhật
+                  </Button>
+                </div>
+              </div>
+            )
+          })()
+        )}
+      </Drawer>
     </div>
   )
 }

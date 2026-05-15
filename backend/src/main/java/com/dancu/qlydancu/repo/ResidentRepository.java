@@ -145,6 +145,7 @@ public interface ResidentRepository extends JpaRepository<Resident, Long> {
             r.dob AS dob,
             r.cccd AS cccd,
             r.phone AS phone,
+            r.gender AS gender,
             r.relationship AS relationship,
             r.resident_category AS residentCategory,
             r.occupancy_status AS occupancyStatus,

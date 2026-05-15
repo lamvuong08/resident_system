@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
+  Avatar,
   Badge,
   Button,
   Card,
@@ -24,10 +25,13 @@ import type { ColumnsType } from 'antd/es/table'
 import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import api, { extractApiError } from '../../utils/api'
-import { formatDateVN, formatResidentRelationship } from '../../utils/resident'
+import { formatDateVN, formatResidentRelationship, formatResidentGender } from '../../utils/resident'
+import { displayInitials } from '../../utils/displayInitials'
+import { relationshipRoleBadge } from '../../utils/householdProfile'
 import SlidingPaginationFooter from '../../components/SlidingPaginationFooter'
 import { PAGE_SIZE } from '../../utils/pagination'
 import '../../styles/resident-management.css'
+import '../../styles/profile-household-page.css'
 
 const { Text } = Typography
 
@@ -44,6 +48,7 @@ type ResidentApi = {
   phone?: string | null
   relationship?: string | null
   householdId?: number | string | null
+  gender?: string | null
   residentCategory?: ResidentCategory | null
   occupancyStatus?: OccupancyStatus | null
   status?: string | null
@@ -84,6 +89,7 @@ type ResidentFormValues = {
   cccd?: string
   phone?: string
   relationship?: string
+  gender?: string
   apartmentCode: string
 }
 
@@ -377,6 +383,7 @@ const ResidentManagement: React.FC = () => {
       cccd: row.cccd === '-' ? '' : row.cccd,
       phone: row.phone === '-' ? '' : row.phone,
       relationship: row.raw.relationship || undefined,
+      gender: row.raw.gender || undefined,
       apartmentCode: row.apartmentCode !== '-' ? row.apartmentCode : undefined,
     })
 
@@ -422,6 +429,7 @@ const ResidentManagement: React.FC = () => {
         cccd: values.cccd?.trim() || null,
         phone: values.phone?.trim() || null,
         relationship: values.relationship || 'OTHER',
+        gender: values.gender || null,
         householdId,
       }
 
@@ -625,21 +633,93 @@ const ResidentManagement: React.FC = () => {
       <Drawer
         open={Boolean(drawerResident)}
         onClose={() => setDrawerResident(null)}
-        title="Chi tiết cư dân"
-        size={500}
+        title={null}
+        placement="right"
+        size="default"
         destroyOnClose
+        className="profile-household__resident-drawer"
       >
         {!drawerResident ? null : (
-          <Space direction="vertical" size={14} style={{ width: '100%' }}>
-            <Row justify="space-between"><Text type="secondary">Họ tên</Text><Text strong>{drawerResident.fullName}</Text></Row>
-            <Row justify="space-between"><Text type="secondary">Căn hộ</Text><Text>{drawerResident.apartmentCode}</Text></Row>
-            <Row justify="space-between"><Text type="secondary">CCCD</Text><Text>{drawerResident.cccd}</Text></Row>
-            <Row justify="space-between"><Text type="secondary">Ngày sinh</Text><Text>{drawerResident.dobLabel}</Text></Row>
-            <Row justify="space-between"><Text type="secondary">SĐT</Text><Text>{drawerResident.phone}</Text></Row>
-            <Row justify="space-between"><Text type="secondary">Quan hệ</Text><Text>{drawerResident.relationship}</Text></Row>
-            <Row justify="space-between"><Text type="secondary">Loại cư dân</Text><Tag color={drawerResident.residentCategory === 'OFFICIAL' ? 'blue' : 'gold'}>{CATEGORY_LABEL[drawerResident.residentCategory]}</Tag></Row>
-            <Row justify="space-between"><Text type="secondary">Trạng thái</Text><Badge color={OCCUPANCY_COLOR[drawerResident.occupancyStatus]} text={OCCUPANCY_LABEL[drawerResident.occupancyStatus]} /></Row>
-          </Space>
+          (() => {
+            const initials = displayInitials(drawerResident.fullName)
+            const role = relationshipRoleBadge(drawerResident.raw.relationship)
+            const formatChunk = (value: string | null | undefined) => {
+              const raw = String(value || '').replace(/\s+/g, '')
+              if (!raw || raw === '-') return '—'
+              return raw.replace(/(.{4})/g, '$1 ').trim()
+            }
+            const renderRow = (label: string, value: string) => (
+              <div className="ph-drawer-row">
+                <dt>{label}</dt>
+                <dd>{value || '—'}</dd>
+              </div>
+            )
+            return (
+              <div className="ph-drawer-detail">
+                <header className="ph-drawer-hero">
+                  <Avatar size={56} className="ph-drawer-avatar">
+                    {initials}
+                  </Avatar>
+                  <h2 className="ph-drawer-name">{drawerResident.fullName}</h2>
+                  <Tag color={role.color} className="ph-drawer-role-tag">
+                    {drawerResident.relationship}
+                  </Tag>
+                </header>
+
+                <section className="ph-drawer-section">
+                  <h3 className="ph-drawer-section__label">Thông tin cá nhân</h3>
+                  <dl className="ph-drawer-dl">
+                    {renderRow('Giới tính', formatResidentGender(drawerResident.raw.gender))}
+                    {renderRow('Ngày sinh', drawerResident.dobLabel !== '-' && drawerResident.dobLabel ? drawerResident.dobLabel : '—')}
+                    {renderRow('CCCD', formatChunk(drawerResident.cccd))}
+                  </dl>
+                </section>
+
+                <section className="ph-drawer-section">
+                  <h3 className="ph-drawer-section__label">Liên hệ</h3>
+                  <dl className="ph-drawer-dl">
+                    {renderRow('Số điện thoại', formatChunk(drawerResident.phone))}
+                  </dl>
+                </section>
+
+                <section className="ph-drawer-section">
+                  <h3 className="ph-drawer-section__label">Hộ khẩu</h3>
+                  <dl className="ph-drawer-dl">
+                    {renderRow('Căn hộ', drawerResident.apartmentCode || '—')}
+                    <div className="ph-drawer-row">
+                      <dt>Loại cư dân</dt>
+                      <dd>
+                        <Tag color={drawerResident.residentCategory === 'OFFICIAL' ? 'blue' : 'gold'}>
+                          {CATEGORY_LABEL[drawerResident.residentCategory]}
+                        </Tag>
+                      </dd>
+                    </div>
+                    <div className="ph-drawer-row">
+                      <dt>Trạng thái</dt>
+                      <dd>
+                        <Tag color={OCCUPANCY_COLOR[drawerResident.occupancyStatus]} className="ph-drawer-status-tag">
+                          {OCCUPANCY_LABEL[drawerResident.occupancyStatus]}
+                        </Tag>
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <div className="ph-drawer-actions">
+                  <Button
+                    type="primary"
+                    className="ph-drawer-btn ph-drawer-btn--primary"
+                    onClick={() => {
+                      setDrawerResident(null)
+                      openEditModal(drawerResident)
+                    }}
+                  >
+                    Cập nhật
+                  </Button>
+                </div>
+              </div>
+            )
+          })()
         )}
       </Drawer>
 
@@ -687,6 +767,20 @@ const ResidentManagement: React.FC = () => {
                     { value: 'SPOUSE', label: 'Vợ / Chồng' },
                     { value: 'CHILD', label: 'Con' },
                     { value: 'PARENT', label: 'Cha / Mẹ' },
+                    { value: 'OTHER', label: 'Khác' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <Form.Item name="gender" label="Giới tính">
+                <Select
+                  allowClear
+                  placeholder="Chọn giới tính"
+                  options={[
+                    { value: 'MALE', label: 'Nam' },
+                    { value: 'FEMALE', label: 'Nữ' },
                     { value: 'OTHER', label: 'Khác' },
                   ]}
                 />

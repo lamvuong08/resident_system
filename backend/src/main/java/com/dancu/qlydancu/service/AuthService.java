@@ -73,7 +73,7 @@ public class AuthService {
 
         otpRepository.deleteByEmailAndPurpose(email, OtpPurpose.RESET_PASSWORD);
         otpRepository.save(new Otp(email, generatedOtp, expiryMillis, OtpPurpose.RESET_PASSWORD));
-        emailService.sendSimpleMessage(email, "OTP đặt lại mật khẩu", "Mã OTP: " + generatedOtp + "\nHết hạn sau 10 phút.");
+        emailService.sendSimpleMessage(email, "[Tcons Resident] Mã OTP đặt lại mật khẩu", buildResetPasswordEmailBody(generatedOtp));
 
         return generatedOtp; 
     }
@@ -111,7 +111,7 @@ public class AuthService {
 
         otpRepository.deleteByEmailAndPurpose(email, OtpPurpose.REGISTER);
         otpRepository.save(new Otp(email, generatedOtp, expiryMillis, OtpPurpose.REGISTER));
-        emailService.sendSimpleMessage(email, "OTP đăng ký", "Mã OTP: " + generatedOtp + "\nHết hạn sau 10 phút.");
+        emailService.sendSimpleMessage(email, "[Tcons Resident] Mã OTP đăng ký tài khoản", buildRegisterEmailBody(generatedOtp));
 
         return generatedOtp;
     }
@@ -159,5 +159,35 @@ public class AuthService {
     private String normalizeEmail(String email) {
         if (email == null) return null;
         return email.trim().toLowerCase();
+    }
+
+    private String buildRegisterEmailBody(String otp) {
+        return "Xin chào,\n\n" +
+               "Cảm ơn bạn đã đăng ký tài khoản tại Tcons Resident.\n\n" +
+               "Mã OTP đăng ký của bạn là:\n\n" +
+               "━━━━━━━━━━━━━━\n" +
+               otp + "\n" +
+               "━━━━━━━━━━━━━━\n\n" +
+               "Mã có hiệu lực trong 10 phút.\n\n" +
+               "Lưu ý bảo mật:\n\n" +
+               "Không chia sẻ mã OTP với bất kỳ ai.\n" +
+               "Nếu bạn không thực hiện đăng ký tài khoản, vui lòng bỏ qua email này.\n\n" +
+               "Trân trọng,\n" +
+               "Tcons Resident";
+    }
+
+    private String buildResetPasswordEmailBody(String otp) {
+        return "Xin chào,\n\n" +
+               "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.\n\n" +
+               "Mã OTP đặt lại mật khẩu là:\n\n" +
+               "━━━━━━━━━━━━━━\n" +
+               otp + "\n" +
+               "━━━━━━━━━━━━━━\n\n" +
+               "Mã có hiệu lực trong 10 phút.\n\n" +
+               "Lưu ý bảo mật:\n\n" +
+               "Không chia sẻ mã OTP với bất kỳ ai.\n" +
+               "Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.\n\n" +
+               "Trân trọng,\n" +
+               "Tcons Resident";
     }
 }

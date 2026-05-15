@@ -3,11 +3,18 @@ package com.dancu.qlydancu.controller;
 import com.dancu.qlydancu.model.Resident;
 import com.dancu.qlydancu.model.enums.OccupancyStatus;
 import com.dancu.qlydancu.model.enums.ResidentCategory;
+import com.dancu.qlydancu.model.enums.ResidentRelationship;
 import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.ResidentRepository;
+import com.dancu.qlydancu.repo.ApartmentRepository;
+import com.dancu.qlydancu.model.Apartment;
+import com.dancu.qlydancu.model.status.ApartmentStatus;
+import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.repo.projection.ResidentAdminRowProjection;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,10 +25,12 @@ import java.util.Map;
 public class ResidentController {
     private final ResidentRepository residentRepository;
     private final HouseholdRepository householdRepository;
+    private final ApartmentRepository apartmentRepository;
 
-    public ResidentController(ResidentRepository residentRepository, HouseholdRepository householdRepository) {
+    public ResidentController(ResidentRepository residentRepository, HouseholdRepository householdRepository, ApartmentRepository apartmentRepository) {
         this.residentRepository = residentRepository;
         this.householdRepository = householdRepository;
+        this.apartmentRepository = apartmentRepository;
     }
 
     @GetMapping
@@ -64,6 +73,28 @@ public class ResidentController {
         resident.setResidentCategory(ResidentCategory.OFFICIAL);
         resident.setOccupancyStatus(OccupancyStatus.LIVING);
         validateResidentPayload(resident);
+
+        Household household = householdRepository.findById(resident.getHouseholdId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "HouseholdId không tồn tại"));
+
+        List<Resident> currentResidents = residentRepository.findByHouseholdId(household.getId());
+        boolean hasHead = currentResidents.stream().anyMatch(r -> r.getRelationship() == ResidentRelationship.HEAD);
+        
+        if (resident.getRelationship() == ResidentRelationship.HEAD) {
+            if (hasHead) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Căn hộ này đã có chủ hộ.");
+            }
+            Apartment apartment = household.getApartment();
+            if (apartment != null && apartment.getStatus() != ApartmentStatus.OCCUPIED) {
+                apartment.setStatus(ApartmentStatus.OCCUPIED);
+                apartmentRepository.save(apartment);
+            }
+        } else {
+            if (!hasHead) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Căn hộ này hiện chưa có chủ hộ. Vui lòng thêm chủ hộ trước.");
+            }
+        }
+
         Resident savedResident = residentRepository.save(resident);
         return ResponseEntity.ok(savedResident);
     }
@@ -83,16 +114,53 @@ public class ResidentController {
                 ? existingResident.getOccupancyStatus()
                 : OccupancyStatus.LIVING);
         validateResidentPayload(resident);
+
+        Household household = householdRepository.findById(resident.getHouseholdId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "HouseholdId không tồn tại"));
+
+        List<Resident> currentResidents = residentRepository.findByHouseholdId(household.getId());
+        currentResidents.removeIf(r -> r.getId().equals(id));
+        boolean hasHead = currentResidents.stream().anyMatch(r -> r.getRelationship() == ResidentRelationship.HEAD);
+        
+        if (resident.getRelationship() == ResidentRelationship.HEAD) {
+            if (hasHead) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Căn hộ này đã có chủ hộ.");
+            }
+            Apartment apartment = household.getApartment();
+            if (apartment != null && apartment.getStatus() != ApartmentStatus.OCCUPIED) {
+                apartment.setStatus(ApartmentStatus.OCCUPIED);
+                apartmentRepository.save(apartment);
+            }
+        } else {
+            if (!hasHead) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Căn hộ này hiện chưa có chủ hộ. Vui lòng thêm chủ hộ trước.");
+            }
+        }
+
         Resident updatedResident = residentRepository.save(resident);
         return ResponseEntity.ok(updatedResident);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!residentExists(id)) {
+        Resident existingResident = residentRepository.findById(id).orElse(null);
+        if (existingResident == null) {
             return ResponseEntity.notFound().build();
         }
         residentRepository.deleteById(id);
+
+        Household household = householdRepository.findById(existingResident.getHouseholdId()).orElse(null);
+        if (household != null) {
+            List<Resident> remaining = residentRepository.findByHouseholdId(household.getId());
+            if (remaining.isEmpty()) {
+                Apartment apartment = household.getApartment();
+                if (apartment != null) {
+                    apartment.setStatus(ApartmentStatus.EMPTY);
+                    apartmentRepository.save(apartment);
+                }
+            }
+        }
+
         return ResponseEntity.noContent().build();
     }
 
@@ -138,6 +206,7 @@ public class ResidentController {
         response.put("cccd", row.getCccd());
         response.put("phone", row.getPhone());
         response.put("relationship", row.getRelationship());
+        response.put("gender", row.getGender());
         response.put("residentCategory", row.getResidentCategory());
         response.put("occupancyStatus", row.getOccupancyStatus());
         response.put("status", row.getOccupancyStatus());

@@ -9,6 +9,7 @@ public interface ResidentAdminRowProjection {
     String getCccd();
     String getPhone();
     String getRelationship();
+    String getGender();
     String getResidentCategory();
     String getOccupancyStatus();
     Long getHouseholdId();
