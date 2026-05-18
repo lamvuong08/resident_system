@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/resident-request-history.css";
-import { RequestType, type RequestTypeValues } from "./ResidentSupport";
+import type { RequestTypeValues } from "./ResidentSupport";
 
 interface RequestItem {
   id: number;

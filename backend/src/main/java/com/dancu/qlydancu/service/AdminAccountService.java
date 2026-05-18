@@ -187,17 +187,37 @@ public class AdminAccountService {
     }
 
     public void assignApartment(Long userId, AdminAccountAssignRequest request) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+        if (request == null || request.apartmentId == null || request.relationship == null || request.relationship.isBlank()) {
+            throw new IllegalArgumentException("Thiếu thông tin gán căn hộ");
+        }
 
-        if (householdRepository.findByUser_Id(user.getId()).isPresent()) {
-            throw new RuntimeException("Tài khoản này đã được gán cho một căn hộ khác.");
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+
+        if (residentRepository.findByUserId(user.getId()).isPresent()
+                || householdRepository.findByUser_Id(user.getId()).isPresent()) {
+            throw new IllegalArgumentException("Tài khoản này đã được gán vào 1 căn hộ.");
         }
 
         Apartment apartment = apartmentRepository.findById(request.apartmentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Căn hộ không tồn tại"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Căn hộ không tồn tại"));
 
-        Household household = householdRepository.findByApartment_Code(apartment.getCode())
+        if (apartment.getStatus() != ApartmentStatus.EMPTY) {
+            throw new IllegalArgumentException("Căn hộ này không còn trống.");
+        }
+
+        if (!residentRepository.findByApartmentId(apartment.getId()).isEmpty()) {
+            throw new IllegalArgumentException("Căn hộ này đã có cư dân.");
+        }
+
+        Household existingHousehold = householdRepository.findByApartment_Code(apartment.getCode()).orElse(null);
+        if (existingHousehold != null && existingHousehold.getUser() != null) {
+            throw new IllegalArgumentException("Căn hộ này đã có chủ hộ.");
+        }
+
+        Household household = existingHousehold != null
+                ? existingHousehold
+                : householdRepository.findByApartment_Code(apartment.getCode())
                 .orElseGet(() -> {
                     Household newHousehold = new Household();
                     newHousehold.setApartment(apartment);
@@ -205,55 +225,83 @@ public class AdminAccountService {
                     return householdRepository.save(newHousehold);
                 });
 
-        if (household.getUser() != null && !household.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Căn hộ này đã có tài khoản chủ hộ khác.");
+        ResidentRelationship rel = ResidentRelationship.valueOf(request.relationship);
+
+        if (rel == ResidentRelationship.HEAD) {
+            List<Resident> residents = residentRepository.findByHouseholdId(household.getId());
+            boolean hasHead = residents.stream().anyMatch(r -> r.getRelationship() == ResidentRelationship.HEAD);
+            if (hasHead) {
+                throw new IllegalArgumentException("Căn hộ này đã có chủ hộ. Vui lòng chọn vai trò khác.");
+            }
+            if (household.getUser() == null) {
+                household.setUser(user);
+                householdRepository.save(household);
+            }
         }
-        
-        household.setUser(user);
-        householdRepository.save(household);
+
+        Resident resident = new Resident();
+        resident.setName(user.getName());
+        resident.setPhone(user.getUsername());
+        resident.setHouseholdId(household.getId());
+        resident.setRelationship(rel);
+        resident.setResidentCategory(ResidentCategory.OFFICIAL);
+        resident.setOccupancyStatus(OccupancyStatus.LIVING);
+        residentRepository.save(resident);
 
         if (apartment.getStatus() != ApartmentStatus.OCCUPIED) {
             apartment.setStatus(ApartmentStatus.OCCUPIED);
             apartmentRepository.save(apartment);
         }
-
-        List<Resident> residents = residentRepository.findByHouseholdId(household.getId());
-        Resident resident = residents.stream()
-                .filter(r -> r.getRelationship() == ResidentRelationship.HEAD)
-                .findFirst()
-                .orElseGet(() -> {
-                    Resident newR = new Resident();
-                    newR.setHouseholdId(household.getId());
-                    newR.setRelationship(ResidentRelationship.HEAD);
-                    newR.setResidentCategory(ResidentCategory.OFFICIAL);
-                    newR.setOccupancyStatus(OccupancyStatus.LIVING);
-                    return newR;
-                });
-
-        resident.setName(user.getName());
-        resident.setPhone(user.getUsername());
-        residentRepository.save(resident);
         
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
     }
 
     public void changeApartment(Long userId, AdminAccountChangeApartmentRequest request) {
+        if (request == null || request.apartmentId == null) {
+            throw new IllegalArgumentException("Thiếu thông tin chuyển căn hộ");
+        }
+
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
 
-        Household currentHousehold = householdRepository.findByUser_Id(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Tài khoản chưa được gán vào hộ nào"));
+        Household currentHousehold = resolveUserHousehold(user.getId());
+        if (currentHousehold == null || currentHousehold.getApartment() == null) {
+            throw new IllegalArgumentException("Tài khoản chưa có căn hộ");
+        }
 
         Apartment currentApartment = currentHousehold.getApartment();
+        if (currentApartment.getId() != null && currentApartment.getId().equals(request.apartmentId)) {
+            throw new IllegalArgumentException("Căn hộ mới trùng với căn hộ hiện tại");
+        }
+
         Apartment newApartment = apartmentRepository.findById(request.apartmentId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Căn hộ không tồn tại"));
 
         if (newApartment.getStatus() != ApartmentStatus.EMPTY) {
-            throw new IllegalArgumentException("Căn hộ mới không còn trống.");
+            throw new IllegalArgumentException("Căn hộ này không còn trống.");
         }
 
-        Household newHousehold = householdRepository.findByApartment_Code(newApartment.getCode())
+        if (!residentRepository.findByApartmentId(newApartment.getId()).isEmpty()) {
+            throw new IllegalArgumentException("Căn hộ này đã có cư dân.");
+        }
+
+        Household existingNewHousehold = householdRepository.findByApartment_Code(newApartment.getCode()).orElse(null);
+        if (existingNewHousehold != null && existingNewHousehold.getUser() != null) {
+            throw new IllegalArgumentException("Căn hộ này đã có chủ hộ.");
+        }
+
+        Resident resident = residentRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Tài khoản chưa có cư dân"));
+
+        ResidentRelationship rel = resident.getRelationship();
+        if (rel == null) {
+            throw new IllegalArgumentException("Thiếu vai trò cư dân hiện tại");
+        }
+
+        Household newHousehold = existingNewHousehold != null
+                ? existingNewHousehold
+                : householdRepository.findByApartment_Code(newApartment.getCode())
                 .orElseGet(() -> {
                     Household created = new Household();
                     created.setApartment(newApartment);
@@ -261,49 +309,62 @@ public class AdminAccountService {
                     return householdRepository.save(created);
                 });
 
-        if (newHousehold.getUser() != null) {
-            throw new IllegalArgumentException("Căn hộ mới đã có chủ hộ.");
+        if (rel == ResidentRelationship.HEAD) {
+            List<Resident> residents = residentRepository.findByHouseholdId(newHousehold.getId());
+            boolean hasHead = residents.stream().anyMatch(r -> r.getRelationship() == ResidentRelationship.HEAD);
+            if (hasHead) {
+                throw new IllegalArgumentException("Căn hộ này đã có chủ hộ.");
+            }
+            if (newHousehold.getUser() == null) {
+                newHousehold.setUser(user);
+                householdRepository.save(newHousehold);
+            }
         }
 
-        // Chuyển quyền đại diện
-        currentHousehold.setUser(null);
-        householdRepository.save(currentHousehold);
-        
-        newHousehold.setUser(user);
-        householdRepository.save(newHousehold);
+        resident.setHouseholdId(newHousehold.getId());
+        residentRepository.save(resident);
 
-        // Chuyển bản ghi Resident (Chủ hộ)
-        List<Resident> residents = residentRepository.findByHouseholdId(currentHousehold.getId());
-        residents.stream()
-                .filter(r -> r.getRelationship() == ResidentRelationship.HEAD)
-                .forEach(r -> {
-                    r.setHouseholdId(newHousehold.getId());
-                    residentRepository.save(r);
-                });
+        if (currentHousehold.getUser() != null && currentHousehold.getUser().getId().equals(user.getId())) {
+            currentHousehold.setUser(null);
+            householdRepository.save(currentHousehold);
+        }
 
-        // Cập nhật trạng thái căn hộ cũ nếu hết người
-        if (residentRepository.findByHouseholdId(currentHousehold.getId()).isEmpty()) {
+        List<Resident> remaining = residentRepository.findByHouseholdId(currentHousehold.getId());
+        if (remaining.isEmpty()) {
             currentApartment.setStatus(ApartmentStatus.EMPTY);
             apartmentRepository.save(currentApartment);
         }
 
-        newApartment.setStatus(ApartmentStatus.OCCUPIED);
-        apartmentRepository.save(newApartment);
+        if (newApartment.getStatus() != ApartmentStatus.OCCUPIED) {
+            newApartment.setStatus(ApartmentStatus.OCCUPIED);
+            apartmentRepository.save(newApartment);
+        }
     }
 
     public void removeApartment(Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
 
-        Household household = householdRepository.findByUser_Id(user.getId()).orElse(null);
-        if (household != null) {
-            household.setUser(null);
-            householdRepository.save(household);
-            
-            // Tìm và xử lý bản ghi resident tương ứng nếu cần (thường chủ hộ sẽ xoá tài khoản hoặc thu hồi quyền)
-            // Ở đây ta chỉ thu hồi quyền login vào hộ đó.
+        Household currentHousehold = resolveUserHousehold(user.getId());
+        if (currentHousehold == null || currentHousehold.getApartment() == null) {
+            throw new IllegalArgumentException("Tài khoản chưa có căn hộ");
+        }
+
+        Apartment apartment = currentHousehold.getApartment();
+        residentRepository.findByUserId(user.getId()).ifPresent(residentRepository::delete);
+
+        if (currentHousehold.getUser() != null && currentHousehold.getUser().getId().equals(user.getId())) {
+            currentHousehold.setUser(null);
+            householdRepository.save(currentHousehold);
+        }
+
+        List<Resident> remaining = residentRepository.findByHouseholdId(currentHousehold.getId());
+        if (remaining.isEmpty()) {
+            apartment.setStatus(ApartmentStatus.EMPTY);
+            apartmentRepository.save(apartment);
         }
     }
+
 
     private AdminAccountResponse mapToResponse(User user) {
         AdminAccountResponse dto = new AdminAccountResponse();
@@ -315,7 +376,7 @@ public class AdminAccountService {
         dto.status = user.getStatus() == UserStatus.ACTIVE ? "ACTIVE" : "DISABLED";
         dto.createdAt = user.getCreatedAt();
 
-        Household household = householdRepository.findByUser_Id(user.getId()).orElse(null);
+        Household household = resolveUserHousehold(user.getId());
         if (household != null && household.getApartment() != null) {
             dto.apartmentCode = household.getApartment().getCode();
             dto.apartmentStatus = household.getApartment().getStatus() != null
@@ -324,5 +385,14 @@ public class AdminAccountService {
         }
 
         return dto;
+    }
+
+    private Household resolveUserHousehold(Long userId) {
+        return residentRepository.findByUserId(userId)
+                .flatMap(resident -> resident.getHouseholdId() != null
+                        ? householdRepository.findById(resident.getHouseholdId())
+                        : java.util.Optional.empty())
+                .or(() -> householdRepository.findByUser_Id(userId))
+                .orElse(null);
     }
 }

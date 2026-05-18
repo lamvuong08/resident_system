@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/resident-support.css";
+import { createUserRequest } from "../../utils/userSupportApi";
 
 export const RequestType = {
   REPAIR: "REPAIR",
@@ -37,38 +38,17 @@ const ResidentSupport: React.FC = () => {
     event.preventDefault();
     setIsSubmitting(true);
 
-    const payload = {
-      type: requestType,
-      description: description,
-    };
-
     try {
-      const token = localStorage.getItem("token");
+      await createUserRequest({
+        type: requestType,
+        description: description.trim(),
+        files: selectedFiles.length > 0 ? selectedFiles : undefined,
+      });
 
-      const response = await fetch(
-        "http://localhost:8080/api/user/send-request",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      if (response.ok) {
-        alert("Gửi yêu cầu thành công!");
-        setDescription("");
-        setSelectedFiles([]);
-        navigate("/user/history");
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        alert(
-          "Lỗi khi gửi yêu cầu: " +
-            (errorData.message || "Vui lòng thử lại sau."),
-        );
-      }
+      alert("Gửi yêu cầu thành công!");
+      setDescription("");
+      setSelectedFiles([]);
+      navigate("/user/requests");
     } catch (error) {
       console.error("Lỗi kết nối server:", error);
       alert(

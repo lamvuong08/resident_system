@@ -157,6 +157,14 @@ const mapResidenceRecord = (item: unknown): ResidenceRecordRow => {
 const STAY_REL_PREFIX = /^Quan hệ với chủ hộ:\s*/i
 const STAY_REASON_PREFIX = /^Lý do:\s*/i
 
+const formatLocalDateTimeParts = (value: string): string | null => {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d{1,3})?$/)
+  if (!match) return null
+
+  const [, year, month, day, hour, minute, second = '00'] = match
+  return `${day}/${month}/${year}, ${hour}:${minute}:${second}`
+}
+
 export function displayTemporaryStayGuestRelationship(
   row: Pick<ResidenceRecordRow, 'type' | 'guestRelationship' | 'reason'>
 ): string {
@@ -199,15 +207,34 @@ export function displayTemporaryStayReasonOnly(
 
 export function formatUserRequestDate(iso: string | null): string {
   if (!iso) return '—'
+  if (/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso)) {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return '—'
+    return new Intl.DateTimeFormat('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Ho_Chi_Minh',
+    }).format(d)
+  }
+
+  const localParts = formatLocalDateTimeParts(iso)
+  if (localParts) return localParts
+
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleString('vi-VN', {
+  return new Intl.DateTimeFormat('vi-VN', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
-  })
+    hour12: false,
+    timeZone: 'Asia/Ho_Chi_Minh',
+  }).format(d)
 }
 
 export function getUserRequestTypeLabel(type: string): string {

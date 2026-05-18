@@ -1,5 +1,8 @@
 package com.dancu.qlydancu.service;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,26 +14,63 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.dancu.qlydancu.dto.UserRequestAttachmentDto;
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.User;
 import com.dancu.qlydancu.model.UserRequest;
 import com.dancu.qlydancu.model.enums.RequestStatus;
 import com.dancu.qlydancu.model.enums.RequestType;
 import com.dancu.qlydancu.repo.UserRequestRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class AdminUserRequestService {
 
     @Autowired
     private UserRequestRepository userRequestRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Value("${app.upload.user-requests-dir:uploads/user-requests}")
+    private String userRequestsUploadDir;
+
+    private Path baseUploadDir() {
+        return Paths.get(userRequestsUploadDir).toAbsolutePath().normalize();
+    }
+
+    private Path resolveRequestDir(Long requestId) {
+        return baseUploadDir().resolve(String.valueOf(requestId));
+    }
+
+    private void validateStoredFileName(String name) {
+        if (name == null || name.isBlank() || name.contains("..") || name.contains("/") || name.contains("\\")) {
+            throw new IllegalArgumentException("Tên tệp không hợp lệ.");
+        }
+    }
+
+    private List<UserRequestAttachmentDto> parseAttachmentsJson(String json) {
+        if (json == null || json.isBlank()) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<List<UserRequestAttachmentDto>>() {});
+        } catch (Exception e) {
+            return List.of();
+        }
+    }
 
     @Transactional(readOnly = true)
     public Map<String, Object> getRequests(String search, String type, String status, Pageable pageable) {
@@ -99,6 +139,35 @@ public class AdminUserRequestService {
         return toResponseMap(request);
     }
 
+    @Transactional(readOnly = true)
+    public UserRequestAttachmentPayload getAttachmentPayload(Long requestId, String storedFileName) {
+        validateStoredFileName(storedFileName);
+
+        UserRequest request = userRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu."));
+
+        UserRequestAttachmentDto meta = parseAttachmentsJson(request.getAttachmentsJson()).stream()
+                .filter(a -> storedFileName.equals(a.getStoredFileName()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy tệp."));
+
+        Path base = resolveRequestDir(requestId).normalize();
+        Path path = base.resolve(storedFileName).normalize();
+        if (!path.startsWith(base)) {
+            throw new IllegalArgumentException("Tên tệp không hợp lệ.");
+        }
+
+        try {
+            Resource resource = new UrlResource(path.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không đọc được tệp.");
+            }
+            return new UserRequestAttachmentPayload(resource, meta.getContentType(), meta.getOriginalName());
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không đọc được tệp.", e);
+        }
+    }
+
     @Transactional
     public Map<String, Object> updateStatus(Long id, String action, String reason) {
         UserRequest request = userRequestRepository.findById(id)
@@ -160,7 +229,14 @@ public class AdminUserRequestService {
         
         map.put("resident", residentMap);
 
-        map.put("attachments", new String[]{});
+        List<UserRequestAttachmentDto> attachments = parseAttachmentsJson(req.getAttachmentsJson()).stream()
+                .peek(att -> {
+                    String baseUrl = "/api/admin/requests/" + req.getId() + "/attachments/" + att.getStoredFileName();
+                    att.setPreviewUrl(baseUrl);
+                    att.setDownloadUrl(baseUrl);
+                })
+                .collect(Collectors.toList());
+        map.put("attachments", attachments);
 
         return map;
     }

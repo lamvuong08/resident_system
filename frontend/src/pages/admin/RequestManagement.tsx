@@ -17,7 +17,7 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
-import type { AdminRequestRow } from '../../utils/adminSupportApi'
+import type { AdminRequestAttachment, AdminRequestRow } from '../../utils/adminSupportApi'
 import {
     fetchAdminRequests,
     setAdminRequestInProgress,
@@ -25,6 +25,7 @@ import {
     setAdminRequestRejected,
     getAdminRequestTypeLabel,
     getAdminRequestStatusLabel,
+    resolveAdminRequestAttachmentUrl,
 } from '../../utils/adminSupportApi'
 import SlidingPaginationFooter from '../../components/SlidingPaginationFooter'
 import { PAGE_SIZE } from '../../utils/pagination'
@@ -93,6 +94,28 @@ const RequestManagement: React.FC = () => {
             case 'REJECTED': return 'error'
             default: return 'default'
         }
+    }
+
+    const renderAttachmentPreview = (attachment: AdminRequestAttachment) => {
+        const attachmentUrl = resolveAdminRequestAttachmentUrl(attachment.downloadUrl || attachment.previewUrl)
+        const isImage = attachment.contentType?.toLowerCase().startsWith('image/')
+        if (!isImage) {
+            return (
+                <a href={attachmentUrl} target="_blank" rel="noreferrer">
+                    {attachment.originalName}
+                </a>
+            )
+        }
+
+        return (
+            <a href={attachmentUrl} target="_blank" rel="noreferrer">
+                <img
+                    src={resolveAdminRequestAttachmentUrl(attachment.previewUrl)}
+                    alt={attachment.originalName}
+                    style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
+                />
+            </a>
+        )
     }
 
     const columns: ColumnsType<AdminRequestRow> = [
@@ -314,8 +337,8 @@ const RequestManagement: React.FC = () => {
                             <Text type="secondary">Ảnh đính kèm:</Text>{' '}
                             {selectedReq.attachments && selectedReq.attachments.length > 0 ? (
                                 <Space>
-                                    {selectedReq.attachments.map((url, i) => (
-                                        <img key={i} src={url} alt={`attachment-${i}`} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }} />
+                                    {selectedReq.attachments.map((attachment) => (
+                                        <span key={attachment.storedFileName}>{renderAttachmentPreview(attachment)}</span>
                                     ))}
                                 </Space>
                             ) : (

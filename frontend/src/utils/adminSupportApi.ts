@@ -1,5 +1,26 @@
 import api from './api'
 
+const getBackendOrigin = () => {
+    const baseUrl = api.defaults.baseURL ?? ''
+    return baseUrl.replace(/\/api\/?$/, '') || window.location.origin
+}
+
+export const resolveAdminRequestAttachmentUrl = (fileUrl?: string | null): string => {
+    if (!fileUrl) return ''
+    if (/^https?:\/\//i.test(fileUrl)) return fileUrl
+    const normalized = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`
+    return `${getBackendOrigin()}${normalized}`
+}
+
+export type AdminRequestAttachment = {
+    originalName: string
+    storedFileName: string
+    contentType: string
+    sizeBytes: number
+    previewUrl: string
+    downloadUrl: string
+}
+
 export type AdminRequestStatusList = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'REJECTED'
 export type AdminRequestType = 'REPAIR' | 'COMPLAINT' | 'SUPPORT' | string
 
@@ -14,7 +35,7 @@ export type AdminRequestRow = {
         name: string
         apartment: string
     }
-    attachments?: string[]
+    attachments?: AdminRequestAttachment[]
 }
 
 export const fetchAdminRequests = async (params: { page: number; size: number; status?: string; type?: string; searchQuery?: string }): Promise<{ items: AdminRequestRow[], totalPages: number, totalElements: number }> => {

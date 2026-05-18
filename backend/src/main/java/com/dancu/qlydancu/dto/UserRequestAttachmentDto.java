@@ -5,6 +5,8 @@ public class UserRequestAttachmentDto {
     private String storedFileName;
     private String contentType;
     private long sizeBytes;
+    private String previewUrl;
+    private String downloadUrl;
 
     public UserRequestAttachmentDto() {}
 
@@ -45,5 +47,21 @@ public class UserRequestAttachmentDto {
 
     public void setSizeBytes(long sizeBytes) {
         this.sizeBytes = sizeBytes;
+    }
+
+    public String getPreviewUrl() {
+        return previewUrl;
+    }
+
+    public void setPreviewUrl(String previewUrl) {
+        this.previewUrl = previewUrl;
+    }
+
+    public String getDownloadUrl() {
+        return downloadUrl;
+    }
+
+    public void setDownloadUrl(String downloadUrl) {
+        this.downloadUrl = downloadUrl;
     }
 }

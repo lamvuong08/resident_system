@@ -1,6 +1,7 @@
 package com.dancu.qlydancu.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import com.dancu.qlydancu.model.enums.RequestStatus;
 import com.dancu.qlydancu.model.enums.RequestType;
@@ -42,7 +43,7 @@ public class UserRequest {
     @Column(name = "status")
     private RequestStatus status;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     public UserRequest() {}
@@ -51,6 +52,9 @@ public class UserRequest {
     protected void onCreate() {
         if (this.status == null) {
             this.status = RequestStatus.PENDING;
+        }
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         }
     }
     public Long getId() { return id; }
