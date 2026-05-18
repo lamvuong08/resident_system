@@ -14,12 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dancu.qlydancu.dto.AdminBillDetailResponse;
 import com.dancu.qlydancu.dto.BillDetailFilterRequest;
 import com.dancu.qlydancu.dto.BillDetailRowResponse;
+import com.dancu.qlydancu.model.Apartment;
+import com.dancu.qlydancu.model.Bill;
 import com.dancu.qlydancu.model.BillDetail;
+import com.dancu.qlydancu.model.FeeType;
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.User;
 import com.dancu.qlydancu.model.enums.BillDetailStatus;
+import com.dancu.qlydancu.repo.ApartmentRepository;
 import com.dancu.qlydancu.repo.BillDetailRepository;
 import com.dancu.qlydancu.repo.BillDetailSpecification;
+import com.dancu.qlydancu.repo.BillRepository;
+import com.dancu.qlydancu.repo.FeeTypeRepository;
 import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.UserRepository;
 
@@ -31,6 +37,56 @@ public class BillService {
     private HouseholdRepository householdRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private BillRepository billRepository;
+    @Autowired
+    private ApartmentRepository apartmentRepository;
+    @Autowired
+    private FeeTypeRepository feeTypeRepository;
+
+
+    @Transactional
+    public void createFixedFeeBill(com.dancu.qlydancu.dto.FixedFeeRequest request) {
+        Apartment apartment = apartmentRepository.findById(request.getApartmentId())
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy căn hộ"));
+
+        FeeType feeType = feeTypeRepository.findById(request.getFeeTypeId())
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phí"));
+
+        // Tìm hoặc tạo Bill tổng
+        Bill bill = billRepository.findByApartmentIdAndBillingMonth(apartment.getId(), request.getBillingMonth())
+            .orElseGet(() -> {
+                Bill newBill = new Bill();
+                newBill.setApartment(apartment);
+                newBill.setBillingMonth(request.getBillingMonth());
+                newBill.setTotalAmount(0L);
+                newBill.setStatus(BillDetailStatus.UNPAID);
+                newBill.setCreatedAt(java.time.LocalDateTime.now());
+                return billRepository.save(newBill);
+            });
+
+        // Tìm hoặc tạo BillDetail
+        BillDetail detail = billDetailRepository.findByBillIdAndFeeTypeId(bill.getId(), feeType.getId())
+            .orElseGet(() -> {
+                BillDetail newDetail = new BillDetail();
+                newDetail.setBill(bill);
+                newDetail.setFeeType(feeType);
+                newDetail.setStatus(BillDetailStatus.UNPAID);
+                newDetail.setDueDate(java.time.LocalDateTime.now().plusDays(15));
+                return newDetail;
+            });
+
+        long oldAmount = (detail.getAmount() != null) ? detail.getAmount() : 0L;
+        detail.setQuantity(java.math.BigDecimal.ONE);
+        detail.setAmount(request.getAmount());
+        detail.setUnitPrice(request.getAmount());
+        billDetailRepository.save(detail);
+
+        // Cập nhật tổng tiền
+        long currentTotal = (bill.getTotalAmount() != null) ? bill.getTotalAmount() : 0L;
+        bill.setTotalAmount(currentTotal - oldAmount + request.getAmount());
+        billRepository.save(bill);
+    }
 
     public List<BillDetailRowResponse> getBillDetailsForCurrentUser(List<BillDetailStatus> statuses) {
         String identity = SecurityContextHolder.getContext().getAuthentication().getName();

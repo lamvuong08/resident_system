@@ -56,8 +56,7 @@ public class ApartmentController {
     public List<Apartment> list(
             @RequestParam(required = false) Long buildingId,
             @RequestParam(required = false) String buildingCode,
-            @RequestParam(required = false) Boolean available
-    ) {
+            @RequestParam(required = false) Boolean available) {
         List<Apartment> apartments;
 
         if (buildingId != null) {
@@ -78,8 +77,7 @@ public class ApartmentController {
     @GetMapping("/filter")
     public List<Apartment> filter(
             @RequestParam(required = false) String buildingId,
-            @RequestParam(required = false, name = "floor") Integer floor
-    ) {
+            @RequestParam(required = false, name = "floor") Integer floor) {
         if (buildingId != null && !buildingId.isBlank()) {
             try {
                 Long id = Long.parseLong(buildingId);

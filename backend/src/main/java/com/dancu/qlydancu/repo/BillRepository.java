@@ -1,6 +1,7 @@
 package com.dancu.qlydancu.repo;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,4 +12,6 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     List<Bill> findByApartment_Id(Long apartmentId);
 
     List<Bill> findByApartmentIdAndStatusIn(Long apartmentId, List<BillDetailStatus> statuses);
+
+    Optional<Bill> findByApartmentIdAndBillingMonth(Long apartmentId, String billingMonth);
 }
