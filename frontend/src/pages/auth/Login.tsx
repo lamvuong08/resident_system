@@ -37,7 +37,7 @@ const LoginPage = () => {
         navigate('/user');
       }
     } catch (err: any) {
-      const msg = extractApiError(err, 'Vui lòng kiểm tra lại thông tin');
+      const msg = extractApiError(err, 'Tài khoản hoặc mật khẩu của bạn không đúng. Xin vui lòng thử lại');
       notification.error({ title: 'Đăng nhập thất bại', description: msg });
     }
   };

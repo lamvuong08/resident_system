@@ -44,12 +44,23 @@ public class Payment {
     @Column(name = "transaction_code", length = 100)
     private String transactionCode;
 
+    @Column(name = "note", length = 500)
+    private String note;
+
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public List<PaymentDetail> getPaymentDetails() {

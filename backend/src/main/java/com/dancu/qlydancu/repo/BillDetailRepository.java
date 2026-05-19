@@ -16,5 +16,7 @@ public interface BillDetailRepository extends JpaRepository<BillDetail, Long>, J
 
     List<BillDetail> findByBill_Apartment_IdAndBill_StatusIn(Long apartmentId, List<BillDetailStatus> statuses);
 
+    List<BillDetail> findByBillIsNull();
+
     Optional<BillDetail> findByBillIdAndFeeTypeId(Long billId, Long feeTypeId);
 }

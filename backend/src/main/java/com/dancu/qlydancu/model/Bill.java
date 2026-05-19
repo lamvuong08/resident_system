@@ -40,7 +40,7 @@ public class Bill {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private BillDetailStatus status;
+    private BillDetailStatus status = BillDetailStatus.UNPAID;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

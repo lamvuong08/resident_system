@@ -7,6 +7,8 @@ import type {
   DashboardRequest,
   HouseholdSummary,
   ResidentDashboardData,
+  UserAggregatedBill,
+  UserBillFull,
 } from '../types/residentDashboard'
 
 const REQUEST_IN_PROGRESS_STATUSES = new Set(['IN_PROGRESS', 'PROCESSING', 'PENDING', 'DANG_XU_LY'])
@@ -120,19 +122,6 @@ export const getResidentHouseholdSummary = async (): Promise<HouseholdSummary | 
   }
 }
 
-const mapPayment = (item: unknown): DashboardPayment => {
-  const row = toObject(item) || {}
-  const rawStatus = safeString(row.status || row.paymentStatus || row.state, 'UNPAID').toUpperCase()
-
-  return {
-    id: String(row.id ?? row.paymentId ?? row.invoiceCode ?? crypto.randomUUID()),
-    title: safeString(row.title || row.description || row.type, 'Khoản phí cần thanh toán'),
-    amount: toNumber(row.amount || row.totalAmount || row.value),
-    dueDate: safeNullableString(row.dueDate || row.date || row.createdAt),
-    status: rawStatus,
-  }
-}
-
 const mapRequest = (item: unknown): DashboardRequest => {
   const row = toObject(item) || {}
   const rawStatus = safeString(row.status || row.requestStatus || row.state, 'PENDING').toUpperCase()
@@ -243,5 +232,25 @@ export const getResidentDashboardData = async (): Promise<ResidentDashboardData>
     unreadNotifications,
     inProgressRequests,
     totalUnpaidAmount,
+  }
+}
+
+export const getMyAggregatedBills = async (): Promise<UserAggregatedBill[]> => {
+  try {
+    const response = await api.get('/bills/user/bills');
+    return toArray(response.data) as UserAggregatedBill[];
+  } catch (error) {
+    console.error("Lỗi khi tải lịch sử hóa đơn:", error);
+    return [];
+  }
+}
+
+export const getMyBillDetail = async (id: number): Promise<UserBillFull | null> => {
+  try {
+    const response = await api.get(`/bills/user/bills/${id}`);
+    return response.data as UserBillFull;
+  } catch (error) {
+    console.error("Lỗi khi tải chi tiết hóa đơn:", error);
+    return null;
   }
 }

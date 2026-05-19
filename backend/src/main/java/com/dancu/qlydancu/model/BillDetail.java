@@ -41,6 +41,12 @@ public class BillDetail {
     @Column(name = "amount")
     private Long amount;
 
+    @Column(name = "old_reading")
+    private java.math.BigDecimal oldReading;
+
+    @Column(name = "new_reading")
+    private java.math.BigDecimal newReading;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private BillDetailStatus status = BillDetailStatus.UNPAID;
@@ -48,11 +54,17 @@ public class BillDetail {
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
+    @Column(name = "note", length = 500)
+    private String note;
+
     public BillDetailStatus getStatus() { return status; }
     public void setStatus(BillDetailStatus status) { this.status = status; }
 
     public LocalDateTime getDueDate() { return dueDate; }
     public void setDueDate(LocalDateTime dueDate) { this.dueDate = dueDate; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -66,4 +78,10 @@ public class BillDetail {
     public void setUnitPrice(Long unitPrice) { this.unitPrice = unitPrice; }
     public Long getAmount() { return amount; }
     public void setAmount(Long amount) { this.amount = amount; }
+
+    public java.math.BigDecimal getOldReading() { return oldReading; }
+    public void setOldReading(java.math.BigDecimal oldReading) { this.oldReading = oldReading; }
+
+    public java.math.BigDecimal getNewReading() { return newReading; }
+    public void setNewReading(java.math.BigDecimal newReading) { this.newReading = newReading; }
 }

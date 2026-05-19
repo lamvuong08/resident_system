@@ -3,10 +3,14 @@ package com.dancu.qlydancu.dto;
 public class FixedFeeRequest {
     private Long apartmentId;
     private Long feeTypeId;
-    private String billingMonth; // Format: "MM/YYYY"
+    private String billingMonth; 
     private Long amount;
+    private String dueDate; 
+    private String note;
+    private java.math.BigDecimal oldReading;
+    private java.math.BigDecimal newReading;
+    private Long unitPrice;
 
-    // Getters and Setters
     public Long getApartmentId() {
         return apartmentId;
     }
@@ -38,4 +42,29 @@ public class FixedFeeRequest {
     public void setAmount(Long amount) {
         this.amount = amount;
     }
+
+    public String getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(String dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public java.math.BigDecimal getOldReading() { return oldReading; }
+    public void setOldReading(java.math.BigDecimal oldReading) { this.oldReading = oldReading; }
+
+    public java.math.BigDecimal getNewReading() { return newReading; }
+    public void setNewReading(java.math.BigDecimal newReading) { this.newReading = newReading; }
+
+    public Long getUnitPrice() { return unitPrice; }
+    public void setUnitPrice(Long unitPrice) { this.unitPrice = unitPrice; }
 }

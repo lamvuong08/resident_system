@@ -12,5 +12,8 @@ public record BillDetailRowResponse(
     BillDetailStatus status,
     Long billId,
     LocalDateTime createdAt,
-    LocalDateTime dueDate
+    LocalDateTime dueDate,
+    java.math.BigDecimal oldReading,
+    java.math.BigDecimal newReading,
+    Long unitPrice
 ) {}

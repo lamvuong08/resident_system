@@ -44,3 +44,38 @@ export type ResidentDashboardData = {
   inProgressRequests: number
   totalUnpaidAmount: number
 }
+
+export type UserAggregatedBill = {
+  id: number;
+  apartmentCode: string;
+  ownerName: string;
+  billingMonth: string;
+  totalAmount: number;
+  dueDate: string | null;
+  status: string;
+};
+
+export type UserBillDetailInfo = {
+  id: number;
+  feeName: string;
+  amount: number;
+  note: string;
+  oldReading: number | null;
+  newReading: number | null;
+  unitPrice: number | null;
+  quantity: number | null;
+};
+
+export type UserBillFull = {
+  id: number;
+  apartmentCode: string;
+  ownerName: string;
+  billingMonth: string;
+  dueDate: string | null;
+  totalAmount: number;
+  status: string;
+  details: UserBillDetailInfo[];
+  paidAt?: string;
+  paymentMethod?: string;
+  transactionCode?: string;
+};

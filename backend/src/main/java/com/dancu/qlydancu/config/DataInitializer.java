@@ -17,15 +17,16 @@ import com.dancu.qlydancu.model.Bill;
 import com.dancu.qlydancu.model.Building;
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.Resident;
+import com.dancu.qlydancu.model.FeeType;
 import com.dancu.qlydancu.model.enums.BillDetailStatus;
+import com.dancu.qlydancu.model.enums.FeeTypeCode;
+import com.dancu.qlydancu.model.enums.CalculationType;
 import com.dancu.qlydancu.model.status.ApartmentStatus;
 import com.dancu.qlydancu.repo.ApartmentRepository;
 import com.dancu.qlydancu.repo.BillRepository;
 import com.dancu.qlydancu.repo.BuildingRepository;
 import com.dancu.qlydancu.repo.HouseholdRepository;
-import com.dancu.qlydancu.repo.PaymentRepository;
 import com.dancu.qlydancu.repo.ResidentRepository;
-import com.dancu.qlydancu.repo.UserRequestRepository;
 
 @Component
 @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true")
@@ -37,23 +38,74 @@ public class DataInitializer implements CommandLineRunner {
     private final ResidentRepository residentRepository;
     private final HouseholdRepository householdRepository;
     private final BillRepository billRepository;
-
+    private final com.dancu.qlydancu.repo.FeeTypeRepository feeTypeRepository;
     public DataInitializer(BuildingRepository buildingRepository,
                            ApartmentRepository apartmentRepository,
                            ResidentRepository residentRepository,
                            HouseholdRepository householdRepository,
                            BillRepository billRepository,
-                           PaymentRepository paymentRepository,
-                           UserRequestRepository maintenanceRepository) {
+                           com.dancu.qlydancu.repo.FeeTypeRepository feeTypeRepository,
+                           com.dancu.qlydancu.repo.MeterTypeRepository meterTypeRepository,
+                           com.dancu.qlydancu.repo.MeterTariffRepository meterTariffRepository) {
         this.buildingRepository = buildingRepository;
         this.apartmentRepository = apartmentRepository;
         this.residentRepository = residentRepository;
         this.householdRepository = householdRepository;
         this.billRepository = billRepository;
+        this.feeTypeRepository = feeTypeRepository;
     }
+
+    private void seedFeeTypes() {
+        if (feeTypeRepository.count() == 0) {
+            FeeType electric = new FeeType();
+            electric.setCode(FeeTypeCode.ELECTRIC);
+            electric.setName("Tiền điện");
+            electric.setIsMetered(true);
+            electric.setCalculationType(CalculationType.ELECTRIC_METER);
+            electric.setUnitPrice(2167L);
+            feeTypeRepository.save(electric);
+
+            FeeType water = new FeeType();
+            water.setCode(FeeTypeCode.WATER);
+            water.setName("Tiền nước");
+            water.setIsMetered(false);
+            water.setCalculationType(CalculationType.FIXED);
+            water.setDefaultAmount(80000L);
+            feeTypeRepository.save(water);
+
+            FeeType management = new FeeType();
+            management.setCode(FeeTypeCode.MANAGEMENT);
+            management.setName("Phí quản lý");
+            management.setIsMetered(false);
+            management.setCalculationType(CalculationType.FIXED);
+            management.setDefaultAmount(150000L);
+            feeTypeRepository.save(management);
+
+            FeeType parking = new FeeType();
+            parking.setCode(FeeTypeCode.PARKING);
+            parking.setName("Phí gửi xe");
+            parking.setIsMetered(false);
+            parking.setCalculationType(CalculationType.FIXED);
+            parking.setDefaultAmount(100000L);
+            feeTypeRepository.save(parking);
+
+            FeeType cleaning = new FeeType();
+            cleaning.setCode(FeeTypeCode.CLEANING);
+            cleaning.setName("Phí vệ sinh");
+            cleaning.setIsMetered(false);
+            cleaning.setCalculationType(CalculationType.FIXED);
+            cleaning.setDefaultAmount(30000L);
+            feeTypeRepository.save(cleaning);
+        }
+    }
+
 
     @Override
     public void run(String... args) {
+        if (feeTypeRepository.count() == 0) {
+            seedFeeTypes();
+        }
+
         if (apartmentRepository.count() > 0) {
             logger.info("DataInitializer: apartments already present — skipping seeding.");
             return;

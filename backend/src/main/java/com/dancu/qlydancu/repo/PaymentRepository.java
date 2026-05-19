@@ -17,4 +17,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             "WHERE b.apartment.id = :apartmentId")
     List<Payment> findByApartmentId(@Param("apartmentId") Long apartmentId);
     List<Payment> findByStatus(PaymentStatus status);
+
+    @Query(value = "SELECT p.* FROM payments p " +
+                   "JOIN payment_details pd ON p.id = pd.payment_id " +
+                   "JOIN bill_details bd ON pd.bill_detail_id = bd.id " +
+                   "WHERE bd.bill_id = :billId AND p.status = 'SUCCESS' " +
+                   "ORDER BY p.paid_at DESC LIMIT 1", nativeQuery = true)
+    Payment findLatestSuccessfulPaymentByBillId(@Param("billId") Long billId);
 }

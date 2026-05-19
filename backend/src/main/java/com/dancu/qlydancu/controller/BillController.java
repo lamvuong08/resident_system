@@ -67,6 +67,20 @@ public class BillController {
         return ResponseEntity.ok(billService.getBillDetailsForCurrentUser(statuses));
     }
 
+    @GetMapping("/user/bills")
+    public ResponseEntity<List<com.dancu.qlydancu.dto.AdminAggregatedBillResponse>> getMyAggregatedBills() {
+        return ResponseEntity.ok(billService.getAggregatedBillsForCurrentUser());
+    }
+
+    @GetMapping("/user/bills/{id}")
+    public ResponseEntity<com.dancu.qlydancu.dto.AdminBillFullResponse> getMyBillDetail(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(billService.getUserBillFull(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @GetMapping("/admin/details")
     public ResponseEntity<Page<AdminBillDetailResponse>> getAdminBillDetails(
             @ModelAttribute BillDetailFilterRequest filter, 

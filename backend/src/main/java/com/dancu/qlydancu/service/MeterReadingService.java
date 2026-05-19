@@ -36,6 +36,7 @@ public class MeterReadingService {
     @Autowired private BillRepository billRepository;
     @Autowired private BillDetailRepository billDetailRepository;
     @Autowired private FeeTypeRepository feeTypeRepository;
+    @Autowired private BillService billService;
 
     public Long previewCalculateBill(MeterReadingRequest request) {
         Apartment apartment = apartmentRepository.findById(request.getApartmentId())
@@ -56,7 +57,6 @@ public class MeterReadingService {
 
         BigDecimal usageAmount = newReading.subtract(oldReading);
 
-        // Lấy danh sách bậc thang và tính (gọi lại hàm tính bạn đã viết ở bước trước)
         List<MeterTariff> tariffs = meterTariffRepository.findByMeterTypeIdOrderByMinUsageAsc(meterType.getId());
         return calculateTieredAmount(usageAmount, tariffs);
     }
@@ -69,8 +69,6 @@ public class MeterReadingService {
         MeterType meterType = meterTypeRepository.findById(request.getMeterTypeId())
             .orElseThrow(() -> new RuntimeException("Không tìm thấy loại đồng hồ"));
 
-        // 1. Tìm chỉ số tháng trước để làm số cũ (Giả định lấy bản ghi gần nhất)
-        // Lưu ý: Cần có method findFirstByApartmentIdAndMeterTypeIdOrderByCreatedAtDesc trong Repo
         MeterReading lastReading = meterReadingRepository
             .findFirstByApartmentIdAndMeterTypeIdOrderByCreatedAtDesc(apartment.getId(), meterType.getId());
             
@@ -83,7 +81,6 @@ public class MeterReadingService {
 
         BigDecimal usageAmount = newReading.subtract(oldReading);
 
-        // 2. Lưu lịch sử chỉ số
         MeterReading reading = new MeterReading();
         reading.setApartment(apartment);
         reading.setMeterType(meterType);
@@ -93,54 +90,45 @@ public class MeterReadingService {
         reading.setUsageAmount(usageAmount);
         meterReadingRepository.save(reading);
 
-        // 3. Tính tiền theo bậc thang
         List<MeterTariff> tariffs = meterTariffRepository.findByMeterTypeIdOrderByMinUsageAsc(meterType.getId());
         long calculatedAmount = calculateTieredAmount(usageAmount, tariffs);
 
-        // 4. Map MeterType sang FeeType (Điện -> ELECTRIC, Nước -> WATER)
-        FeeTypeCode feeCode = meterType.getName().toLowerCase().contains("điện") ? FeeTypeCode.ELECTRIC : FeeTypeCode.WATER;
+        if (!meterType.getName().toLowerCase().contains("điện")) {
+            throw new RuntimeException("Loại đồng hồ này không được hỗ trợ nhập chỉ số. Nước hiện được tính theo phí cố định.");
+        }
+        
+        FeeTypeCode feeCode = FeeTypeCode.ELECTRIC;
         FeeType feeType = feeTypeRepository.findByCode(feeCode)
             .orElseThrow(() -> new RuntimeException("Chưa cấu hình loại phí cho: " + feeCode));
+            
+        if (feeType.getCalculationType() != com.dancu.qlydancu.model.enums.CalculationType.ELECTRIC_METER) {
+            throw new RuntimeException("Loại phí " + feeType.getName() + " được cấu hình là phí cố định, không thể nhập chỉ số.");
+        }
 
-        // 5. Tìm Bill tổng của tháng, nếu chưa có thì tạo mới
-        Bill bill = billRepository.findByApartmentIdAndBillingMonth(apartment.getId(), request.getBillingMonth())
-            .orElseGet(() -> {
-                Bill newBill = new Bill();
-                newBill.setApartment(apartment);
-                newBill.setBillingMonth(request.getBillingMonth());
-                newBill.setTotalAmount(0L);
-                newBill.setStatus(BillDetailStatus.UNPAID);
-                newBill.setCreatedAt(LocalDateTime.now());
-                return billRepository.save(newBill);
-            });
+        Bill bill = billService.getOrCreateBill(apartment, request.getBillingMonth());
 
-        // 6. Tìm BillDetail của loại phí này, nếu có rồi thì update, chưa thì tạo
         BillDetail detail = billDetailRepository.findByBillIdAndFeeTypeId(bill.getId(), feeType.getId())
             .orElseGet(() -> {
                 BillDetail newDetail = new BillDetail();
                 newDetail.setBill(bill);
                 newDetail.setFeeType(feeType);
                 newDetail.setStatus(BillDetailStatus.UNPAID);
-                newDetail.setDueDate(LocalDateTime.now().plusDays(15)); // Hạn chót 15 ngày
+                newDetail.setDueDate(LocalDateTime.now().plusDays(15)); 
                 return newDetail;
             });
 
-        // Trừ đi amount cũ (nếu đang update) để cộng amount mới vào Bill tổng
         long oldDetailAmount = (detail.getAmount() != null) ? detail.getAmount() : 0L;
         
         detail.setQuantity(usageAmount);
         detail.setAmount(calculatedAmount);
-        // Với bậc thang, unit_price không cố định 1 giá trị, có thể set null hoặc giá trị trung bình
         detail.setUnitPrice(calculatedAmount / (usageAmount.longValue() == 0 ? 1 : usageAmount.longValue())); 
         billDetailRepository.save(detail);
 
-        // 7. Cập nhật lại tổng tiền hóa đơn (Bill)
         long currentTotal = (bill.getTotalAmount() != null) ? bill.getTotalAmount() : 0L;
         bill.setTotalAmount(currentTotal - oldDetailAmount + calculatedAmount);
         billRepository.save(bill);
     }
 
-    // Thuật toán bóc tách giá trị tiêu thụ qua các bậc thang
     private long calculateTieredAmount(BigDecimal usage, List<MeterTariff> tariffs) {
         long totalAmount = 0L;
         BigDecimal remainingUsage = usage;
@@ -148,11 +136,9 @@ public class MeterReadingService {
         for (MeterTariff tariff : tariffs) {
             if (remainingUsage.compareTo(BigDecimal.ZERO) <= 0) break;
 
-            // Số lượng tối đa có thể chịu mức giá của bậc này
             Integer min = tariff.getMinUsage();
             Integer max = tariff.getMaxUsage();
-            
-            // Nếu max = null (bậc cuối cùng, vd: từ 400 trở lên)
+
             BigDecimal tierCapacity = (max != null) 
                 ? new BigDecimal(max - min + 1) 
                 : new BigDecimal(Integer.MAX_VALUE);

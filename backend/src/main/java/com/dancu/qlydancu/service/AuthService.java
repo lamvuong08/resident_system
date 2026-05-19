@@ -12,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,8 @@ public class AuthService {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email, req.password));
         } catch (DisabledException | LockedException ex) {
             throw new AuthenticationServiceException("Tài khoản đã bị vô hiệu hóa");
+        } catch (BadCredentialsException ex) {
+            throw new AuthenticationServiceException("Tài khoản hoặc mật khẩu của bạn không đúng. Xin vui lòng thử lại");
         }
         String token = jwtUtil.generateToken(req.email);
         User user = userRepository.findByEmail(req.email).orElseThrow(() -> new RuntimeException("No user found"));
