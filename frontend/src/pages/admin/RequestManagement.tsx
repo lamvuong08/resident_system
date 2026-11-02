@@ -17,9 +17,11 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import type { AdminRequestAttachment, AdminRequestRow } from '../../utils/adminSupportApi'
 import {
     fetchAdminRequests,
+    getAdminRequestDetail,
     setAdminRequestInProgress,
     setAdminRequestCompleted,
     setAdminRequestRejected,
@@ -53,6 +55,48 @@ const RequestManagement: React.FC = () => {
     const [rejectLoading, setRejectLoading] = useState(false)
 
     const [actionLoading, setActionLoading] = useState(false)
+
+    const location = useLocation()
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    // Tự động mở modal xử lý yêu cầu khi nhận được requestId từ URL hoặc navigation state (nút "Xử lý ngay")
+    useEffect(() => {
+        const requestIdParam = searchParams.get('requestId') || location.state?.requestId
+        if (!requestIdParam) return
+
+        const targetId = Number(requestIdParam)
+        if (isNaN(targetId) || targetId <= 0) return
+
+        // 1. Mở nhanh bằng state đã truyền sẵn nếu khớp ID để giao diện phản hồi tức thì
+        const stateRow = location.state?.requestRow as AdminRequestRow | undefined
+        if (stateRow && Number(stateRow.id) === targetId) {
+            setSelectedReq(stateRow)
+            setDetailModalOpen(true)
+        }
+
+        // 2. Tải chi tiết đầy đủ mới nhất từ server (đảm bảo file đính kèm và trạng thái mới nhất)
+        getAdminRequestDetail(targetId)
+            .then((detail) => {
+                if (detail) {
+                    setSelectedReq(detail)
+                    setDetailModalOpen(true)
+                }
+            })
+            .catch((err) => {
+                if (!stateRow) {
+                    message.error(extractApiError(err, `Không thể tải thông tin yêu cầu #${targetId}`))
+                }
+            })
+    }, [searchParams, location.state])
+
+    const handleCloseDetailModal = () => {
+        setDetailModalOpen(false)
+        if (searchParams.has('requestId')) {
+            const nextParams = new URLSearchParams(searchParams)
+            nextParams.delete('requestId')
+            setSearchParams(nextParams, { replace: true })
+        }
+    }
 
     const loadData = async () => {
         setLoading(true)
@@ -181,7 +225,7 @@ const RequestManagement: React.FC = () => {
         try {
             await setAdminRequestInProgress(selectedReq.id)
             message.success('Đã nhận xử lý yêu cầu')
-            setDetailModalOpen(false)
+            handleCloseDetailModal()
             loadData()
         } catch (err) {
             message.error(extractApiError(err, 'Lỗi cập nhật yêu cầu'))
@@ -196,7 +240,7 @@ const RequestManagement: React.FC = () => {
         try {
             await setAdminRequestCompleted(selectedReq.id)
             message.success('Đã hoàn thành yêu cầu')
-            setDetailModalOpen(false)
+            handleCloseDetailModal()
             loadData()
         } catch (err) {
             message.error(extractApiError(err, 'Lỗi cập nhật yêu cầu'))
@@ -218,7 +262,7 @@ const RequestManagement: React.FC = () => {
             await setAdminRequestRejected(selectedReq.id, values.reason)
             message.success('Đã từ chối yêu cầu')
             setRejectModalOpen(false)
-            setDetailModalOpen(false)
+            handleCloseDetailModal()
             loadData()
         } catch (err: unknown) {
             if (err && typeof err === 'object' && 'errorFields' in err) return
@@ -295,7 +339,7 @@ const RequestManagement: React.FC = () => {
             <Modal
                 title={`Chi tiết yêu cầu #${selectedReq?.id}`}
                 open={detailModalOpen}
-                onCancel={() => setDetailModalOpen(false)}
+                onCancel={handleCloseDetailModal}
                 footer={null}
                 width={600}
                 destroyOnClose
@@ -326,12 +370,11 @@ const RequestManagement: React.FC = () => {
                             <Text type="secondary">Loại yêu cầu:</Text>{' '}
                             <Text strong>{getAdminRequestTypeLabel(selectedReq.type)}</Text>
                         </div>
-                        <div style={{ marginBottom: 12 }}>
-                            <Text type="secondary">Tiêu đề:</Text>{' '}
-                            <Text strong>{selectedReq.title}</Text>
+                        <div style={{ marginBottom: 6 }}>
+                            <Text type="secondary">Nội dung yêu cầu:</Text>
                         </div>
                         <div style={{ backgroundColor: '#f5f5f5', padding: 12, borderRadius: 6, minHeight: 80, marginBottom: 16 }}>
-                            <Text>{selectedReq.content}</Text>
+                            <Text>{selectedReq.content || selectedReq.title}</Text>
                         </div>
                         <div style={{ marginBottom: 24 }}>
                             <Text type="secondary">Ảnh đính kèm:</Text>{' '}
@@ -348,7 +391,7 @@ const RequestManagement: React.FC = () => {
 
                         <Row justify="end" gutter={10}>
                             <Col>
-                                <Button className="fix-height-32" onClick={() => setDetailModalOpen(false)}>Đóng</Button>
+                                <Button className="fix-height-32" onClick={handleCloseDetailModal}>Đóng</Button>
                             </Col>
                             {(selectedReq.status === 'PENDING' || selectedReq.status === 'IN_PROGRESS') && (
                                 <Col>

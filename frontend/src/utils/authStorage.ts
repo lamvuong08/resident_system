@@ -55,8 +55,11 @@ export const setAuthSession = (token: string, user: StoredUser) => {
 }
 
 export const setStoredUser = (user: StoredUser) => {
-  if (user.role) {
-    localStorage.setItem(STORAGE_KEYS.role, user.role)
+  const currentRole = getStoredRole()
+  const roleToSave = user.role || currentRole
+  if (roleToSave) {
+    localStorage.setItem(STORAGE_KEYS.role, roleToSave)
   }
-  localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(user))
+  const updatedUser: StoredUser = { ...user, role: roleToSave }
+  localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(updatedUser))
 }

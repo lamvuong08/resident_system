@@ -28,8 +28,11 @@ import TemporaryResidence from './pages/user/TemporaryResidence'
 import AdminPaymentManagement from './pages/admin/AdminPaymentManagement'
 import Settings from './pages/user/Settings'
 import { getStoredRole, hasToken } from './utils/authStorage'
+import StaffLayout from './pages/staff/StaffLayout'
+import StaffDashboard from './pages/staff/StaffDashboard'
+import StaffMeterReading from './pages/staff/StaffMeterReading'
 
-type RoleKey = 'ADMIN' | 'USER'
+type RoleKey = 'ADMIN' | 'USER' | 'STAFF'
 
 type GuardProps = {
   children: React.ReactElement
@@ -55,7 +58,9 @@ const RequireRole: React.FC<RoleGuardProps> = ({ role, children }) => {
 
   const currentRole = getStoredRole()
   if (!currentRole.includes(role)) {
-    return <Navigate to={role === 'ADMIN' ? '/user' : '/admin'} replace />
+    if (currentRole.includes('ADMIN')) return <Navigate to="/admin" replace />
+    if (currentRole.includes('STAFF')) return <Navigate to="/staff" replace />
+    return <Navigate to="/user" replace />
   }
 
   return children
@@ -97,6 +102,14 @@ function App() {
           <Route path="requests" element={<RequestManagement />} />
           <Route path="vehicles" element={<VehicleManagement />} />
           <Route path="quan-ly-thanh-toan" element={<AdminPaymentManagement />} />
+          <Route path="cai-dat" element={<Settings />} />
+          <Route path="settings" element={<Navigate to="/admin/cai-dat" replace />} />
+        </Route>
+        <Route path="/staff/*" element={<RequireRole role="STAFF"><StaffLayout /></RequireRole>}>
+          <Route index element={<StaffDashboard />} />
+          <Route path="requests" element={<RequestManagement />} />
+          <Route path="meter-readings" element={<StaffMeterReading />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
         <Route path="/user/*" element={<RequireRole role="USER"><User /></RequireRole>}>
           <Route index element={<Home />} />

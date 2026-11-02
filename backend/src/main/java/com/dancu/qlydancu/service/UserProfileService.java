@@ -103,7 +103,11 @@ public class UserProfileService {
         dto.name = user.getName();
         dto.email = user.getEmail();
         dto.phone = user.getUsername();
-        dto.role = user.getRoles() == UserRole.ROLE_ADMIN ? "ADMIN" : "USER";
+        if (user.getRoles() != null) {
+            dto.role = user.getRoles().name();
+        } else {
+            dto.role = UserRole.ROLE_USER.name();
+        }
         if (user.getStatus() == UserStatus.ACTIVE) {
             dto.status = "ACTIVE";
         } else if (user.getStatus() == UserStatus.BLOCKED) {

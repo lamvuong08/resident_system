@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Avatar, Button, Card, Input, Tabs, Typography, message } from 'antd'
 import { LockOutlined, MailOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons'
 import { extractApiError } from '../../utils/api'
-import { getStoredUser, setAuthSession, setStoredUser } from '../../utils/authStorage'
+import { getStoredRole, getStoredUser, setAuthSession, setStoredUser } from '../../utils/authStorage'
 import type { StoredUser } from '../../utils/authStorage'
 import { userApi } from '../../utils/user'
 import '../../styles/resident-dashboard.css'
@@ -68,9 +68,23 @@ const Settings = () => {
     try {
       const response = await userApi.getMe()
       const payload = response.data || {}
+      const currentUser = getStoredUser()
+      const currentRole = (currentUser.role || getStoredRole() || '').toUpperCase()
+      const apiRole = (payload.role || '').toUpperCase()
+
+      let resolvedRole = currentUser.role || getStoredRole()
+      if (apiRole) {
+        if (apiRole.includes('STAFF')) resolvedRole = 'ROLE_STAFF'
+        else if (apiRole.includes('ADMIN')) resolvedRole = 'ROLE_ADMIN'
+        else if (apiRole.includes('USER') && !currentRole.includes('STAFF') && !currentRole.includes('ADMIN')) {
+          resolvedRole = 'ROLE_USER'
+        }
+      }
+
       const nextUser: StoredUser = {
-        ...getStoredUser(),
+        ...currentUser,
         ...payload,
+        role: resolvedRole,
       }
       setUser(nextUser)
       setStoredUser(nextUser)

@@ -56,11 +56,14 @@ api.interceptors.response.use(
     if (status === 403 && !isAuthPath) {
       const role = getStoredRole() || (getStoredUser().role || '').toUpperCase()
       const isAdmin = role.includes('ADMIN')
+      const isStaff = role.includes('STAFF')
 
       if (path.startsWith('/admin') && !isAdmin) {
-        window.location.href = '/user'
-      } else if (path.startsWith('/user') && isAdmin) {
-        window.location.href = '/admin'
+        window.location.href = isStaff ? '/staff' : '/user'
+      } else if (path.startsWith('/staff') && !isStaff) {
+        window.location.href = isAdmin ? '/admin' : '/user'
+      } else if (path.startsWith('/user') && (isAdmin || isStaff)) {
+        window.location.href = isAdmin ? '/admin' : '/staff'
       }
     }
 

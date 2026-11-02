@@ -33,6 +33,8 @@ const LoginPage = () => {
       const role = (data.role || '').toUpperCase();
       if (role.includes('ADMIN')) {
         navigate('/admin');
+      } else if (role.includes('STAFF')) {
+        navigate('/staff');
       } else {
         navigate('/user');
       }

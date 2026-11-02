@@ -127,7 +127,8 @@ const AccountFormModal: React.FC<AccountFormModalProps> = ({
           <Select
             placeholder="Chọn vai trò"
             options={[
-              { value: 'ADMIN', label: 'Admin' },
+              { value: 'ADMIN', label: 'Admin (Quản trị viên)' },
+              { value: 'STAFF', label: 'Nhân viên (Vận hành / Kỹ thuật)' },
               { value: 'RESIDENT', label: 'Cư dân' },
             ]}
           />

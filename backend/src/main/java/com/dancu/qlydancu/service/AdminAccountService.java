@@ -72,7 +72,14 @@ public class AdminAccountService {
             }
 
             if (role != null && !role.trim().isEmpty() && !role.equalsIgnoreCase("ALL")) {
-                UserRole userRole = role.equalsIgnoreCase("ADMIN") ? UserRole.ROLE_ADMIN : UserRole.ROLE_USER;
+                UserRole userRole;
+                if (role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("ROLE_ADMIN")) {
+                    userRole = UserRole.ROLE_ADMIN;
+                } else if (role.equalsIgnoreCase("STAFF") || role.equalsIgnoreCase("ROLE_STAFF")) {
+                    userRole = UserRole.ROLE_STAFF;
+                } else {
+                    userRole = UserRole.ROLE_USER;
+                }
                 predicates.add(cb.equal(root.get("roles"), userRole));
             }
 
@@ -97,6 +104,7 @@ public class AdminAccountService {
         AdminAccountPageResponse.AccountStats stats = new AdminAccountPageResponse.AccountStats();
         stats.totalAccounts = userRepository.count();
         stats.adminAccounts = userRepository.countByRoles(UserRole.ROLE_ADMIN);
+        stats.staffAccounts = userRepository.countByRoles(UserRole.ROLE_STAFF);
         stats.residentAccounts = userRepository.countByRoles(UserRole.ROLE_USER);
         response.stats = stats;
 
@@ -127,7 +135,15 @@ public class AdminAccountService {
         }
         user.setPassword(passwordEncoder.encode(request.password));
         
-        user.setRoles(request.role.equalsIgnoreCase("ADMIN") ? UserRole.ROLE_ADMIN : UserRole.ROLE_USER);
+        UserRole selectedRole = UserRole.ROLE_USER;
+        if (request.role != null) {
+            if (request.role.equalsIgnoreCase("ADMIN") || request.role.equalsIgnoreCase("ROLE_ADMIN")) {
+                selectedRole = UserRole.ROLE_ADMIN;
+            } else if (request.role.equalsIgnoreCase("STAFF") || request.role.equalsIgnoreCase("ROLE_STAFF")) {
+                selectedRole = UserRole.ROLE_STAFF;
+            }
+        }
+        user.setRoles(selectedRole);
         user.setStatus(request.status.equalsIgnoreCase("ACTIVE") ? UserStatus.ACTIVE : UserStatus.BLOCKED);
         user.setCreatedAt(LocalDateTime.now());
 
@@ -158,7 +174,15 @@ public class AdminAccountService {
             user.setPassword(passwordEncoder.encode(request.password));
         }
 
-        user.setRoles(request.role.equalsIgnoreCase("ADMIN") ? UserRole.ROLE_ADMIN : UserRole.ROLE_USER);
+        UserRole selectedRole = UserRole.ROLE_USER;
+        if (request.role != null) {
+            if (request.role.equalsIgnoreCase("ADMIN") || request.role.equalsIgnoreCase("ROLE_ADMIN")) {
+                selectedRole = UserRole.ROLE_ADMIN;
+            } else if (request.role.equalsIgnoreCase("STAFF") || request.role.equalsIgnoreCase("ROLE_STAFF")) {
+                selectedRole = UserRole.ROLE_STAFF;
+            }
+        }
+        user.setRoles(selectedRole);
         user.setStatus(request.status.equalsIgnoreCase("ACTIVE") ? UserStatus.ACTIVE : UserStatus.BLOCKED);
 
         user = userRepository.save(user);
@@ -372,7 +396,13 @@ public class AdminAccountService {
         dto.fullName = user.getName();
         dto.email = user.getEmail();
         dto.phone = user.getUsername();
-        dto.role = user.getRoles() == UserRole.ROLE_ADMIN ? "ADMIN" : "RESIDENT";
+        if (user.getRoles() == UserRole.ROLE_ADMIN) {
+            dto.role = "ADMIN";
+        } else if (user.getRoles() == UserRole.ROLE_STAFF) {
+            dto.role = "STAFF";
+        } else {
+            dto.role = "RESIDENT";
+        }
         dto.status = user.getStatus() == UserStatus.ACTIVE ? "ACTIVE" : "DISABLED";
         dto.createdAt = user.getCreatedAt();
 

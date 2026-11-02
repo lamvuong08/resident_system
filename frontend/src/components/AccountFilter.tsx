@@ -51,6 +51,7 @@ const AccountFilter: React.FC<AccountFilterProps> = ({ onFilter, onClear, loadin
             options={[
               { value: 'ALL', label: 'Tất cả vai trò' },
               { value: 'ADMIN', label: 'Admin' },
+              { value: 'STAFF', label: 'Nhân viên' },
               { value: 'RESIDENT', label: 'Cư dân' },
             ]}
           />

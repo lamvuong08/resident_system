@@ -30,7 +30,7 @@ public class AdminUserRequestController {
     private AdminUserRequestService adminUserRequestService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<?> getRequests(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -43,7 +43,7 @@ public class AdminUserRequestController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<?> getRequest(@PathVariable Long id) {
         return ResponseEntity.ok(adminUserRequestService.getRequest(id));
     }
@@ -71,19 +71,19 @@ public class AdminUserRequestController {
     }
 
     @PatchMapping("/{id}/in-progress")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<?> setInProgress(@PathVariable Long id) {
         return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "PROCESSING", null));
     }
 
     @PatchMapping("/{id}/complete")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<?> setComplete(@PathVariable Long id) {
         return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "DONE", null));
     }
 
     @PatchMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<?> setReject(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "REJECTED", payload.get("reason")));
     }

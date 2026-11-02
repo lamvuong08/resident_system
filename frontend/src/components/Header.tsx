@@ -3,14 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import { Badge, Popover } from 'antd'
 import { NotificationOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons'
 import '../styles/App.css'
-import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
+import { clearAuthStorage, getStoredRole, getStoredUser } from '../utils/authStorage'
 import NotificationsPopover from './resident/NotificationsPopover'
 import { markMyNotificationRead, fetchMyNotifications } from '../utils/notificationApi'
 
 const Header: React.FC = () => {
   const navigate = useNavigate()
   const user = getStoredUser()
-  const roleValue = (user.role || 'ROLE_USER').replace('ROLE_', '')
+  const roleString = (user.role || getStoredRole() || 'ROLE_USER').toUpperCase()
+  const roleValue = roleString.replace('ROLE_', '')
   const [notificationsOpen, setNotificationsOpen] = React.useState(false)
   const [unreadNotifications, setUnreadNotifications] = React.useState(0)
 
@@ -27,7 +28,13 @@ const Header: React.FC = () => {
   }
 
   const goSettings = () => {
-    navigate(roleValue === 'ADMIN' ? '/admin/cai-dat' : '/user/settings')
+    if (roleValue === 'ADMIN') {
+      navigate('/admin/cai-dat')
+    } else if (roleValue === 'STAFF') {
+      navigate('/staff/settings')
+    } else {
+      navigate('/user/settings')
+    }
   }
 
   const handleLogout = () => {

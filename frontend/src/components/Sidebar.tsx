@@ -17,9 +17,10 @@ import {
   CalendarOutlined,
   BellOutlined,
   CarOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { clearAuthStorage, getStoredUser } from '../utils/authStorage'
+import { clearAuthStorage, getStoredRole, getStoredUser } from '../utils/authStorage'
 import { displayInitials } from '../utils/displayInitials'
 
 import '../styles/sidebar.css'
@@ -30,8 +31,9 @@ const Sidebar: React.FC = () => {
   const location = useLocation()
 
   const user = getStoredUser()
-  const rawRole = (user.role || 'ROLE_USER').replace('ROLE_', '')
-  const displayRole = rawRole === 'ADMIN' ? 'Quản trị viên' : rawRole === 'USER' ? 'Người dùng' : rawRole
+  const roleString = (user.role || getStoredRole() || 'ROLE_USER').toUpperCase()
+  const rawRole = roleString.replace('ROLE_', '')
+  const displayRole = rawRole === 'ADMIN' ? 'Quản trị viên' : rawRole === 'STAFF' ? 'Nhân viên' : rawRole === 'USER' ? 'Cư dân' : rawRole
 
   const handleLogout = () => {
     clearAuthStorage()
@@ -54,7 +56,15 @@ const Sidebar: React.FC = () => {
       if (path.startsWith('/admin/cai-dat')) return 'cai-dat'
     }
 
-    if (rawRole !== 'ADMIN') {
+    if (rawRole === 'STAFF') {
+      if (path === '/staff' || path === '/staff/') return 'dashboard'
+      if (path.startsWith('/staff/requests')) return 'requests'
+      if (path.startsWith('/staff/meter-readings')) return 'meter-readings'
+      if (path.startsWith('/staff/settings')) return 'settings'
+      return 'dashboard'
+    }
+
+    if (rawRole === 'USER') {
       if (path === '/user' || path === '/user/') return 'dashboard'
       if (path.startsWith('/user/profile-household')) return 'profile-household'
       if (path.startsWith('/user/payment')) return 'payment'
@@ -88,6 +98,11 @@ const Sidebar: React.FC = () => {
       return
     }
 
+    if (rawRole === 'STAFF') {
+      navigate(`/staff${key === 'dashboard' ? '' : '/' + key}`)
+      return
+    }
+
     const nextPath = userRouteMap[key] || '/user'
     navigate(nextPath)
   }
@@ -103,6 +118,14 @@ const Sidebar: React.FC = () => {
     { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán' },
     { key: 'thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },
     { key: 'quan-ly-tai-khoan', icon: <UserOutlined />, label: 'Quản lý tài khoản' },
+    { key: 'cai-dat', icon: <SettingOutlined />, label: 'Cài đặt' },
+  ]
+
+  const staffItems = [
+    { key: 'dashboard', icon: <DashboardOutlined />, label: 'Tổng quan công việc' },
+    { key: 'requests', icon: <FileTextOutlined />, label: 'Xử lý yêu cầu cư dân' },
+    { key: 'meter-readings', icon: <ThunderboltOutlined />, label: 'Ghi chỉ số điện' },
+    { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
   ]
 
   const userItems = [
@@ -116,8 +139,9 @@ const Sidebar: React.FC = () => {
     { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
   ]
 
-  const items = rawRole === 'ADMIN' ? adminItems : userItems
-  const sidebarClassName = `app-sidebar ${collapsed ? 'collapsed' : ''} ${rawRole === 'ADMIN' ? 'admin-sidebar' : 'resident-sidebar'}`
+  const items = rawRole === 'ADMIN' ? adminItems : rawRole === 'STAFF' ? staffItems : userItems
+  const isManagement = rawRole === 'ADMIN' || rawRole === 'STAFF'
+  const sidebarClassName = `app-sidebar ${collapsed ? 'collapsed' : ''} ${isManagement ? 'admin-sidebar' : 'resident-sidebar'}`
 
   return (
     <aside className={sidebarClassName}>
@@ -137,9 +161,9 @@ const Sidebar: React.FC = () => {
           <Avatar
             size={collapsed ? 36 : 40}
             style={{ backgroundColor: 'var(--resident-user-avatar-bg, #185FA5)' }}
-            icon={rawRole === 'ADMIN' ? <UserOutlined /> : undefined}
+            icon={isManagement ? <UserOutlined /> : undefined}
           >
-            {rawRole !== 'ADMIN' ? displayInitials(user.name) : null}
+            {!isManagement ? displayInitials(user.name) : null}
           </Avatar>
           {!collapsed && (
             <div className="user-meta">

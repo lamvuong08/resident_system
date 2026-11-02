@@ -502,20 +502,53 @@ body {
 .fix-height-32, .fix-height-32.ant-btn {
   height: 32px !important;
   min-height: 32px !important;
+  line-height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
 }
 .fix-height-32.ant-input-affix-wrapper {
+  height: 32px !important;
+  min-height: 32px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   align-items: center !important;
+  display: inline-flex !important;
+  box-sizing: border-box !important;
 }
 .fix-height-32.ant-input-affix-wrapper > input.ant-input {
   height: 100% !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  font-size: 14px !important;
 }
 .fix-height-32.ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
   height: 32px !important;
+  min-height: 32px !important;
   align-items: center !important;
+  display: flex !important;
+  box-sizing: border-box !important;
+  font-size: 14px !important;
+}
+.fix-height-32.ant-picker {
+  height: 32px !important;
+  min-height: 32px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  font-size: 14px !important;
+}
+.fix-height-32.ant-picker .ant-picker-input {
+  height: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+.fix-height-32.ant-picker .ant-picker-input > input {
+  height: 100% !important;
+  font-size: 14px !important;
 }
 
 .fix-height-24, .fix-height-24.ant-btn {

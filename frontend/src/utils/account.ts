@@ -3,6 +3,7 @@ import api from './api'
 export interface AccountStats {
   totalAccounts: number
   adminAccounts: number
+  staffAccounts?: number
   residentAccounts: number
 }
 
@@ -11,7 +12,7 @@ export interface AccountItem {
   fullName: string
   email: string
   phone: string
-  role: 'ADMIN' | 'RESIDENT' | string
+  role: 'ADMIN' | 'STAFF' | 'RESIDENT' | string
   status: 'ACTIVE' | 'DISABLED' | string
   apartmentCode?: string | null
   apartmentStatus?: string | null

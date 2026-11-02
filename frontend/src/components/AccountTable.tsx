@@ -62,8 +62,9 @@ const AccountTable: React.FC<AccountTableProps> = ({
       key: 'role',
       width: 120,
       render: (role) => {
-        const color = role === 'ADMIN' ? 'gold' : 'green'
-        return <Tag color={color}>{role}</Tag>
+        const color = role === 'ADMIN' ? 'gold' : role === 'STAFF' ? 'purple' : 'green'
+        const label = role === 'ADMIN' ? 'Admin' : role === 'STAFF' ? 'Nhân viên' : 'Cư dân'
+        return <Tag color={color}>{label}</Tag>
       },
     },
     {

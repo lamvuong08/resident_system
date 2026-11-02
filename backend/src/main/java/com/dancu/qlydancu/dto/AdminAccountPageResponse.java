@@ -13,6 +13,7 @@ public class AdminAccountPageResponse {
     public static class AccountStats {
         public long totalAccounts;
         public long adminAccounts;
+        public long staffAccounts;
         public long residentAccounts;
     }
 }
