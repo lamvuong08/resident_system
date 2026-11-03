@@ -44,6 +44,9 @@ public class AdminUserRequestService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Value("${app.upload.user-requests-dir:uploads/user-requests}")
     private String userRequestsUploadDir;
 
@@ -194,6 +197,37 @@ public class AdminUserRequestService {
         }
 
         userRequestRepository.save(request);
+
+        if (request.getHousehold() != null && request.getHousehold().getUser() != null) {
+            String title = "";
+            String content = "";
+            String eventType = "";
+            if ("PROCESSING".equals(action)) {
+                title = "Yêu cầu #" + request.getId() + " đã được tiếp nhận";
+                content = "Yêu cầu (" + (request.getType() != null ? request.getType().name() : "") + ") của bạn đang được xử lý.";
+                eventType = "REQUEST_PROCESSING";
+            } else if ("DONE".equals(action)) {
+                title = "Yêu cầu #" + request.getId() + " đã hoàn thành";
+                content = "Yêu cầu (" + (request.getType() != null ? request.getType().name() : "") + ") của bạn đã được xử lý hoàn tất.";
+                eventType = "REQUEST_DONE";
+            } else if ("REJECTED".equals(action)) {
+                title = "Yêu cầu #" + request.getId() + " bị từ chối";
+                content = "Yêu cầu của bạn đã bị từ chối." + (reason != null && !reason.trim().isEmpty() ? " Lý do: " + reason : "");
+                eventType = "REQUEST_REJECTED";
+            }
+
+            if (!title.isEmpty()) {
+                notificationService.sendNotificationToUser(
+                        request.getHousehold().getUser(),
+                        title,
+                        content,
+                        com.dancu.qlydancu.model.enums.NotificationType.GENERAL,
+                        "/user/requests",
+                        eventType
+                );
+            }
+        }
+
         return toResponseMap(request);
     }
 

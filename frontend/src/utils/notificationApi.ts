@@ -1,4 +1,5 @@
 import api from './api'
+export { formatNotificationDate } from './notificationTime'
 import type {
   NotificationAttachment,
   ResidentNotification,
@@ -43,29 +44,6 @@ const toNotificationDetail = (input: unknown): ResidentNotificationDetail => {
   }
 }
 
-export const formatNotificationDate = (value: string | null): string => {
-  if (!value) return 'Chưa rõ thời gian'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-
-  const now = new Date()
-  const diffMs = Math.max(0, now.getTime() - date.getTime())
-  const diffMinutes = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMinutes / 60)
-  const diffDays = Math.floor(diffHours / 24)
-
-  if (diffMinutes < 1) {
-    return 'vừa xong'
-  }
-  if (diffMinutes < 60) {
-    return `${diffMinutes} phút trước`
-  }
-  if (diffHours < 24) {
-    return `${diffHours} giờ trước`
-  }
-  return `${diffDays} ngày trước`
-}
-
 export const fetchMyNotifications = async (): Promise<ResidentNotification[]> => {
   const res = await api.get('/notifications/me')
   const rows = Array.isArray(res.data) ? res.data : []
@@ -83,4 +61,13 @@ export const markMyNotificationRead = async (id: number): Promise<void> => {
 
 export const markMyNotificationsReadAll = async (): Promise<void> => {
   await api.put('/notifications/me/read-all')
+}
+
+export const fetchUnreadCount = async (): Promise<number> => {
+  try {
+    const res = await api.get<{ unreadCount: number }>('/notifications/me/unread-count')
+    return typeof res.data?.unreadCount === 'number' ? res.data.unreadCount : 0
+  } catch {
+    return 0
+  }
 }

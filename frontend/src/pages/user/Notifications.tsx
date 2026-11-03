@@ -22,30 +22,6 @@ const Notifications = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 10
 
-  const openDetails = async (id: number, updateRoute = true) => {
-    setDetailLoading(true)
-    setIsDetailOpen(true)
-    try {
-      await markAsRead(id)
-      const data = await fetchMyNotificationDetail(id)
-      setDetail(data)
-      if (updateRoute) {
-        navigate(`/user/notifications/${id}`, { replace: true })
-      }
-    } catch (err: any) {
-      if (err?.response?.status === 404) {
-        message.warning('Thông báo này không còn tồn tại hoặc đã bị xóa (Ghost data đã được xoá).')
-        removeItem(id)
-      } else {
-        message.error(extractApiError(err, 'Không thể tải chi tiết thông báo.'))
-      }
-      setIsDetailOpen(false)
-      setDetail(null)
-    } finally {
-      setDetailLoading(false)
-    }
-  }
-
   const closeDetails = () => {
     setIsDetailOpen(false)
     setDetail(null)
@@ -54,13 +30,36 @@ const Notifications = () => {
 
   useEffect(() => {
     const fromRouteId = Number(params.id ?? 0)
-    if (fromRouteId > 0) {
-      void openDetails(fromRouteId, false)
-    } else {
+    let active = true
+    setDetail(null)
+    if (!Number.isSafeInteger(fromRouteId) || fromRouteId <= 0) {
       setIsDetailOpen(false)
-      setDetail(null)
+      return
     }
-  }, [params.id])
+    setDetailLoading(true)
+    setIsDetailOpen(true)
+    const loadDetail = async () => {
+      try {
+        await markAsRead(fromRouteId)
+        if (!active) return
+        const data = await fetchMyNotificationDetail(fromRouteId)
+        if (active) setDetail(data)
+      } catch (err) {
+        if (!active) return
+        if ((err as { response?: { status?: number } })?.response?.status === 404) {
+          message.warning('Thông báo này không còn tồn tại hoặc đã bị xóa.')
+          removeItem(fromRouteId)
+        } else {
+          message.error(extractApiError(err, 'Không thể tải chi tiết thông báo.'))
+        }
+        setIsDetailOpen(false)
+      } finally {
+        if (active) setDetailLoading(false)
+      }
+    }
+    void loadDetail()
+    return () => { active = false }
+  }, [params.id, markAsRead, removeItem])
 
   const truncateContent = (value: string, maxLength = 140) =>
     value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
@@ -148,7 +147,7 @@ const Notifications = () => {
                   key={item.id}
                   className={`resident-notifications-item ${item.isRead ? 'read' : 'unread'}`}
                   type="button"
-                  onClick={() => void openDetails(item.id)}
+                  onClick={() => navigate(`/user/notifications/${item.id}`)}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
                     <Typography.Text className="resident-notifications-item__title" strong style={{ flex: 1, paddingRight: 8, wordBreak: 'break-word', textAlign: 'left' }}>

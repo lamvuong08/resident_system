@@ -1,6 +1,7 @@
 package com.dancu.qlydancu.controller;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,11 +28,15 @@ import com.dancu.qlydancu.dto.ResidentNotificationDetailResponse;
 import com.dancu.qlydancu.dto.ResidentNotificationListItemResponse;
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.Notification;
+import com.dancu.qlydancu.dto.NotificationRealtimeMessage;
+import com.dancu.qlydancu.model.Household;
+import com.dancu.qlydancu.model.Notification;
 import com.dancu.qlydancu.model.NotificationReceiver;
 import com.dancu.qlydancu.model.enums.NotificationType;
 import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.NotificationReceiverRepository;
 import com.dancu.qlydancu.repo.NotificationRepository;
+import com.dancu.qlydancu.service.NotificationRealtimePublisher;
 import com.dancu.qlydancu.service.NotificationService;
 
 @RestController
@@ -42,15 +47,18 @@ public class NotificationController {
     private final HouseholdRepository householdRepository;
     private final NotificationReceiverRepository receiverRepository;
     private final NotificationService notificationService;
+    private final NotificationRealtimePublisher realtimePublisher;
 
     public NotificationController(
             NotificationRepository notificationRepository, HouseholdRepository householdRepository,
             NotificationReceiverRepository receiverRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            NotificationRealtimePublisher realtimePublisher) {
         this.notificationRepository = notificationRepository;
         this.householdRepository = householdRepository;
         this.receiverRepository = receiverRepository;
         this.notificationService = notificationService;
+        this.realtimePublisher = realtimePublisher;
     }
 
     @GetMapping("/me")
@@ -59,6 +67,15 @@ public class NotificationController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         return ResponseEntity.ok(notificationService.getResidentNotifications(authentication.getName()));
+    }
+
+    @GetMapping("/me/unread-count")
+    public ResponseEntity<java.util.Map<String, Long>> getMyUnreadCount(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        long count = notificationService.getUnreadCount(authentication.getName());
+        return ResponseEntity.ok(java.util.Map.of("unreadCount", count));
     }
 
     @GetMapping("/{id}")
@@ -148,7 +165,7 @@ public class NotificationController {
         notification.setTitle(request.title());
         notification.setContent(request.content());
         notification.setType(request.type() != null ? request.type() : NotificationType.GENERAL);
-        notification.setCreatedAt(LocalDateTime.now());
+        notification.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
 
         Notification savedNotification = notificationRepository.save(notification);
 
@@ -173,11 +190,38 @@ public class NotificationController {
             NotificationReceiver receiver = new NotificationReceiver();
             receiver.setNotification(savedNotification);
             receiver.setHousehold(household);
+            if (household.getUser() != null) {
+                receiver.setUser(household.getUser());
+            }
             receiver.setIsRead(false);
             return receiver;
         }).toList();
 
-        receiverRepository.saveAll(receivers);
+        List<NotificationReceiver> savedReceivers = receiverRepository.saveAll(receivers);
+
+        for (NotificationReceiver rec : savedReceivers) {
+            Long recipientUserId = null;
+            if (rec.getUser() != null) {
+                recipientUserId = rec.getUser().getId();
+            } else if (rec.getHousehold() != null && rec.getHousehold().getUser() != null) {
+                recipientUserId = rec.getHousehold().getUser().getId();
+            }
+
+            if (recipientUserId != null) {
+                NotificationRealtimeMessage msg = new NotificationRealtimeMessage(
+                        savedNotification.getId(),
+                        rec.getId(),
+                        savedNotification.getTitle(),
+                        savedNotification.getContent(),
+                        savedNotification.getType().name(),
+                        false,
+                        savedNotification.getCreatedAt(),
+                        "/user/notifications/" + rec.getId(),
+                        "ANNOUNCEMENT"
+                );
+                realtimePublisher.sendAfterCommit(recipientUserId, msg);
+            }
+        }
 
         return ResponseEntity.ok(new NotificationResponse(
                 savedNotification.getId(),

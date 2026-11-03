@@ -57,6 +57,8 @@ public class BillService {
     private PaymentRepository paymentRepository;
     @Autowired
     private ResidentRepository residentRepository;
+    @Autowired
+    private NotificationService notificationService;
 
     private String calculateBillStatus(Bill bill, List<BillDetail> details) {
         if (bill.getStatus() == BillDetailStatus.PAID) {
@@ -293,6 +295,20 @@ public class BillService {
         long currentTotal = (bill.getTotalAmount() != null) ? bill.getTotalAmount() : 0L;
         bill.setTotalAmount(currentTotal + finalAmount);
         billRepository.save(bill);
+
+        if (household.getUser() != null) {
+            String notiTitle = "Hóa đơn mới - Tháng " + request.getBillingMonth();
+            String notiContent = "Căn hộ " + apartment.getCode() + " có khoản phí mới (" + feeType.getName() + "): "
+                    + String.format("%,d", finalAmount) + " VNĐ.";
+            notificationService.sendNotificationToUser(
+                    household.getUser(),
+                    notiTitle,
+                    notiContent,
+                    com.dancu.qlydancu.model.enums.NotificationType.PAYMENT,
+                    "/user/payment",
+                    "NEW_BILL"
+            );
+        }
     }
 
     @Transactional
@@ -360,6 +376,25 @@ public class BillService {
         billRepository.save(bill);
         billDetailRepository.saveAll(details);
         paymentRepository.save(payment);
+
+        if (bill.getApartment() != null) {
+            householdRepository.findByApartment_Code(bill.getApartment().getCode()).ifPresent(hh -> {
+                if (hh.getUser() != null) {
+                    String title = "Xác nhận thanh toán thành công";
+                    String content = "Hóa đơn tháng " + bill.getBillingMonth() + " ("
+                            + String.format("%,d", bill.getTotalAmount() != null ? bill.getTotalAmount() : 0L)
+                            + " VNĐ) đã được xác nhận thanh toán.";
+                    notificationService.sendNotificationToUser(
+                            hh.getUser(),
+                            title,
+                            content,
+                            com.dancu.qlydancu.model.enums.NotificationType.PAYMENT,
+                            "/user/payment",
+                            "BILL_PAID"
+                    );
+                }
+            });
+        }
     }
 
     public com.dancu.qlydancu.dto.BillStatisticsResponse getStatistics() {

@@ -102,3 +102,53 @@
     text-align: left;
   }
 }
+
+.ant-notification .ant-notification-notice.realtime-notification {
+  width: min(370px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(28, 50, 80, 0.12);
+}
+
+.realtime-notification .ant-notification-notice-message,
+.realtime-notification .ant-notification-notice-title {
+  padding-right: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.realtime-notification__icon { color: #1e6efc; }
+
+.realtime-notification__body { min-width: 0; }
+
+.realtime-notification__content {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+  line-height: 1.6;
+  color: #526478;
+}
+
+.realtime-notification__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-top: 12px;
+}
+
+.realtime-notification__time { color: #6b7d90; font-size: 12px; }
+
+.realtime-notification__details.ant-btn {
+  margin-left: auto;
+  padding-inline: 0;
+  height: auto;
+  font-weight: 500;
+  white-space: normal;
+  transition: color 0.2s ease;
+}

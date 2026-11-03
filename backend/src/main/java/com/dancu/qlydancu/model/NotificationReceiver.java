@@ -18,6 +18,10 @@ public class NotificationReceiver {
     @JoinColumn(name = "household_id")
     private Household household;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(name = "is_read")
     private Boolean isRead;
 
@@ -27,6 +31,8 @@ public class NotificationReceiver {
     public void setNotification(Notification notification) { this.notification = notification; }
     public Household getHousehold() { return household; }
     public void setHousehold(Household household) { this.household = household; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
     public Boolean getIsRead() { return isRead; }
     public void setIsRead(Boolean read) { isRead = read; }
 }

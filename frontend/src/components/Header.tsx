@@ -5,7 +5,7 @@ import { NotificationOutlined, SettingOutlined, LogoutOutlined } from '@ant-desi
 import '../styles/App.css'
 import { clearAuthStorage, getStoredRole, getStoredUser } from '../utils/authStorage'
 import NotificationsPopover from './resident/NotificationsPopover'
-import { markMyNotificationRead, fetchMyNotifications } from '../utils/notificationApi'
+import { useNotification } from '../context/NotificationContext'
 
 const Header: React.FC = () => {
   const navigate = useNavigate()
@@ -13,19 +13,8 @@ const Header: React.FC = () => {
   const roleString = (user.role || getStoredRole() || 'ROLE_USER').toUpperCase()
   const roleValue = roleString.replace('ROLE_', '')
   const [notificationsOpen, setNotificationsOpen] = React.useState(false)
-  const [unreadNotifications, setUnreadNotifications] = React.useState(0)
 
-  React.useEffect(() => {
-    if (roleValue === 'USER') {
-      fetchMyNotifications()
-        .then((rows) => setUnreadNotifications(rows.filter((item) => !item.isRead).length))
-        .catch(() => { })
-    }
-  }, [roleValue])
-
-  const goNotifications = () => {
-    navigate(roleValue === 'ADMIN' ? '/admin/thong-bao' : '/user/notifications')
-  }
+  const { unreadCount, markAsRead, notifications } = useNotification()
 
   const goSettings = () => {
     if (roleValue === 'ADMIN') {
@@ -42,6 +31,37 @@ const Header: React.FC = () => {
     navigate('/login')
   }
 
+  const handleOpenItem = async (id: number) => {
+    try {
+      await markAsRead(id)
+    } catch {
+      // Bỏ qua lỗi mạng khi đánh dấu đọc
+    }
+    setNotificationsOpen(false)
+
+    const target = notifications.find((n) => n.id === id)
+    if (target?.actionUrl) {
+      navigate(target.actionUrl)
+    } else if (roleValue === 'ADMIN') {
+      navigate('/admin/thong-bao')
+    } else if (roleValue === 'STAFF') {
+      navigate('/staff/requests')
+    } else {
+      navigate(`/user/notifications/${id}`)
+    }
+  }
+
+  const handleViewAll = () => {
+    setNotificationsOpen(false)
+    if (roleValue === 'ADMIN') {
+      navigate('/admin/thong-bao')
+    } else if (roleValue === 'STAFF') {
+      navigate('/staff/requests')
+    } else {
+      navigate('/user/notifications')
+    }
+  }
+
   return (
     <header className="app-header">
       <div className="header-left">
@@ -50,45 +70,27 @@ const Header: React.FC = () => {
       </div>
 
       <div className="header-right">
-        {roleValue === 'USER' ? (
-          <Popover
-            trigger="click"
-            placement="bottomRight"
-            open={notificationsOpen}
-            onOpenChange={setNotificationsOpen}
-            overlayClassName="header-notifications-popover-overlay"
-            content={
-              <NotificationsPopover
-                open={notificationsOpen}
-                onUnreadCountChange={setUnreadNotifications}
-                onOpenNotification={async (id) => {
-                  try {
-                    await markMyNotificationRead(id)
-                    setUnreadNotifications((prev) => Math.max(0, prev - 1))
-                  } catch {
-                    // Không chặn chuyển trang nếu API đánh dấu đọc lỗi.
-                  }
-                  setNotificationsOpen(false)
-                  navigate(`/user/notifications/${id}`)
-                }}
-                onViewAll={() => {
-                  setNotificationsOpen(false)
-                  navigate('/user/notifications')
-                }}
-              />
-            }
-          >
-            <button className="icon-btn" title="Thông báo" type="button">
-              <Badge count={unreadNotifications} showZero={false} overflowCount={99} size="small">
-                <NotificationOutlined style={{ fontSize: 18, color: '#ffffff' }} />
-              </Badge>
-            </button>
-          </Popover>
-        ) : (
-          <button className="icon-btn" onClick={goNotifications} title="Thông báo" type="button">
-            <NotificationOutlined style={{ fontSize: 18, color: '#ffffff' }} />
+        <Popover
+          trigger="click"
+          placement="bottomRight"
+          open={notificationsOpen}
+          onOpenChange={setNotificationsOpen}
+          overlayClassName="header-notifications-popover-overlay"
+          content={
+            <NotificationsPopover
+              open={notificationsOpen}
+              onOpenNotification={handleOpenItem}
+              onViewAll={handleViewAll}
+            />
+          }
+        >
+          <button className="icon-btn" title="Thông báo" type="button">
+            <Badge count={unreadCount} showZero={false} overflowCount={99} size="small">
+              <NotificationOutlined style={{ fontSize: 18, color: '#ffffff' }} />
+            </Badge>
           </button>
-        )}
+        </Popover>
+
         <button className="icon-btn" onClick={goSettings} title="Cài đặt">
           <SettingOutlined style={{ fontSize: 18, color: 'inherit' }} />
         </button>

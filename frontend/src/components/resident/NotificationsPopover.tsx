@@ -1,59 +1,27 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button, Empty, List, Skeleton, Typography } from 'antd'
-import type { ResidentNotification } from '../../types/notification'
-import { fetchMyNotifications, formatNotificationDate } from '../../utils/notificationApi'
+import { formatNotificationDate } from '../../utils/notificationApi'
+import { useNotification } from '../../context/NotificationContext'
 
 type NotificationsPopoverProps = {
-  open: boolean
+  open?: boolean
   onViewAll: () => void
   onOpenNotification: (id: number) => Promise<void> | void
   onUnreadCountChange?: (count: number) => void
 }
 
 const NotificationsPopover = ({
-  open,
   onViewAll,
   onOpenNotification,
-  onUnreadCountChange,
 }: NotificationsPopoverProps) => {
-  const [loading, setLoading] = useState(false)
-  const [items, setItems] = useState<ResidentNotification[]>([])
+  const { notifications, loading } = useNotification()
   const [openingId, setOpeningId] = useState<number | null>(null)
 
-  useEffect(() => {
-    let mounted = true
-
-    const load = async () => {
-      if (!open) return
-      setLoading(true)
-      try {
-        const rows = await fetchMyNotifications()
-        if (mounted) {
-          setItems(rows)
-          onUnreadCountChange?.(rows.filter((item) => !item.isRead).length)
-        }
-      } catch {
-        if (mounted) {
-          setItems([])
-          onUnreadCountChange?.(0)
-        }
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [open])
-
-  const latest = useMemo(() => items.slice(0, 5), [items])
+  const latest = useMemo(() => notifications.slice(0, 5), [notifications])
 
   const handleOpenNotification = async (id: number) => {
     setOpeningId(id)
     try {
-      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)))
       await onOpenNotification(id)
     } finally {
       setOpeningId(null)
@@ -66,7 +34,7 @@ const NotificationsPopover = ({
         <Typography.Text strong>Thông báo</Typography.Text>
       </div>
 
-      {loading ? (
+      {loading && latest.length === 0 ? (
         <div style={{ padding: 12 }}>
           <Skeleton active paragraph={{ rows: 4 }} />
         </div>
@@ -117,4 +85,3 @@ const NotificationsPopover = ({
 }
 
 export default NotificationsPopover
-

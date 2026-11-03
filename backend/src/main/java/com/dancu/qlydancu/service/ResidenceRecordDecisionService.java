@@ -23,11 +23,17 @@ public class ResidenceRecordDecisionService {
 
     private final ResidenceRecordRepository residenceRecordRepository;
     private final ResidentRepository residentRepository;
+    private final com.dancu.qlydancu.repo.HouseholdRepository householdRepository;
+    private final NotificationService notificationService;
 
     public ResidenceRecordDecisionService(ResidenceRecordRepository residenceRecordRepository,
-                                         ResidentRepository residentRepository) {
+                                         ResidentRepository residentRepository,
+                                         com.dancu.qlydancu.repo.HouseholdRepository householdRepository,
+                                         NotificationService notificationService) {
         this.residenceRecordRepository = residenceRecordRepository;
         this.residentRepository = residentRepository;
+        this.householdRepository = householdRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -42,6 +48,26 @@ public class ResidenceRecordDecisionService {
 
         if (targetStatus == ResidenceRecordStatus.APPROVED) {
             applyApproveEffect(record);
+        }
+
+        if (record.getHouseholdId() != null) {
+            householdRepository.findById(record.getHouseholdId()).ifPresent(household -> {
+                if (household.getUser() != null) {
+                    boolean approved = targetStatus == ResidenceRecordStatus.APPROVED;
+                    String typeName = record.getType() == ResidenceRecordType.TEMPORARY_STAY ? "tạm trú" : "tạm vắng";
+                    String title = "Hồ sơ đăng ký " + typeName + (approved ? " đã được phê duyệt" : " đã bị từ chối");
+                    String guest = record.getGuestName() != null ? " (" + record.getGuestName() + ")" : "";
+                    String content = "Hồ sơ đăng ký " + typeName + guest + " của bạn đã được " + (approved ? "chấp thuận." : "từ chối.");
+                    notificationService.sendNotificationToUser(
+                            household.getUser(),
+                            title,
+                            content,
+                            com.dancu.qlydancu.model.enums.NotificationType.GENERAL,
+                            "/user/temporary",
+                            "RESIDENCE_DECISION"
+                    );
+                }
+            });
         }
 
         return targetStatus;

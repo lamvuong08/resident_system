@@ -31,6 +31,7 @@ import { getStoredRole, hasToken } from './utils/authStorage'
 import StaffLayout from './pages/staff/StaffLayout'
 import StaffDashboard from './pages/staff/StaffDashboard'
 import StaffMeterReading from './pages/staff/StaffMeterReading'
+import { NotificationProvider } from './context/NotificationContext'
 
 type RoleKey = 'ADMIN' | 'USER' | 'STAFF'
 
@@ -69,7 +70,9 @@ const RequireRole: React.FC<RoleGuardProps> = ({ role, children }) => {
 function AppWrapper() {
   return (
     <BrowserRouter>
-      <App />
+      <NotificationProvider>
+        <App />
+      </NotificationProvider>
     </BrowserRouter>
   )
 }

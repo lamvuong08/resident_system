@@ -36,6 +36,8 @@ import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.User;
 import com.dancu.qlydancu.model.UserRequest;
 import com.dancu.qlydancu.model.enums.RequestStatus;
+import com.dancu.qlydancu.model.enums.NotificationType;
+import com.dancu.qlydancu.model.enums.UserRole;
 import com.dancu.qlydancu.repo.HouseholdRepository;
 import com.dancu.qlydancu.repo.UserRepository;
 import com.dancu.qlydancu.repo.UserRequestRepository;
@@ -58,6 +60,9 @@ public class UserRequestService {
 
     @Autowired
     private HouseholdRepository householdRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -208,6 +213,15 @@ public class UserRequestService {
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu tệp đính kèm.", e);
         }
+
+        String aptCode = household.getApartment() != null ? household.getApartment().getCode() : "";
+        String notiTitle = "Yêu cầu mới từ căn hộ " + aptCode;
+        String notiDesc = (dto.getType() != null ? "[" + dto.getType().name() + "] " : "") +
+                (dto.getDescription() != null && dto.getDescription().length() > 100
+                        ? dto.getDescription().substring(0, 100) + "..."
+                        : (dto.getDescription() != null ? dto.getDescription() : ""));
+        notificationService.sendNotificationToRole(UserRole.ROLE_ADMIN, notiTitle, notiDesc, NotificationType.GENERAL, "/admin/requests", "NEW_REQUEST");
+        notificationService.sendNotificationToRole(UserRole.ROLE_STAFF, notiTitle, notiDesc, NotificationType.GENERAL, "/staff/requests", "NEW_REQUEST");
 
         return toResponse(userRequestRepository.findById(savedRequest.getId()).orElse(savedRequest));
     }
