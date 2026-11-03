@@ -10,9 +10,6 @@ type NotificationsListCardProps = {
   onItemClick?: (id: string, isRead: boolean) => void
 }
 
-const truncateContent = (value: string, maxLength = 100) =>
-  value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
-
 const NotificationsListCard = ({ loading, items, onViewAll, onItemClick }: NotificationsListCardProps) => {
   const latestItems = items.slice(0, 5)
 
@@ -47,8 +44,8 @@ const NotificationsListCard = ({ loading, items, onViewAll, onItemClick }: Notif
                 </Typography.Text>
               </div>
               {item.content && (
-                <Typography.Text className="resident-notifications-item__content" type="secondary" style={{ display: 'block' }}>
-                  {truncateContent(item.content)}
+                <Typography.Text className="resident-notifications-item__content" type="secondary">
+                  {item.content}
                 </Typography.Text>
               )}
             </button>

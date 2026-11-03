@@ -61,9 +61,6 @@ const Notifications = () => {
     return () => { active = false }
   }, [params.id, markAsRead, removeItem])
 
-  const truncateContent = (value: string, maxLength = 140) =>
-    value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
-
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       if (showUnreadOnly && item.isRead) return false
@@ -157,8 +154,8 @@ const Notifications = () => {
                       {formatNotificationDate(item.createdAt)}
                     </Typography.Text>
                   </div>
-                  <Typography.Text className="resident-notifications-item__content" type="secondary" style={{ display: 'block' }}>
-                    {truncateContent(item.content || 'Không có nội dung')}
+                  <Typography.Text className="resident-notifications-item__content" type="secondary">
+                    {item.content || 'Không có nội dung'}
                   </Typography.Text>
                 </button>
               ))}
@@ -194,7 +191,7 @@ const Notifications = () => {
             <Typography.Paragraph className="resident-notification-detail__meta">
               {formatNotificationDate(detail.createdAt)} | Người gửi: {detail.createdBy || 'Hệ thống'}
             </Typography.Paragraph>
-            <Typography.Paragraph>{detail.content || 'Không có nội dung'}</Typography.Paragraph>
+            <Typography.Paragraph className="resident-notification-detail__content">{detail.content || 'Không có nội dung'}</Typography.Paragraph>
 
             <div>
               <Typography.Text strong>File đính kèm</Typography.Text>

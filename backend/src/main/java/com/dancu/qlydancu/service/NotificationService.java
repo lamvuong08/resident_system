@@ -164,10 +164,11 @@ public class NotificationService {
 
     private ResidentNotificationListItemResponse toListItemResponse(NotificationReceiver receiver) {
         Notification notification = receiver.getNotification();
+        RequestNotificationContent wording = RequestNotificationContent.forDisplay(notification);
         return new ResidentNotificationListItemResponse(
                 receiver.getId(),
-                notification != null ? notification.getTitle() : "Thông báo hệ thống",
-                notification != null ? notification.getContent() : "",
+                wording.title(),
+                wording.content(),
                 notification != null && notification.getType() != null ? notification.getType().name() : "GENERAL",
                 Boolean.TRUE.equals(receiver.getIsRead()),
                 notification != null ? notification.getCreatedAt() : null);
@@ -175,10 +176,11 @@ public class NotificationService {
 
     private ResidentNotificationDetailResponse toDetailResponse(NotificationReceiver receiver) {
         Notification notification = receiver.getNotification();
+        RequestNotificationContent wording = RequestNotificationContent.forDisplay(notification);
         return new ResidentNotificationDetailResponse(
                 receiver.getId(),
-                notification != null ? notification.getTitle() : "Thông báo hệ thống",
-                notification != null ? notification.getContent() : "",
+                wording.title(),
+                wording.content(),
                 notification != null && notification.getType() != null ? notification.getType().name() : "GENERAL",
                 Boolean.TRUE.equals(receiver.getIsRead()),
                 notification != null && notification.getCreatedBy() != null

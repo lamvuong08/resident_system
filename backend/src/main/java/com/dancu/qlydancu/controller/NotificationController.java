@@ -38,6 +38,7 @@ import com.dancu.qlydancu.repo.NotificationReceiverRepository;
 import com.dancu.qlydancu.repo.NotificationRepository;
 import com.dancu.qlydancu.service.NotificationRealtimePublisher;
 import com.dancu.qlydancu.service.NotificationService;
+import com.dancu.qlydancu.service.RequestNotificationContent;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -113,13 +114,16 @@ public class NotificationController {
 
         Page<Notification> notifications = notificationRepository.findNotifications(type, pageable);
 
-        Page<NotificationResponse> response = notifications.map(n -> new NotificationResponse(
+        Page<NotificationResponse> response = notifications.map(n -> {
+            RequestNotificationContent wording = RequestNotificationContent.forDisplay(n);
+            return new NotificationResponse(
                 n.getId(),
-                n.getTitle(),
-                n.getContent(),
+                wording.title(),
+                wording.content(),
                 n.getType() != null ? n.getType().name() : "GENERAL",
                 n.getCreatedBy() != null ? n.getCreatedBy().getUsername() : "Hệ thống",
-                n.getCreatedAt()));
+                n.getCreatedAt());
+        });
 
         return ResponseEntity.ok(response);
     }

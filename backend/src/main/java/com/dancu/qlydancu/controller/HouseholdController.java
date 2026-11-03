@@ -1,5 +1,7 @@
 package com.dancu.qlydancu.controller;
 
+import com.dancu.qlydancu.service.RequestNotificationContent;
+
 import com.dancu.qlydancu.model.Household;
 import com.dancu.qlydancu.model.MaintenanceRequest;
 import com.dancu.qlydancu.model.Notification;
@@ -296,8 +298,9 @@ public class HouseholdController {
         response.put("id", receiver.getId());
         response.put("isRead", receiver.getIsRead());
         if (notification != null) {
-            response.put("title", notification.getTitle());
-            response.put("content", notification.getContent());
+            RequestNotificationContent wording = RequestNotificationContent.forDisplay(notification);
+            response.put("title", wording.title());
+            response.put("content", wording.content());
             response.put("createdAt", notification.getCreatedAt());
             response.put("type", notification.getType() != null ? notification.getType().name() : null);
         }

@@ -215,11 +215,9 @@ public class UserRequestService {
         }
 
         String aptCode = household.getApartment() != null ? household.getApartment().getCode() : "";
-        String notiTitle = "Yêu cầu mới từ căn hộ " + aptCode;
-        String notiDesc = (dto.getType() != null ? "[" + dto.getType().name() + "] " : "") +
-                (dto.getDescription() != null && dto.getDescription().length() > 100
-                        ? dto.getDescription().substring(0, 100) + "..."
-                        : (dto.getDescription() != null ? dto.getDescription() : ""));
+        RequestNotificationContent wording = RequestNotificationContent.created(dto.getType(), aptCode, dto.getDescription());
+        String notiTitle = wording.title();
+        String notiDesc = wording.content();
         notificationService.sendNotificationToRole(UserRole.ROLE_ADMIN, notiTitle, notiDesc, NotificationType.GENERAL, "/admin/requests", "NEW_REQUEST");
         notificationService.sendNotificationToRole(UserRole.ROLE_STAFF, notiTitle, notiDesc, NotificationType.GENERAL, "/staff/requests", "NEW_REQUEST");
 

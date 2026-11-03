@@ -201,9 +201,12 @@ body {
 
 .header-notifications-popover__item-content {
   margin-top: 2px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 
 .header-notifications-popover__footer {

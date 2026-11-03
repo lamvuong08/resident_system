@@ -203,16 +203,19 @@ public class AdminUserRequestService {
             String content = "";
             String eventType = "";
             if ("PROCESSING".equals(action)) {
-                title = "Yêu cầu #" + request.getId() + " đã được tiếp nhận";
-                content = "Yêu cầu (" + (request.getType() != null ? request.getType().name() : "") + ") của bạn đang được xử lý.";
+                RequestNotificationContent wording = RequestNotificationContent.processing(request.getType());
+                title = wording.title();
+                content = wording.content();
                 eventType = "REQUEST_PROCESSING";
             } else if ("DONE".equals(action)) {
-                title = "Yêu cầu #" + request.getId() + " đã hoàn thành";
-                content = "Yêu cầu (" + (request.getType() != null ? request.getType().name() : "") + ") của bạn đã được xử lý hoàn tất.";
+                RequestNotificationContent wording = RequestNotificationContent.done(request.getType());
+                title = wording.title();
+                content = wording.content();
                 eventType = "REQUEST_DONE";
             } else if ("REJECTED".equals(action)) {
-                title = "Yêu cầu #" + request.getId() + " bị từ chối";
-                content = "Yêu cầu của bạn đã bị từ chối." + (reason != null && !reason.trim().isEmpty() ? " Lý do: " + reason : "");
+                RequestNotificationContent wording = RequestNotificationContent.rejected(reason);
+                title = wording.title();
+                content = wording.content();
                 eventType = "REQUEST_REJECTED";
             }
 

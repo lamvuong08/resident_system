@@ -45,7 +45,12 @@
 }
 
 .resident-notifications-item__content {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
   margin-top: 4px;
 }
 
@@ -61,6 +66,11 @@
 
 .resident-notification-detail__meta {
   color: #6b7d90;
+}
+
+.resident-notification-detail__content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .resident-notification-detail__attachments {
