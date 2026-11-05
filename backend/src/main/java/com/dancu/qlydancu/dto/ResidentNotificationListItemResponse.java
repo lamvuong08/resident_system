@@ -8,5 +8,6 @@ public record ResidentNotificationListItemResponse(
         String content,
         String type,
         Boolean isRead,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        String actionUrl) {
 }

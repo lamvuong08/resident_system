@@ -220,6 +220,7 @@ public class UserRequestService {
         String notiDesc = wording.content();
         notificationService.sendNotificationToRole(UserRole.ROLE_ADMIN, notiTitle, notiDesc, NotificationType.GENERAL, "/admin/requests", "NEW_REQUEST");
         notificationService.sendNotificationToRole(UserRole.ROLE_STAFF, notiTitle, notiDesc, NotificationType.GENERAL, "/staff/requests", "NEW_REQUEST");
+        notificationService.notifyRequestListsChanged();
 
         return toResponse(userRequestRepository.findById(savedRequest.getId()).orElse(savedRequest));
     }
@@ -246,7 +247,7 @@ public class UserRequestService {
     public void deleteRequest(Long requestId, String email) {
         Household household = requireHouseholdForEmail(email);
 
-        UserRequest request = userRequestRepository.findById(requestId)
+        UserRequest request = userRequestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Không tìm thấy yêu cầu với ID: " + requestId));
 
@@ -254,11 +255,12 @@ public class UserRequestService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xóa yêu cầu này.");
         }
 
-        if (request.getStatus() != RequestStatus.PENDING) {
+        if (request.getStatus() != RequestStatus.PENDING || request.getAssignedStaff() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chỉ có thể xóa yêu cầu ở trạng thái Chờ xử lý.");
         }
 
         userRequestRepository.delete(request);
+        notificationService.notifyRequestListsChanged();
         deleteAttachmentDir(requestId);
     }
 
@@ -272,14 +274,14 @@ public class UserRequestService {
 
         Household household = requireHouseholdForEmail(email);
 
-        UserRequest request = userRequestRepository.findById(requestId)
+        UserRequest request = userRequestRepository.findByIdForUpdate(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu: " + requestId));
 
         if (!request.getHousehold().getId().equals(household.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền chỉnh sửa yêu cầu này.");
         }
 
-        if (request.getStatus() != RequestStatus.PENDING) {
+        if (request.getStatus() != RequestStatus.PENDING || request.getAssignedStaff() != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Chỉ có thể chỉnh sửa yêu cầu đang ở trạng thái 'Chờ xử lý'.");
         }
@@ -342,6 +344,7 @@ public class UserRequestService {
         }
 
         UserRequest updatedRequest = userRequestRepository.save(request);
+        notificationService.notifyRequestListsChanged();
         return toResponse(updatedRequest);
     }
 
@@ -390,12 +393,13 @@ public class UserRequestService {
         long done = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.DONE);
         long pending = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.PENDING);
         long processing = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.PROCESSING);
+        long assigned = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.ASSIGNED);
         long rejected = userRequestRepository.countByHouseholdIdAndStatus(householdId, RequestStatus.REJECTED);
 
         Map<String, Long> stats = new HashMap<>();
         stats.put("total", total);
         stats.put("done", done);
-        stats.put("processing", pending + processing);
+        stats.put("processing", pending + assigned + processing);
         stats.put("rejected", rejected);
 
         return stats;

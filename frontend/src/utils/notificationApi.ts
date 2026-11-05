@@ -31,6 +31,7 @@ const toNotification = (input: unknown): ResidentNotification => {
     type: String(row.type ?? 'GENERAL'),
     isRead: Boolean(row.isRead ?? false),
     createdAt: typeof row.createdAt === 'string' ? row.createdAt : null,
+    actionUrl: typeof row.actionUrl === 'string' ? row.actionUrl : undefined,
   }
 }
 

@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -50,6 +51,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Dữ liệu gửi lên không hợp lệ");
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleInvalidFields(MethodArgumentNotValidException ex) {
+        String message = "Dữ liệu đầu vào không hợp lệ.";
+        if (ex.getBindingResult().hasFieldErrors("staffId")) message = "Vui lòng chọn nhân viên hợp lệ.";
+        else if (ex.getBindingResult().hasFieldErrors("reason")) message = "Lý do chuyển giao không được vượt quá 2000 ký tự.";
+        else if (ex.getBindingResult().hasFieldErrors("expectedStaffId")) message = "Thông tin người phụ trách không hợp lệ. Vui lòng tải lại yêu cầu.";
+        return ResponseEntity.badRequest().body(message);
+    }
+
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<String> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
         LOGGER.warn("Unsupported media type: {}", ex.getMessage());
@@ -67,7 +77,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleDataAccess(DataAccessException ex) {
         LOGGER.error("Data access error", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Lỗi cơ sở dữ liệu. Kiểm tra đã chạy script cập nhật bảng requests (cột attachments_json) nếu bạn vừa nâng cấp backend.");
+                .body("Lỗi cơ sở dữ liệu. Vui lòng kiểm tra log backend và các migration cập nhật schema.");
     }
 
     @ExceptionHandler(RuntimeException.class)

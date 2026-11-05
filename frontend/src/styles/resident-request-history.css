@@ -820,3 +820,7 @@ button:disabled {
     }
 }
 
+.status-badge.assigned {
+  color: #1677ff;
+  background: #e6f4ff;
+}

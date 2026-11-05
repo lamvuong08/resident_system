@@ -5,6 +5,7 @@ import java.time.ZoneId;
 
 import com.dancu.qlydancu.model.enums.RequestStatus;
 import com.dancu.qlydancu.model.enums.RequestType;
+import com.dancu.qlydancu.model.enums.AssignmentMethod;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,9 +18,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 
 @Entity
-@Table(name = "requests")
+@Table(name = "requests", indexes = @Index(name = "idx_requests_assignee_status", columnList = "assigned_staff_id,status"))
 public class UserRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,6 +47,27 @@ public class UserRequest {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_staff_id")
+    private User assignedStaff;
+
+    @Column(name = "accepted_at")
+    private LocalDateTime acceptedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_by")
+    private User assignedBy;
+
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "assignment_method")
+    private AssignmentMethod assignmentMethod;
 
     public UserRequest() {}
 
@@ -77,4 +100,16 @@ public class UserRequest {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public User getAssignedStaff() { return assignedStaff; }
+    public void setAssignedStaff(User assignedStaff) { this.assignedStaff = assignedStaff; }
+    public LocalDateTime getAcceptedAt() { return acceptedAt; }
+    public void setAcceptedAt(LocalDateTime acceptedAt) { this.acceptedAt = acceptedAt; }
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+    public User getAssignedBy() { return assignedBy; }
+    public void setAssignedBy(User assignedBy) { this.assignedBy = assignedBy; }
+    public LocalDateTime getAssignedAt() { return assignedAt; }
+    public void setAssignedAt(LocalDateTime assignedAt) { this.assignedAt = assignedAt; }
+    public AssignmentMethod getAssignmentMethod() { return assignmentMethod; }
+    public void setAssignmentMethod(AssignmentMethod assignmentMethod) { this.assignmentMethod = assignmentMethod; }
 }

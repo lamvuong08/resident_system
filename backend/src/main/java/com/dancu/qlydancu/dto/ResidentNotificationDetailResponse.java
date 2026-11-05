@@ -11,5 +11,6 @@ public record ResidentNotificationDetailResponse(
         Boolean isRead,
         String createdBy,
         LocalDateTime createdAt,
-        List<NotificationAttachmentResponse> attachments) {
+        List<NotificationAttachmentResponse> attachments,
+        String actionUrl) {
 }

@@ -93,32 +93,19 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
         }
 
         String destination = accessor.getDestination();
-        if (destination == null) {
-            return;
+        if ("/user/queue/notifications".equals(destination)) return;
+        if ("/user/queue/request-updates".equals(destination)) {
+            User user = userRepository.findById(Long.valueOf(principal.getName()))
+                    .orElseThrow(() -> new AccessDeniedException("Không tìm thấy tài khoản."));
+            if (user.getStatus() != UserStatus.BLOCKED &&
+                    (user.getRoles() == com.dancu.qlydancu.model.enums.UserRole.ROLE_ADMIN ||
+                     user.getRoles() == com.dancu.qlydancu.model.enums.UserRole.ROLE_STAFF)) return;
         }
-
-        // Destination hợp lệ: /user/queue/notifications hoặc các queue người dùng
-        if (destination.startsWith("/user/")) {
-            return;
-        }
-
-        // Chặn client trực tiếp đăng ký các raw queue của người khác hoặc topic broadcast khi chưa được phép
-        if (destination.startsWith("/topic/")) {
-            log.warn("STOMP SUBSCRIBE rejected for userId={}: Destination {} not allowed", principal.getName(), destination);
-            throw new AccessDeniedException("Không có quyền đăng ký destination này");
-        }
-
-        if (destination.startsWith("/queue/") && !destination.contains(principal.getName())) {
-            log.warn("STOMP SUBSCRIBE rejected for userId={}: Cannot access foreign queue {}", principal.getName(), destination);
-            throw new AccessDeniedException("Không có quyền truy cập queue người dùng khác");
-        }
+        throw new AccessDeniedException("Không có quyền đăng ký destination này.");
     }
 
     private void authorizeSend(StompHeaderAccessor accessor) {
-        String destination = accessor.getDestination();
-        if (destination != null && (destination.startsWith("/topic/") || destination.startsWith("/queue/"))) {
-            log.warn("STOMP SEND rejected: Client cannot send directly to broker destination {}", destination);
-            throw new AccessDeniedException("Client không được phép gửi trực tiếp tới broker");
-        }
+        // This application mutates requests through authenticated REST, not client STOMP SEND.
+        throw new AccessDeniedException("Client không được phép phát sự kiện realtime.");
     }
 }

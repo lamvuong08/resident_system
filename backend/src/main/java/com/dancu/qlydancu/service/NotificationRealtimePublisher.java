@@ -78,4 +78,24 @@ public class NotificationRealtimePublisher {
             log.error("Failed to send realtime notification to userId={}: {}", userId, ex.getMessage());
         }
     }
+
+    /** Invalidation only: no request details, no notification row/toast/unread count. */
+    public void sendRequestUpdateAfterCommit(Collection<Long> userIds) {
+        var recipients = java.util.Set.copyOf(userIds);
+        Runnable publish = () -> recipients.forEach(userId -> {
+            try {
+                messagingTemplate.convertAndSendToUser(userId.toString(), "/queue/request-updates",
+                        java.util.Map.of("eventType", "REQUEST_CHANGED"));
+            } catch (Exception ex) {
+                log.warn("Request list sync failed for userId={}", userId, ex);
+            }
+        });
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { publish.run(); }
+            });
+        } else {
+            publish.run();
+        }
+    }
 }

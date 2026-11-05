@@ -11,6 +11,7 @@ type RequestListCardProps = {
 const formatStatus = (status: string) => {
   if (status === 'DONE' || status === 'COMPLETED' || status === 'APPROVED') return { text: 'Hoàn thành', color: 'success' as const }
   if (status === 'IN_PROGRESS' || status === 'PROCESSING') return { text: 'Đang xử lý', color: 'processing' as const }
+  if (status === 'ASSIGNED') return { text: 'Đã phân công', color: 'blue' as const }
   if (status === 'REJECTED' || status === 'DENIED') return { text: 'Từ chối', color: 'error' as const }
   if (status === 'PENDING') return { text: 'Chờ xử lý', color: 'warning' as const }
   return { text: 'Chờ xử lý', color: 'warning' as const }

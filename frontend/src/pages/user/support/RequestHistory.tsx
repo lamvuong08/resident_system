@@ -97,6 +97,8 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
     switch (status) {
       case 'PENDING':
         return 'Chờ xử lý'
+      case 'ASSIGNED':
+        return 'Đã phân công'
       case 'PROCESSING':
         return 'Đang xử lý'
       case 'DONE':
@@ -276,6 +278,7 @@ const RequestHistory: React.FC<RequestHistoryProps> = ({
           items={[
             { key: 'ALL', label: 'Tất cả' },
             { key: 'PENDING', label: 'Chờ xử lý' },
+            { key: 'ASSIGNED', label: 'Đã phân công' },
             { key: 'PROCESSING', label: 'Đang xử lý' },
             { key: 'DONE', label: 'Hoàn thành' },
             { key: 'REJECTED', label: 'Đã từ chối' },

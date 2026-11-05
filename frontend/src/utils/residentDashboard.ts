@@ -11,7 +11,7 @@ import type {
   UserBillFull,
 } from '../types/residentDashboard'
 
-const REQUEST_IN_PROGRESS_STATUSES = new Set(['IN_PROGRESS', 'PROCESSING', 'PENDING', 'DANG_XU_LY'])
+const REQUEST_IN_PROGRESS_STATUSES = new Set(['IN_PROGRESS', 'PROCESSING', 'PENDING', 'ASSIGNED', 'DANG_XU_LY'])
 const PAYMENT_UNPAID_STATUSES = new Set(['UNPAID', 'PENDING', 'DUE', 'UNPAID_INVOICE'])
 
 export function formatBillingPeriod(month?: number, year?: number) {

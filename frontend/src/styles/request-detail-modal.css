@@ -1,0 +1,95 @@
+.request-detail-modal {
+  max-width: calc(100vw - 32px);
+  padding-bottom: 0;
+}
+
+.request-detail-modal .request-detail-modal__container {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--rd-bg);
+  color: var(--rd-text);
+  font-family: var(--rd-font);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.request-detail-modal .request-detail-modal__header {
+  margin: 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--rd-border);
+}
+
+.request-detail-modal__heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-right: 20px; }
+.request-detail-modal__heading h2 { margin: 0; font: 600 18px/1.4 var(--rd-font); color: var(--rd-text); }
+.request-detail-modal__heading p { margin: 4px 0 0; color: var(--rd-muted); font-size: 13px; font-weight: 400; }
+.request-detail-modal__status { margin: 0; border-radius: 20px; flex-shrink: 0; }
+
+.request-detail-modal .request-detail-modal__body {
+  max-height: calc(100vh - 210px);
+  max-height: calc(100dvh - 210px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 24px;
+  background: var(--rd-bg);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rd-scrollbar) var(--rd-bg);
+}
+
+/* Fallback for browsers that do not support standard scrollbar properties. */
+.request-detail-modal__body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.request-detail-modal__body::-webkit-scrollbar-track,
+.request-detail-modal__body::-webkit-scrollbar-corner {
+  background: var(--rd-bg);
+}
+
+.request-detail-modal__body::-webkit-scrollbar-thumb {
+  background: var(--rd-scrollbar);
+  border: 2px solid var(--rd-bg);
+  border-radius: 8px;
+}
+
+.request-detail-modal__body::-webkit-scrollbar-thumb:hover {
+  background: var(--rd-scrollbar-hover);
+}
+
+.request-detail-modal__section { padding: 20px 0; border-bottom: 1px solid var(--rd-border); }
+.request-detail-modal__section:last-child { border-bottom: 0; }
+.request-detail-modal__section h3 { margin: 0 0 16px; font: 600 14px/1.5 var(--rd-font); color: var(--rd-text); }
+.request-detail-modal__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; margin: 0; }
+.request-detail-modal__field { min-width: 0; overflow-wrap: anywhere; }
+.request-detail-modal__field dt { font-size: 12px; color: var(--rd-muted); margin-bottom: 4px; }
+.request-detail-modal__field dd { margin: 0; font-size: 14px; font-weight: 500; }
+.request-detail-modal__assignment { padding: 16px; background: var(--rd-soft); border-radius: 8px; }
+.request-detail-modal__assignee { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.request-detail-modal__person { flex: 1; min-width: 100px; overflow-wrap: anywhere; }
+.request-detail-modal__person strong { display: block; font-weight: 600; }
+.request-detail-modal__person span { font-size: 12px; color: var(--rd-muted); }
+.request-detail-modal__method { margin: 0; max-width: 100%; white-space: normal; }
+.request-detail-modal__assignment .request-detail-modal__grid { margin-top: 16px; }
+.request-detail-modal__content { background: var(--rd-soft); border-radius: 8px; padding: 14px 16px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.request-detail-modal__attachments { margin-top: 14px; color: var(--rd-muted); font-size: 13px; }
+.request-detail-modal__files { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.request-detail-modal__attachment { display: flex; flex-direction: column; gap: 6px; max-width: 160px; overflow-wrap: anywhere; }
+.request-detail-modal__timeline { margin-top: 16px; }
+.request-detail-modal__event-title { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.request-detail-modal__timeline time { font-size: 12px; color: var(--rd-muted); }
+.request-detail-modal__timeline p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+.request-detail-modal .request-detail-modal__footer { margin: 0; padding: 14px 24px; border-top: 1px solid var(--rd-border); }
+.request-detail-modal__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 575px) {
+  .request-detail-modal__grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .request-detail-modal__heading { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .request-detail-modal .request-detail-modal__header { padding: 16px; }
+  .request-detail-modal .request-detail-modal__body { padding-inline: 16px; max-height: calc(100dvh - 230px); }
+  .request-detail-modal .request-detail-modal__footer { padding: 12px 16px; }
+  .request-detail-modal__heading h2 { font-size: 16px; }
+  .request-detail-modal__person { flex-basis: calc(100% - 52px); }
+  .request-detail-modal__method { margin-left: 52px; }
+}

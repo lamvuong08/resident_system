@@ -95,6 +95,7 @@
 	</dependencies>
 
 	<build>
+		<testSourceDirectory>${project.basedir}/../tests/backend/java</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

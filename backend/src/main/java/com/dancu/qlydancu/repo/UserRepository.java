@@ -21,4 +21,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     boolean existsByUsernameAndIdNot(String username, Long id);
     long countByRoles(UserRole role);
     java.util.List<User> findByRoles(UserRole role);
+    java.util.List<User> findByRolesAndStatus(UserRole role, com.dancu.qlydancu.model.enums.UserStatus status);
 }

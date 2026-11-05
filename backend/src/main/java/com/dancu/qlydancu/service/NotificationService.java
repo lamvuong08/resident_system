@@ -115,6 +115,7 @@ public class NotificationService {
         Notification notification = new Notification();
         notification.setTitle(title);
         notification.setContent(content);
+        notification.setActionUrl(actionUrl);
         notification.setType(type != null ? type : NotificationType.GENERAL);
         notification.setCreatedAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")));
         Notification saved = notificationRepository.save(notification);
@@ -150,8 +151,19 @@ public class NotificationService {
     public void sendNotificationToRole(UserRole role, String title, String content, NotificationType type, String actionUrl, String eventType) {
         List<User> users = userRepository.findByRoles(role);
         for (User u : users) {
+            if (u.getStatus() == com.dancu.qlydancu.model.enums.UserStatus.BLOCKED) continue;
             sendNotificationToUser(u, title, content, type, actionUrl, eventType);
         }
+    }
+
+    public void notifyRequestListsChanged() {
+        java.util.Set<Long> recipients = new java.util.HashSet<>();
+        for (UserRole role : List.of(UserRole.ROLE_ADMIN, UserRole.ROLE_STAFF)) {
+            userRepository.findByRoles(role).stream()
+                    .filter(user -> user.getStatus() != com.dancu.qlydancu.model.enums.UserStatus.BLOCKED)
+                    .map(User::getId).forEach(recipients::add);
+        }
+        realtimePublisher.sendRequestUpdateAfterCommit(recipients);
     }
 
     private User requireUserForEmail(String email) {
@@ -171,7 +183,8 @@ public class NotificationService {
                 wording.content(),
                 notification != null && notification.getType() != null ? notification.getType().name() : "GENERAL",
                 Boolean.TRUE.equals(receiver.getIsRead()),
-                notification != null ? notification.getCreatedAt() : null);
+                notification != null ? notification.getCreatedAt() : null,
+                notification != null ? notification.getActionUrl() : null);
     }
 
     private ResidentNotificationDetailResponse toDetailResponse(NotificationReceiver receiver) {
@@ -187,6 +200,7 @@ public class NotificationService {
                         ? notification.getCreatedBy().getUsername()
                         : "Hệ thống",
                 notification != null ? notification.getCreatedAt() : null,
-                List.of());
+                List.of(),
+                notification != null ? notification.getActionUrl() : null);
     }
 }

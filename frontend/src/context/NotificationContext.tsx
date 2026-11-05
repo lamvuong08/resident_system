@@ -3,7 +3,7 @@ import { Client, type IMessage } from '@stomp/stompjs'
 import { notification as antNotification, Button } from 'antd'
 import { ArrowRightOutlined, NotificationOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
-import { hasToken } from '../utils/authStorage'
+import { hasToken, getStoredRole } from '../utils/authStorage'
 import {
   fetchMyNotifications,
   markMyNotificationRead,
@@ -18,6 +18,7 @@ interface NotificationContextType {
   notifications: ResidentNotification[]
   unreadCount: number
   isConnected: boolean
+  requestUpdatesVersion: number
   loading: boolean
   markAsRead: (id: number) => Promise<void>
   markAllAsRead: () => Promise<void>
@@ -38,6 +39,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [unreadCount, setUnreadCount] = useState<number>(0)
   const [isConnected, setIsConnected] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
+  const [requestUpdatesVersion, setRequestUpdatesVersion] = useState(0)
   const clientRef = useRef<Client | null>(null)
   const initialLoadedRef = useRef<boolean>(false)
   const receivedIdsRef = useRef(new Set<number>())
@@ -180,7 +182,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
+        if (clientRef.current !== stompClient || token !== localStorage.getItem('token')) return
         setIsConnected(true)
+        setRequestUpdatesVersion((version) => version + 1)
         console.info('[STOMP] Connected to WebSocket successfully')
 
         // Subscribe hàng đợi riêng của người dùng
@@ -257,6 +261,15 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
         })
 
+        const role = getStoredRole()
+        if (role.includes('ADMIN') || role.includes('STAFF')) {
+          stompClient.subscribe('/user/queue/request-updates', () => {
+            if (clientRef.current === stompClient && token === localStorage.getItem('token')) {
+              setRequestUpdatesVersion((version) => version + 1)
+            }
+          })
+        }
+
         // Đồng bộ REST để bù đắp bất kỳ thông báo nào bị gửi trong lúc reconnect
         void refreshNotifications()
       },
@@ -309,6 +322,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         notifications,
         unreadCount,
         isConnected,
+        requestUpdatesVersion,
         loading,
         markAsRead,
         markAllAsRead,

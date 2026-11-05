@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import {
     Button,
     Card,
@@ -7,7 +7,6 @@ import {
     Modal,
     Row,
     Select,
-    Space,
     Table,
     Tabs,
     Tag,
@@ -18,7 +17,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import type { AdminRequestAttachment, AdminRequestRow } from '../../utils/adminSupportApi'
+import type { AdminRequestRow, AssignmentHistory } from '../../utils/adminSupportApi'
 import {
     fetchAdminRequests,
     getAdminRequestDetail,
@@ -27,21 +26,28 @@ import {
     setAdminRequestRejected,
     getAdminRequestTypeLabel,
     getAdminRequestStatusLabel,
-    resolveAdminRequestAttachmentUrl,
+    fetchAssignmentHistory,
+    startAssignedRequest,
 } from '../../utils/adminSupportApi'
 import SlidingPaginationFooter from '../../components/SlidingPaginationFooter'
 import { PAGE_SIZE } from '../../utils/pagination'
 import { formatUserRequestDate } from '../../utils/userSupportApi'
 import { extractApiError } from '../../utils/api'
+import { getStoredRole } from '../../utils/authStorage'
+import { useNotification } from '../../context/NotificationContext'
+import RequestAssignmentModal from '../../components/RequestAssignmentModal'
+import RequestDetailModal from '../../components/RequestDetailModal'
 
 const { Text } = Typography
 
 const RequestManagement: React.FC = () => {
+    const isStaff = getStoredRole().includes('STAFF') && !getStoredRole().includes('ADMIN')
+    const { requestUpdatesVersion } = useNotification()
     const [loading, setLoading] = useState(false)
     const [rows, setRows] = useState<AdminRequestRow[]>([])
 
     const [keyword, setKeyword] = useState('')
-    const [activeTab, setActiveTab] = useState<string>('ALL')
+    const [activeTab, setActiveTab] = useState<string>(isStaff ? 'PENDING' : 'ALL')
     const [filterType, setFilterType] = useState<string>('ALL')
 
     const [currentPage, setCurrentPage] = useState(1)
@@ -49,12 +55,34 @@ const RequestManagement: React.FC = () => {
 
     const [detailModalOpen, setDetailModalOpen] = useState(false)
     const [selectedReq, setSelectedReq] = useState<AdminRequestRow | null>(null)
+    const [detailLoading, setDetailLoading] = useState(false)
+    const listRequestRef = useRef(0)
+    const [assignmentRequest, setAssignmentRequest] = useState<AdminRequestRow | null>(null)
+    const [assignmentOpen, setAssignmentOpen] = useState(false)
+    const [transfer, setTransfer] = useState(false)
+    const [history, setHistory] = useState<AssignmentHistory[]>([])
+    const [historyLoading, setHistoryLoading] = useState(false)
+    const [historyError, setHistoryError] = useState(false)
+
+    useEffect(() => {
+        if (isStaff || !selectedReq?.id) return
+        let active = true
+        setHistoryLoading(true)
+        setHistoryError(false)
+        setHistory([])
+        void fetchAssignmentHistory(selectedReq.id).then((rows) => { if (active) setHistory(rows) })
+            .catch(() => { if (active) setHistoryError(true) })
+            .finally(() => { if (active) setHistoryLoading(false) })
+        return () => { active = false }
+    }, [selectedReq?.id, requestUpdatesVersion, isStaff])
 
     const [rejectModalOpen, setRejectModalOpen] = useState(false)
+    const [rejectRequest, setRejectRequest] = useState<AdminRequestRow | null>(null)
     const [rejectForm] = Form.useForm()
     const [rejectLoading, setRejectLoading] = useState(false)
 
     const [actionLoading, setActionLoading] = useState(false)
+    const mutationPendingRef = useRef(false)
 
     const location = useLocation()
     const [searchParams, setSearchParams] = useSearchParams()
@@ -62,43 +90,55 @@ const RequestManagement: React.FC = () => {
     // Tự động mở modal xử lý yêu cầu khi nhận được requestId từ URL hoặc navigation state (nút "Xử lý ngay")
     useEffect(() => {
         const requestIdParam = searchParams.get('requestId') || location.state?.requestId
-        if (!requestIdParam) return
-
-        const targetId = Number(requestIdParam)
-        if (isNaN(targetId) || targetId <= 0) return
-
-        // 1. Mở nhanh bằng state đã truyền sẵn nếu khớp ID để giao diện phản hồi tức thì
-        const stateRow = location.state?.requestRow as AdminRequestRow | undefined
-        if (stateRow && Number(stateRow.id) === targetId) {
-            setSelectedReq(stateRow)
-            setDetailModalOpen(true)
+        if (!requestIdParam) {
+            setDetailModalOpen(false)
+            setSelectedReq(null)
+            setDetailLoading(false)
+            return
         }
 
-        // 2. Tải chi tiết đầy đủ mới nhất từ server (đảm bảo file đính kèm và trạng thái mới nhất)
+        const targetId = Number(requestIdParam)
+        if (!Number.isSafeInteger(targetId) || targetId <= 0) return
+
+        let active = true
+        setDetailModalOpen(true)
+        setDetailLoading(true)
+        setSelectedReq(null)
+        setHistory([])
+
+        // Always load permissions from the server, including after realtime invalidation.
         getAdminRequestDetail(targetId)
             .then((detail) => {
-                if (detail) {
+                if (active && detail) {
                     setSelectedReq(detail)
                     setDetailModalOpen(true)
                 }
             })
             .catch((err) => {
-                if (!stateRow) {
+                if (active) {
+                    setSelectedReq(null)
+                    setDetailModalOpen(false)
+                    setRejectModalOpen(false)
+                    setAssignmentOpen(false)
                     message.error(extractApiError(err, `Không thể tải thông tin yêu cầu #${targetId}`))
                 }
             })
-    }, [searchParams, location.state])
+            .finally(() => { if (active) setDetailLoading(false) })
+        return () => { active = false }
+    }, [searchParams, location.state, requestUpdatesVersion])
 
     const handleCloseDetailModal = () => {
         setDetailModalOpen(false)
-        if (searchParams.has('requestId')) {
-            const nextParams = new URLSearchParams(searchParams)
-            nextParams.delete('requestId')
-            setSearchParams(nextParams, { replace: true })
-        }
+        setSelectedReq(null)
+        setRejectModalOpen(false)
+        setAssignmentOpen(false)
+        const nextParams = new URLSearchParams(searchParams)
+        nextParams.delete('requestId')
+        setSearchParams(nextParams, { replace: true, state: null })
     }
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
+        const requestNumber = ++listRequestRef.current
         setLoading(true)
         try {
             const res = await fetchAdminRequests({
@@ -108,18 +148,21 @@ const RequestManagement: React.FC = () => {
                 type: filterType,
                 searchQuery: keyword
             })
-            setRows(res.items)
-            setTotalElements(res.totalElements)
+            if (requestNumber === listRequestRef.current) {
+                setRows(res.items)
+                setTotalElements(res.totalElements)
+            }
         } catch (err) {
-            message.error(extractApiError(err, 'Lỗi tải danh sách yêu cầu'))
+            if (requestNumber === listRequestRef.current) message.error(extractApiError(err, 'Lỗi tải danh sách yêu cầu'))
         } finally {
-            setLoading(false)
+            if (requestNumber === listRequestRef.current) setLoading(false)
         }
-    }
+    }, [currentPage, activeTab, filterType, keyword])
 
     useEffect(() => {
         loadData()
-    }, [currentPage, activeTab, filterType, keyword])
+        return () => { ++listRequestRef.current }
+    }, [loadData, requestUpdatesVersion])
 
     useEffect(() => {
         setCurrentPage(1)
@@ -133,33 +176,12 @@ const RequestManagement: React.FC = () => {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'PENDING': return 'warning'
+            case 'ASSIGNED': return 'blue'
             case 'IN_PROGRESS': return 'processing'
             case 'COMPLETED': return 'success'
             case 'REJECTED': return 'error'
             default: return 'default'
         }
-    }
-
-    const renderAttachmentPreview = (attachment: AdminRequestAttachment) => {
-        const attachmentUrl = resolveAdminRequestAttachmentUrl(attachment.downloadUrl || attachment.previewUrl)
-        const isImage = attachment.contentType?.toLowerCase().startsWith('image/')
-        if (!isImage) {
-            return (
-                <a href={attachmentUrl} target="_blank" rel="noreferrer">
-                    {attachment.originalName}
-                </a>
-            )
-        }
-
-        return (
-            <a href={attachmentUrl} target="_blank" rel="noreferrer">
-                <img
-                    src={resolveAdminRequestAttachmentUrl(attachment.previewUrl)}
-                    alt={attachment.originalName}
-                    style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4 }}
-                />
-            </a>
-        )
     }
 
     const columns: ColumnsType<AdminRequestRow> = [
@@ -207,59 +229,75 @@ const RequestManagement: React.FC = () => {
             ),
         },
         {
+            title: 'Người phụ trách',
+            key: 'assignedStaff',
+            width: 160,
+            render: (_, row) => row.assignedStaff?.name || 'Chưa có người phụ trách',
+        },
+        {
             title: 'Thao tác',
             key: 'actions',
             width: 100,
             align: 'center',
             render: (_, row: AdminRequestRow) => (
-                <Button type="link" size="small" onClick={() => { setSelectedReq(row); setDetailModalOpen(true); }}>
-                    Chi tiết
-                </Button>
+                <Button type="link" size="small" onClick={() => setSearchParams({ requestId: String(row.id) })}>Chi tiết</Button>
             ),
         },
     ]
 
-    const handleAccept = async () => {
-        if (!selectedReq) return
+    const handleAccept = async (request: AdminRequestRow) => {
+        if ((!request.canAccept && !request.canStart) || mutationPendingRef.current) return
+        mutationPendingRef.current = true
         setActionLoading(true)
         try {
-            await setAdminRequestInProgress(selectedReq.id)
-            message.success('Đã nhận xử lý yêu cầu')
+            if (request.canStart) await startAssignedRequest(request.id)
+            else await setAdminRequestInProgress(request.id)
+            message.success(request.canStart ? 'Đã bắt đầu xử lý yêu cầu' : 'Đã nhận xử lý yêu cầu')
             handleCloseDetailModal()
             loadData()
         } catch (err) {
             message.error(extractApiError(err, 'Lỗi cập nhật yêu cầu'))
+            handleCloseDetailModal()
+            void loadData()
         } finally {
+            mutationPendingRef.current = false
             setActionLoading(false)
         }
     }
 
-    const handleComplete = async () => {
-        if (!selectedReq) return
+    const handleComplete = async (request: AdminRequestRow) => {
+        if (!request.canComplete || mutationPendingRef.current) return
+        mutationPendingRef.current = true
         setActionLoading(true)
         try {
-            await setAdminRequestCompleted(selectedReq.id)
+            await setAdminRequestCompleted(request.id)
             message.success('Đã hoàn thành yêu cầu')
             handleCloseDetailModal()
             loadData()
         } catch (err) {
             message.error(extractApiError(err, 'Lỗi cập nhật yêu cầu'))
+            handleCloseDetailModal()
+            void loadData()
         } finally {
+            mutationPendingRef.current = false
             setActionLoading(false)
         }
     }
 
-    const handleRejectPrompt = () => {
+    const handleRejectPrompt = (request: AdminRequestRow) => {
+        if (!request.canReject) return
+        setRejectRequest(request)
         rejectForm.resetFields()
         setRejectModalOpen(true)
     }
 
     const submitReject = async () => {
-        if (!selectedReq) return
+        if (!rejectRequest?.canReject || mutationPendingRef.current) return
+        mutationPendingRef.current = true
         try {
             const values = await rejectForm.validateFields()
             setRejectLoading(true)
-            await setAdminRequestRejected(selectedReq.id, values.reason)
+            await setAdminRequestRejected(rejectRequest.id, values.reason)
             message.success('Đã từ chối yêu cầu')
             setRejectModalOpen(false)
             handleCloseDetailModal()
@@ -267,7 +305,10 @@ const RequestManagement: React.FC = () => {
         } catch (err: unknown) {
             if (err && typeof err === 'object' && 'errorFields' in err) return
             message.error(extractApiError(err, 'Lỗi cập nhật yêu cầu'))
+            handleCloseDetailModal()
+            void loadData()
         } finally {
+            mutationPendingRef.current = false
             setRejectLoading(false)
         }
     }
@@ -312,9 +353,15 @@ const RequestManagement: React.FC = () => {
                 <Tabs
                     activeKey={activeTab}
                     onChange={setActiveTab}
-                    items={[
+                    items={isStaff ? [
+                        { key: 'PENDING', label: 'Chưa tiếp nhận' },
+                        { key: 'MINE', label: 'Công việc của tôi' },
+                        { key: 'COMPLETED', label: 'Đã hoàn thành' },
+                        { key: 'REJECTED', label: 'Đã từ chối' },
+                    ] : [
                         { key: 'ALL', label: 'Tất cả' },
                         { key: 'PENDING', label: 'Chờ xử lý' },
+                        { key: 'ASSIGNED', label: 'Đã phân công' },
                         { key: 'IN_PROGRESS', label: 'Đang xử lý' },
                         { key: 'COMPLETED', label: 'Hoàn thành' },
                         { key: 'REJECTED', label: 'Đã từ chối' },
@@ -326,6 +373,7 @@ const RequestManagement: React.FC = () => {
                     size="small"
                     columns={columns}
                     dataSource={rows}
+                    scroll={{ x: 'max-content' }}
                     pagination={false}
                 />
                 <SlidingPaginationFooter
@@ -336,82 +384,32 @@ const RequestManagement: React.FC = () => {
                 />
             </Card>
 
-            <Modal
-                title={`Chi tiết yêu cầu #${selectedReq?.id}`}
-                open={detailModalOpen}
-                onCancel={handleCloseDetailModal}
-                footer={null}
-                width={600}
-                destroyOnClose
-            >
-                {selectedReq && (
-                    <div>
-                        <Row style={{ marginBottom: 16 }}>
-                            <Col span={12}>
-                                <Text type="secondary">Cư dân: </Text> <Text strong>{selectedReq.resident.name}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text type="secondary">Căn hộ: </Text> <Text>{selectedReq.resident.apartment}</Text>
-                            </Col>
-                        </Row>
-                        <Row style={{ marginBottom: 16 }}>
-                            <Col span={12}>
-                                <Text type="secondary">Ngày gửi: </Text>
-                                <Text>{formatUserRequestDate(selectedReq.createdAt)}</Text>
-                            </Col>
-                            <Col span={12}>
-                                <Text type="secondary">Trạng thái: </Text>
-                                <Tag color={getStatusColor(selectedReq.status)}>
-                                    {getAdminRequestStatusLabel(selectedReq.status)}
-                                </Tag>
-                            </Col>
-                        </Row>
-                        <div style={{ marginBottom: 12 }}>
-                            <Text type="secondary">Loại yêu cầu:</Text>{' '}
-                            <Text strong>{getAdminRequestTypeLabel(selectedReq.type)}</Text>
-                        </div>
-                        <div style={{ marginBottom: 6 }}>
-                            <Text type="secondary">Nội dung yêu cầu:</Text>
-                        </div>
-                        <div style={{ backgroundColor: '#f5f5f5', padding: 12, borderRadius: 6, minHeight: 80, marginBottom: 16 }}>
-                            <Text>{selectedReq.content || selectedReq.title}</Text>
-                        </div>
-                        <div style={{ marginBottom: 24 }}>
-                            <Text type="secondary">Ảnh đính kèm:</Text>{' '}
-                            {selectedReq.attachments && selectedReq.attachments.length > 0 ? (
-                                <Space>
-                                    {selectedReq.attachments.map((attachment) => (
-                                        <span key={attachment.storedFileName}>{renderAttachmentPreview(attachment)}</span>
-                                    ))}
-                                </Space>
-                            ) : (
-                                <Text type="secondary" italic>Không có</Text>
-                            )}
-                        </div>
+            <RequestDetailModal open={detailModalOpen} loading={detailLoading} request={selectedReq}
+                history={isStaff ? [] : history} historyLoading={!isStaff && historyLoading}
+                historyError={!isStaff && historyError} onClose={handleCloseDetailModal}
+                actions={selectedReq && <>
+                    {selectedReq.canReject && <Button className="fix-height-32" danger disabled={actionLoading || rejectLoading}
+                        onClick={() => handleRejectPrompt(selectedReq)}>Từ chối</Button>}
+                    {!isStaff && (selectedReq.canAssign || selectedReq.canReassign) && <Button className="fix-height-32"
+                        disabled={actionLoading || rejectLoading} onClick={() => {
+                            setAssignmentRequest(selectedReq)
+                            setTransfer(Boolean(selectedReq.canReassign))
+                            setAssignmentOpen(true)
+                        }}>{selectedReq.canReassign ? 'Thay đổi nhân viên' : 'Phân công'}</Button>}
+                    {(selectedReq.canAccept || selectedReq.canStart) && <Button className="fix-height-32" type="primary"
+                        loading={actionLoading} disabled={rejectLoading} onClick={() => void handleAccept(selectedReq)}>
+                        {selectedReq.canStart ? 'Bắt đầu xử lý' : 'Nhận xử lý'}
+                    </Button>}
+                    {selectedReq.canComplete && <Button className="fix-height-32" type="primary" loading={actionLoading}
+                        disabled={rejectLoading} onClick={() => void handleComplete(selectedReq)}>Hoàn thành</Button>}
+                </>}>
 
-                        <Row justify="end" gutter={10}>
-                            <Col>
-                                <Button className="fix-height-32" onClick={handleCloseDetailModal}>Đóng</Button>
-                            </Col>
-                            {(selectedReq.status === 'PENDING' || selectedReq.status === 'IN_PROGRESS') && (
-                                <Col>
-                                    <Button className="fix-height-32" danger loading={actionLoading} onClick={handleRejectPrompt}>Từ chối</Button>
-                                </Col>
-                            )}
-                            {selectedReq.status === 'PENDING' && (
-                                <Col>
-                                    <Button className="fix-height-32" type="primary" loading={actionLoading} onClick={handleAccept}>Nhận xử lý</Button>
-                                </Col>
-                            )}
-                            {selectedReq.status === 'IN_PROGRESS' && (
-                                <Col>
-                                    <Button className="fix-height-32" type="primary" loading={actionLoading} onClick={handleComplete}>Hoàn thành</Button>
-                                </Col>
-                            )}
-                        </Row>
-                    </div>
-                )}
-            </Modal>
+            {!isStaff && <RequestAssignmentModal open={assignmentOpen} request={assignmentRequest} transfer={transfer}
+                revision={requestUpdatesVersion} onCancel={() => setAssignmentOpen(false)} onDone={() => {
+                    setAssignmentOpen(false)
+                    handleCloseDetailModal()
+                    void loadData()
+                }} />}
 
             <Modal
                 title="Từ chối yêu cầu"
@@ -434,6 +432,7 @@ const RequestManagement: React.FC = () => {
                     </Form.Item>
                 </Form>
             </Modal>
+            </RequestDetailModal>
         </div>
     )
 }

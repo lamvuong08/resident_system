@@ -186,7 +186,9 @@ public class HouseholdController {
             return ResponseEntity.notFound().build();
         }
 
-        List<NotificationReceiver> receivers = notificationReceiverRepository.findByHousehold_Id(household.getId());
+        User currentUser = userRepository.findByEmail(authentication.getName()).orElse(null);
+        if (currentUser == null) return ResponseEntity.status(401).build();
+        List<NotificationReceiver> receivers = notificationReceiverRepository.findByUserOrHousehold(currentUser.getId(), household.getId());
         List<Map<String, Object>> response = new ArrayList<>();
         for (NotificationReceiver receiver : receivers) {
             response.add(toNotificationResponse(receiver));
@@ -302,6 +304,7 @@ public class HouseholdController {
             response.put("title", wording.title());
             response.put("content", wording.content());
             response.put("createdAt", notification.getCreatedAt());
+            response.put("actionUrl", notification.getActionUrl());
             response.put("type", notification.getType() != null ? notification.getType().name() : null);
         }
         return response;

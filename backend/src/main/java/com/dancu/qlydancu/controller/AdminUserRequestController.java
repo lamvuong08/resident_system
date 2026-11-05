@@ -1,6 +1,7 @@
 package com.dancu.qlydancu.controller;
 
 import java.util.Map;
+import org.springframework.security.core.Authentication;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import jakarta.validation.Valid;
+import com.dancu.qlydancu.dto.RequestAssignmentRequest;
 
 import com.dancu.qlydancu.service.UserRequestAttachmentPayload;
 import com.dancu.qlydancu.service.AdminUserRequestService;
@@ -29,6 +34,26 @@ public class AdminUserRequestController {
     @Autowired
     private AdminUserRequestService adminUserRequestService;
 
+    @GetMapping("/assignable-staff")
+    public ResponseEntity<?> getAssignableStaff(Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.getAssignableStaff(authentication.getName()));
+    }
+
+    @PostMapping("/{id}/assign")
+    public ResponseEntity<?> assign(@PathVariable Long id, @Valid @RequestBody RequestAssignmentRequest request, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.assign(id, request, false, authentication.getName()));
+    }
+
+    @PutMapping("/{id}/reassign")
+    public ResponseEntity<?> reassign(@PathVariable Long id, @Valid @RequestBody RequestAssignmentRequest request, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.assign(id, request, true, authentication.getName()));
+    }
+
+    @GetMapping("/{id}/assignment-history")
+    public ResponseEntity<?> history(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.getAssignmentHistory(id, authentication.getName()));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
     public ResponseEntity<?> getRequests(
@@ -36,23 +61,23 @@ public class AdminUserRequestController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status, Authentication authentication) {
         
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return ResponseEntity.ok(adminUserRequestService.getRequests(search, type, status, pageable));
+        return ResponseEntity.ok(adminUserRequestService.getRequests(search, type, status, pageable, authentication.getName()));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<?> getRequest(@PathVariable Long id) {
-        return ResponseEntity.ok(adminUserRequestService.getRequest(id));
+    public ResponseEntity<?> getRequest(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.getRequest(id, authentication.getName()));
     }
 
     @GetMapping("/{id}/attachments/{storedFileName}")
     public ResponseEntity<Resource> downloadAttachment(
             @PathVariable Long id,
-            @PathVariable String storedFileName) {
-        UserRequestAttachmentPayload payload = adminUserRequestService.getAttachmentPayload(id, storedFileName);
+            @PathVariable String storedFileName, Authentication authentication) {
+        UserRequestAttachmentPayload payload = adminUserRequestService.getAttachmentPayload(id, storedFileName, authentication.getName());
         MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
         if (payload.contentType() != null && !payload.contentType().isBlank()) {
             try {
@@ -72,19 +97,24 @@ public class AdminUserRequestController {
 
     @PatchMapping("/{id}/in-progress")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<?> setInProgress(@PathVariable Long id) {
-        return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "PROCESSING", null));
+    public ResponseEntity<?> setInProgress(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "PROCESSING", null, authentication.getName()));
     }
 
     @PatchMapping("/{id}/complete")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<?> setComplete(@PathVariable Long id) {
-        return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "DONE", null));
+    public ResponseEntity<?> setComplete(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "DONE", null, authentication.getName()));
+    }
+
+    @PatchMapping("/{id}/start")
+    public ResponseEntity<?> start(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "START", null, authentication.getName()));
     }
 
     @PatchMapping("/{id}/reject")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public ResponseEntity<?> setReject(@PathVariable Long id, @RequestBody Map<String, String> payload) {
-        return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "REJECTED", payload.get("reason")));
+    public ResponseEntity<?> setReject(@PathVariable Long id, @RequestBody Map<String, String> payload, Authentication authentication) {
+        return ResponseEntity.ok(adminUserRequestService.updateStatus(id, "REJECTED", payload.get("reason"), authentication.getName()));
     }
 }

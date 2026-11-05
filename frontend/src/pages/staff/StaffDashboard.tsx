@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Card, Row, Col, Statistic, Table, Tag, Button, Typography, Space, Tooltip, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -15,47 +15,50 @@ import type { AdminRequestRow } from '../../utils/adminSupportApi'
 import { fetchMeterReadingApartments } from '../../utils/meterReadingApi'
 import { formatUserRequestDate } from '../../utils/userSupportApi'
 import { extractApiError } from '../../utils/api'
+import { useNotification } from '../../context/NotificationContext'
 
 const { Title, Text } = Typography
 
 const StaffDashboard: React.FC = () => {
   const navigate = useNavigate()
+  const { requestUpdatesVersion } = useNotification()
   const [loading, setLoading] = useState(false)
   const [pendingRequests, setPendingRequests] = useState<AdminRequestRow[]>([])
   const [totalPending, setTotalPending] = useState(0)
   const [totalInProgress, setTotalInProgress] = useState(0)
   const [unrecordedMeters, setUnrecordedMeters] = useState(0)
   const [totalApartments, setTotalApartments] = useState(0)
+  const requestRef = useRef(0)
 
   const currentMonthString = dayjs().format('MM/YYYY')
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
+    const revision = ++requestRef.current
     setLoading(true)
     try {
-      // 1. Tải danh sách yêu cầu chờ xử lý
-      const pendingRes = await fetchAdminRequests({ page: 1, size: 5, status: 'PENDING' })
+      const [pendingRes, inProgressRes, meters] = await Promise.all([
+        fetchAdminRequests({ page: 1, size: 5, status: 'PENDING' }),
+        fetchAdminRequests({ page: 1, size: 1, status: 'MINE' }),
+        fetchMeterReadingApartments({ billingMonth: currentMonthString }),
+      ])
+      if (revision !== requestRef.current) return
       setPendingRequests(pendingRes.items || [])
       setTotalPending(pendingRes.totalElements || 0)
-
-      // 2. Tải số lượng yêu cầu đang xử lý
-      const inProgressRes = await fetchAdminRequests({ page: 1, size: 1, status: 'IN_PROGRESS' })
       setTotalInProgress(inProgressRes.totalElements || 0)
-
-      // 3. Tải tình trạng ghi điện tháng hiện tại
-      const meters = await fetchMeterReadingApartments({ billingMonth: currentMonthString })
       setTotalApartments(meters.length)
       const notRecorded = meters.filter((m) => m.recordedStatus !== 'RECORDED').length
       setUnrecordedMeters(notRecorded)
     } catch (err) {
-      message.error(extractApiError(err, 'Lỗi khi tải dữ liệu tổng quan công việc'))
+      if (revision === requestRef.current) message.error(extractApiError(err, 'Lỗi khi tải dữ liệu tổng quan công việc'))
     } finally {
-      setLoading(false)
+      if (revision === requestRef.current) setLoading(false)
     }
-  }
+  }, [currentMonthString])
 
   useEffect(() => {
     loadDashboardData()
-  }, [])
+    return () => { ++requestRef.current }
+  }, [loadDashboardData, requestUpdatesVersion])
 
   // Điều hướng trực tiếp đến đúng thao tác xử lý của yêu cầu được chọn
   const handleProcessImmediately = (record: AdminRequestRow) => {
@@ -205,7 +208,7 @@ const StaffDashboard: React.FC = () => {
             onClick={() => navigate('/staff/requests')}
           >
             <Statistic
-              title="Yêu cầu đang tiến hành"
+              title="Công việc chưa hoàn thành"
               value={totalInProgress}
               prefix={<FileTextOutlined style={{ color: '#1890ff' }} />}
               styles={{ content: { color: '#1890ff', fontWeight: 'bold' } }}
