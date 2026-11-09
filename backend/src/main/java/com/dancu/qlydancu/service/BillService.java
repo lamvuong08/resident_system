@@ -58,7 +58,7 @@ public class BillService {
     @Autowired
     private ResidentRepository residentRepository;
     @Autowired
-    private NotificationService notificationService;
+    private com.dancu.qlydancu.billing.BillEmailEventPublisher billEmailEvents;
 
     private String calculateBillStatus(Bill bill, List<BillDetail> details) {
         if (bill.getStatus() == BillDetailStatus.PAID) {
@@ -127,7 +127,9 @@ public class BillService {
                 d.getOldReading(),
                 d.getNewReading(),
                 d.getUnitPrice(),
-                d.getQuantity()
+                d.getQuantity(),
+                d.getFeeType().getCode().name(),
+                d.getDueDate()
             ))
             .collect(Collectors.toList());
 
@@ -165,11 +167,18 @@ public class BillService {
 
     @Transactional
     public Bill getOrCreateBill(Apartment apartment, String billingMonth) {
+        apartmentRepository.findLockedById(apartment.getId()).orElseThrow();
+        billingMonth=ElectricityCalculation.month(billingMonth);
+        final String normalizedMonth=billingMonth;
+        var matches=billRepository.findByApartment_Id(apartment.getId()).stream()
+            .filter(b -> ElectricityCalculation.period(b.getBillingMonth()).equals(ElectricityCalculation.period(normalizedMonth))).toList();
+        if(matches.size()>1)throw new IllegalArgumentException("Có hóa đơn kỳ cũ bị trùng; cần đối soát trước khi phát hành");
+        if(!matches.isEmpty())return matches.getFirst();
         Bill bill = billRepository.findByApartmentIdAndBillingMonth(apartment.getId(), billingMonth)
             .orElseGet(() -> {
                 Bill newBill = new Bill();
                 newBill.setApartment(apartment);
-                newBill.setBillingMonth(billingMonth);
+                newBill.setBillingMonth(normalizedMonth);
                 newBill.setTotalAmount(0L);
                 newBill.setStatus(BillDetailStatus.UNPAID);
                 newBill.setCreatedAt(java.time.LocalDateTime.now());
@@ -184,6 +193,7 @@ public class BillService {
         List<FeeType> fixedFees = feeTypeRepository.findAllByCalculationType(com.dancu.qlydancu.model.enums.CalculationType.FIXED);
         
         for (FeeType ft : fixedFees) {
+            if(ft.getCode()==com.dancu.qlydancu.model.enums.FeeTypeCode.ELECTRIC)continue;
             // Kiểm tra xem đã có khoản phí này trong hóa đơn chưa
             boolean exists = billDetailRepository.findByBillIdAndFeeTypeId(bill.getId(), ft.getId()).isPresent();
             if (!exists) {
@@ -222,13 +232,12 @@ public class BillService {
 
         FeeType feeType = feeTypeRepository.findById(request.getFeeTypeId())
             .orElseThrow(() -> new RuntimeException("Không tìm thấy loại phí"));
-
-        if (feeType.getCalculationType() != com.dancu.qlydancu.model.enums.CalculationType.ELECTRIC_METER) {
-            throw new RuntimeException("Khoản phí này không phải tiền điện.");
-        }
+        if(feeType.getCode()==com.dancu.qlydancu.model.enums.FeeTypeCode.ELECTRIC)
+            throw new IllegalArgumentException("Tiền điện phải được phát hành từ chỉ số đã duyệt tại Quản lý điện");
 
         // Chống tạo trùng: Cùng căn hộ, Cùng tháng, Cùng loại phí
         Bill bill = getOrCreateBill(apartment, request.getBillingMonth());
+        if (bill.getStatus() == BillDetailStatus.PAID) throw new IllegalStateException("Không thêm khoản phí vào hóa đơn đã thanh toán");
         
         boolean alreadyExists = billDetailRepository.findByBillIdAndFeeTypeId(bill.getId(), feeType.getId()).isPresent();
         if (alreadyExists) {
@@ -296,19 +305,7 @@ public class BillService {
         bill.setTotalAmount(currentTotal + finalAmount);
         billRepository.save(bill);
 
-        if (household.getUser() != null) {
-            String notiTitle = "Hóa đơn mới - Tháng " + request.getBillingMonth();
-            String notiContent = "Căn hộ " + apartment.getCode() + " có khoản phí mới (" + feeType.getName() + "): "
-                    + String.format("%,d", finalAmount) + " VNĐ.";
-            notificationService.sendNotificationToUser(
-                    household.getUser(),
-                    notiTitle,
-                    notiContent,
-                    com.dancu.qlydancu.model.enums.NotificationType.PAYMENT,
-                    "/user/payment",
-                    "NEW_BILL"
-            );
-        }
+        billEmailEvents.issued(bill);
     }
 
     @Transactional
@@ -338,7 +335,10 @@ public class BillService {
                 List<Resident> residents = residentRepository.findByHouseholdId(household.getId());
                 if (residents != null && !residents.isEmpty()) {
                     Bill bill = getOrCreateBill(apt, billingMonth);
+                    if (bill.getStatus() == BillDetailStatus.PAID) continue;
                     addFixedFees(bill);
+                    billEmailEvents.issued(bill);
+                    billRepository.save(bill);
                 }
             }
         }
@@ -346,7 +346,7 @@ public class BillService {
 
     @Transactional
     public void confirmBillPayment(Long billId, com.dancu.qlydancu.dto.BillConfirmRequest request) {
-        Bill bill = billRepository.findById(billId)
+        Bill bill = billRepository.findLockedById(billId)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
 
         if (bill.getStatus() == BillDetailStatus.PAID) {
@@ -355,11 +355,14 @@ public class BillService {
 
         List<BillDetail> details = billDetailRepository.findByBill_Id(billId);
         
-        // Tạo Payment record
+        List<BillDetail> remaining = details.stream().filter(d -> d.getStatus() != BillDetailStatus.PAID).toList();
+        long remainingAmount = remaining.stream().mapToLong(d -> d.getAmount() != null ? d.getAmount() : 0L).sum();
+        if (remaining.isEmpty() || remainingAmount <= 0) throw new IllegalStateException("Không có khoản phí còn phải xác nhận thanh toán");
+        // Record only the remaining balance, preserving prior successful partial payments.
         Payment payment = new Payment();
-        payment.setAmount(bill.getTotalAmount());
+        payment.setAmount(remainingAmount);
         payment.setStatus(com.dancu.qlydancu.model.enums.PaymentStatus.SUCCESS);
-        payment.setPaidAt(request.paymentDate() != null ? request.paymentDate() : LocalDateTime.now());
+        payment.setPaidAt(request.paymentDate() != null ? request.paymentDate() : billEmailEvents.now());
         payment.setPaymentMethod(com.dancu.qlydancu.model.enums.PaymentMethod.valueOf(request.paymentMethod() != null ? request.paymentMethod() : "CASH"));
         payment.setTransactionCode(request.transactionCode());
         payment.setNote(request.note());
@@ -367,7 +370,7 @@ public class BillService {
         // Phải lưu payment trước để có ID nếu PaymentDetail dùng id compound
         payment = paymentRepository.save(payment);
 
-        for (BillDetail bd : details) {
+        for (BillDetail bd : remaining) {
             bd.setStatus(BillDetailStatus.PAID);
             payment.addPaymentDetail(bd);
         }
@@ -377,24 +380,7 @@ public class BillService {
         billDetailRepository.saveAll(details);
         paymentRepository.save(payment);
 
-        if (bill.getApartment() != null) {
-            householdRepository.findByApartment_Code(bill.getApartment().getCode()).ifPresent(hh -> {
-                if (hh.getUser() != null) {
-                    String title = "Xác nhận thanh toán thành công";
-                    String content = "Hóa đơn tháng " + bill.getBillingMonth() + " ("
-                            + String.format("%,d", bill.getTotalAmount() != null ? bill.getTotalAmount() : 0L)
-                            + " VNĐ) đã được xác nhận thanh toán.";
-                    notificationService.sendNotificationToUser(
-                            hh.getUser(),
-                            title,
-                            content,
-                            com.dancu.qlydancu.model.enums.NotificationType.PAYMENT,
-                            "/user/payment",
-                            "BILL_PAID"
-                    );
-                }
-            });
-        }
+        billEmailEvents.paid(bill);
     }
 
     public com.dancu.qlydancu.dto.BillStatisticsResponse getStatistics() {
@@ -441,6 +427,9 @@ public class BillService {
             .orElseThrow(() -> new RuntimeException("Không tìm thấy khoản phí với ID: " + request.getId()));
         
         Bill bill = detail.getBill();
+        if(detail.getFeeType().getCode()==com.dancu.qlydancu.model.enums.FeeTypeCode.ELECTRIC ||
+            request.getFeeTypeId()!=null && feeTypeRepository.findById(request.getFeeTypeId()).orElseThrow().getCode()==com.dancu.qlydancu.model.enums.FeeTypeCode.ELECTRIC)
+            throw new IllegalArgumentException("Không sửa khoản điện qua biểu mẫu phí; cần quy trình điều chỉnh có lịch sử");
         if (bill == null) {
             throw new RuntimeException("Khoản phí không thuộc hóa đơn nào (Dữ liệu lỗi)");
         }
@@ -449,6 +438,7 @@ public class BillService {
             throw new RuntimeException("Hóa đơn đã thanh toán, không được phép sửa");
         }
 
+        if (detail.getStatus() == BillDetailStatus.PAID) throw new IllegalStateException("Không sửa khoản phí đã thanh toán");
         long oldAmount = detail.getAmount();
 
         if (request.getFeeTypeId() != null) {
@@ -493,6 +483,7 @@ public class BillService {
             detail.setBill(targetBill);
             targetBill.setTotalAmount((targetBill.getTotalAmount() != null ? targetBill.getTotalAmount() : 0L) + detail.getAmount());
             bill.setTotalAmount((bill.getTotalAmount() != null ? bill.getTotalAmount() : 0L) - detail.getAmount());
+            billEmailEvents.issued(targetBill);
             billRepository.save(targetBill);
         }
 
@@ -520,7 +511,7 @@ public class BillService {
         }
 
         // CẬP NHẬT PHẦN MAP DƯỚI ĐÂY
-        return details.stream().map(d -> new BillDetailRowResponse(
+        return details.stream().filter(d -> d.getBill().getIssuedAt()!=null).map(d -> new BillDetailRowResponse(
                 d.getId(),
                 d.getBill().getBillingMonth(),
                 d.getFeeType().getName(),
@@ -544,7 +535,7 @@ public class BillService {
 
         List<Bill> bills = billRepository.findByApartment_Id(household.getApartment().getId());
         
-        return bills.stream().map(bill -> {
+        return bills.stream().filter(bill -> bill.getIssuedAt()!=null).map(bill -> {
             List<BillDetail> details = billDetailRepository.findByBill_Id(bill.getId());
             java.time.LocalDateTime firstDueDate = details.isEmpty() ? null : details.get(0).getDueDate();
 
@@ -573,8 +564,9 @@ public class BillService {
 
         // Kiểm tra quyền: Hóa đơn phải thuộc về căn hộ của user
         if (!bill.getApartment().getId().equals(household.getApartment().getId())) {
-            throw new RuntimeException("Bạn không có quyền xem hóa đơn này");
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN,"Bạn không có quyền xem hóa đơn này");
         }
+        if(bill.getIssuedAt()==null)throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND,"Hóa đơn chưa phát hành");
 
         return getAdminBillDetailFull(billId);
     }
@@ -604,6 +596,8 @@ public class BillService {
         BillDetail detail = billDetailRepository.findById(detailId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết hóa đơn ID: " + detailId));
 
+        if (detail.getStatus() == BillDetailStatus.PAID && newStatus != BillDetailStatus.PAID)
+            throw new IllegalStateException("Chưa hỗ trợ mở lại khoản phí đã thanh toán");
         detail.setStatus(newStatus);
         billDetailRepository.save(detail);
 

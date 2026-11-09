@@ -3,7 +3,19 @@ package com.dancu.qlydancu.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@lombok.Getter @lombok.Setter
 public class ApartmentMeterReadingResponse {
+    private Long readingId;
+    private Long version;
+    private String approvalStatus;
+    private String recordedBy;
+    private String approvedBy;
+    private LocalDateTime approvedAt;
+    private String rejectionReason;
+    private String tariffSnapshot;
+    private Long issuedBillDetailId;
+    private boolean eligibleForIssue;
+    private String issueBlockedReason;
     private Long apartmentId;
     private String apartmentCode;
     private Long buildingId;

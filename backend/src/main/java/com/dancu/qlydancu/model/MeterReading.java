@@ -14,7 +14,9 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "meter_readings")
+@lombok.Getter
+@lombok.Setter
+@Table(name = "meter_readings", uniqueConstraints=@jakarta.persistence.UniqueConstraint(name="uk_meter_period",columnNames={"apartment_id","meter_type_id","period_key"}))
 public class MeterReading {
 
     @Id
@@ -43,6 +45,32 @@ public class MeterReading {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name="period_key",length=7)
+    private String periodKey;
+    @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+    @Column(name="approval_status",length=24)
+    private com.dancu.qlydancu.model.enums.MeterReadingStatus approvalStatus;
+    @Column(name="estimated_amount")
+    private Long estimatedAmount;
+    @Column(name="tariff_snapshot",columnDefinition="TEXT")
+    private String tariffSnapshot;
+    @Column(name="recorded_by")
+    private String recordedBy;
+    @Column(name="updated_at")
+    private LocalDateTime updatedAt;
+    @Column(name="approved_by")
+    private String approvedBy;
+    @Column(name="approved_at")
+    private LocalDateTime approvedAt;
+    @Column(name="rejection_reason",length=1000)
+    private String rejectionReason;
+    @Column(name="issued_bill_detail_id")
+    private Long issuedBillDetailId;
+    @Column(name="issued_at")
+    private LocalDateTime issuedAt;
+    @jakarta.persistence.Version
+    private Long version;
 
     @PrePersist
     protected void onCreate() {

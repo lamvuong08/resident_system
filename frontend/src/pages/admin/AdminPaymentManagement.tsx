@@ -47,6 +47,7 @@ interface AdminAggregatedBillResponse {
 }
 
 interface AdminBillDetailInfo {
+  feeCode: string;
   id: number;
   feeName: string;
   amount: number;
@@ -160,50 +161,6 @@ const AdminPaymentManagement: React.FC = () => {
 
   const [isInitModalVisible, setIsInitModalVisible] = useState(false);
   const [initForm] = Form.useForm();
-
-  // Watchers for creating fee
-  const selectedFeeTypeId = Form.useWatch("feeTypeId", form);
-  const oldReading = Form.useWatch("oldReading", form);
-  const newReading = Form.useWatch("newReading", form);
-
-  useEffect(() => {
-    if (selectedFeeTypeId) {
-      const ft = feeTypes.find(f => f.id === selectedFeeTypeId);
-      if (ft) {
-        if (ft.calculationType === "FIXED") {
-          form.setFieldsValue({
-            amount: ft.defaultAmount,
-            oldReading: undefined,
-            newReading: undefined,
-            unitPrice: undefined
-          });
-        } else if (ft.calculationType === "ELECTRIC_METER") {
-          form.setFieldsValue({
-            unitPrice: ft.unitPrice || 2167,
-            amount: (newReading !== undefined && oldReading !== undefined && newReading >= oldReading)
-              ? (newReading - oldReading) * (ft.unitPrice || 2167)
-              : undefined
-          });
-        }
-      }
-    }
-  }, [selectedFeeTypeId, feeTypes, form]);
-
-  useEffect(() => {
-    if (selectedFeeTypeId) {
-      const ft = feeTypes.find(f => f.id === selectedFeeTypeId);
-      if (ft?.calculationType === "ELECTRIC_METER") {
-        if (oldReading !== undefined && newReading !== undefined && newReading >= oldReading) {
-          const usage = newReading - oldReading;
-          const up = form.getFieldValue("unitPrice") || 2167;
-          form.setFieldsValue({ amount: usage * up });
-        } else {
-          form.setFieldsValue({ amount: undefined });
-        }
-      }
-    }
-  }, [oldReading, newReading, form, selectedFeeTypeId, feeTypes]);
-
 
   const handleInitializeMonth = async (values: any) => {
     const billingMonth = values.month.format("MM/YYYY");
@@ -378,9 +335,6 @@ const AdminPaymentManagement: React.FC = () => {
         amount: values.amount,
         note: values.note,
         dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DDTHH:mm:ss') : null,
-        oldReading: values.oldReading,
-        newReading: values.newReading,
-        unitPrice: values.unitPrice
       };
       await axiosInstance.post("/admin/payments", payload);
       message.success("Tạo hóa đơn thành công!");
@@ -394,17 +348,8 @@ const AdminPaymentManagement: React.FC = () => {
     }
   };
 
-  const openCreateElectricBill = () => {
-    const electricFeeType = feeTypes.find(f => f.calculationType === 'ELECTRIC_METER');
-    if (!electricFeeType) {
-      message.error("Hệ thống chưa cấu hình loại phí điện!");
-      return;
-    }
+  const openCreateFeeBill = () => {
     form.resetFields();
-    form.setFieldsValue({
-      feeTypeId: electricFeeType.id,
-      unitPrice: electricFeeType.unitPrice || 2167,
-    });
     setIsModalVisible(true);
   };
 
@@ -475,11 +420,11 @@ const AdminPaymentManagement: React.FC = () => {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={openCreateElectricBill}
+            onClick={openCreateFeeBill}
             className="premium-btn"
             style={{ height: '44px' }}
           >
-            Tạo tiền điện
+            Tạo khoản phí khác
           </Button>
           <Button
             type="default"
@@ -573,97 +518,26 @@ const AdminPaymentManagement: React.FC = () => {
         }}
       />
 
-      <Modal
-        title="Tạo Tiền Điện"
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={null}
-        destroyOnClose
-        wrapClassName="payment-admin-modal"
-      >
+      <Modal title="Tạo khoản phí khác" open={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null} destroyOnClose wrapClassName="payment-admin-modal">
+        <Alert type="info" showIcon message="Tiền điện được phát hành tại mục Quản lý điện từ chỉ số đã duyệt." style={{ marginBottom: 16 }} />
         <Form form={form} layout="vertical" onFinish={handleCreateBill}>
-          <Form.Item name="feeTypeId" hidden><Input /></Form.Item>
-          <Form.Item name="apartmentId" label="Căn hộ" rules={[{ required: true }]}>
-            <Select showSearch optionFilterProp="children">
-              {apartments.map(a => <Option key={a.id} value={a.id}>{a.code}</Option>)}
+          <Form.Item name="feeTypeId" label="Loại phí" rules={[{ required: true }]}>
+            <Select onChange={id => { const fee = feeTypes.find(item => item.id === id); form.setFieldsValue({ amount: fee?.defaultAmount }); }}>
+              {feeTypes.filter(fee => fee.code !== 'ELECTRIC').map(fee => <Option key={fee.id} value={fee.id}>{fee.name}</Option>)}
             </Select>
           </Form.Item>
+          <Form.Item name="apartmentId" label="Căn hộ" rules={[{ required: true }]}>
+            <Select showSearch optionFilterProp="children">{apartments.map(apartment => <Option key={apartment.id} value={apartment.id}>{apartment.code}</Option>)}</Select>
+          </Form.Item>
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="billingMonth" label="Tháng/Năm" rules={[{ required: true }]}>
-                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="dueDate" label="Hạn đóng">
-                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
+            <Col span={12}><Form.Item name="billingMonth" label="Tháng/Năm" rules={[{ required: true }]}><DatePicker picker="month" format="MM/YYYY" style={{ width: '100%' }} /></Form.Item></Col>
+            <Col span={12}><Form.Item name="dueDate" label="Hạn đóng" rules={[{ required: true }]}><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item></Col>
           </Row>
-
-          <Card style={{ backgroundColor: '#f8fafc', marginBottom: 16 }}>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item name="oldReading" label="Chỉ số cũ" rules={[{ required: true, message: 'Nhập số cũ' }]}>
-                  <InputNumber style={{ width: '100%' }} min={0} />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="newReading" label="Chỉ số mới" dependencies={['oldReading']} rules={[
-                  { required: true, message: 'Nhập số mới' },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (value === undefined || value === null || getFieldValue('oldReading') === undefined) {
-                        return Promise.resolve();
-                      }
-                      if (value >= getFieldValue('oldReading')) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(new Error('Chỉ số mới phải >= chỉ số cũ'));
-                    },
-                  }),
-                ]}>
-                  <InputNumber style={{ width: '100%' }} min={0} />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item label="Sử dụng (kWh)">
-                  <Input
-                    disabled
-                    value={((newReading || 0) >= (oldReading || 0)) ? (newReading || 0) - (oldReading || 0) : 0}
-                    style={{ color: '#1e3a8a', fontWeight: 'bold' }}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="unitPrice" label="Đơn giá (VNĐ/kWh)">
-                  <InputNumber
-                    style={{ width: '100%' }}
-                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Card>
-
-          <Form.Item name="amount" label="Tổng số tiền (₫)" rules={[{ required: true }]}>
-            <InputNumber
-              style={{ width: '100%' }}
-              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              readOnly
-              className="readonly-input-total"
-            />
-          </Form.Item>
-          <Form.Item name="note" label="Ghi chú">
-            <TextArea rows={2} />
-          </Form.Item>
-          <Button type="primary" htmlType="submit" block loading={submitting}>Tạo Tiền Điện</Button>
+          <Form.Item name="amount" label="Số tiền (₫)" rules={[{ required: true }]}><InputNumber min={0} style={{ width: '100%' }} /></Form.Item>
+          <Form.Item name="note" label="Ghi chú"><TextArea rows={2} /></Form.Item>
+          <Button type="primary" htmlType="submit" block loading={submitting}>Tạo khoản phí</Button>
         </Form>
       </Modal>
-
-
 
       <Modal
         title="Khởi tạo hóa đơn định kỳ"
@@ -731,7 +605,7 @@ const AdminPaymentManagement: React.FC = () => {
                   key: 'details',
                   render: (_, r) => r.oldReading !== null ? (
                     <div style={{ fontSize: '11px', color: '#64748b' }}>
-                      {r.oldReading} → {r.newReading} ({r.quantity} kWh) x {formatCurrency(r.unitPrice)}
+                      {r.oldReading} → {r.newReading} ({r.quantity} kWh){r.feeCode !== 'ELECTRIC' && <> x {formatCurrency(r.unitPrice)}</>}
                     </div>
                   ) : null
                 },
@@ -741,7 +615,7 @@ const AdminPaymentManagement: React.FC = () => {
                   title: 'Thao tác',
                   key: 'action',
                   render: (_, record) => (
-                    detailData.status !== "Đã thanh toán" && (
+                    detailData.status !== "Đã thanh toán" && record.feeCode !== 'ELECTRIC' && (
                       <Button type="link" onClick={() => showEditModal(record)} style={{ height: '32px', padding: 0 }}>
                         Sửa
                       </Button>
@@ -812,7 +686,7 @@ const AdminPaymentManagement: React.FC = () => {
         <Form form={editForm} layout="vertical" onFinish={handleUpdateDetail}>
           <Form.Item name="feeTypeId" label="Loại phí" rules={[{ required: true }]}>
             <Select disabled>
-              {feeTypes.map(f => <Option key={f.id} value={f.id}>{f.name}</Option>)}
+              {feeTypes.filter(f => f.code !== 'ELECTRIC').map(f => <Option key={f.id} value={f.id}>{f.name}</Option>)}
             </Select>
           </Form.Item>
           <Form.Item name="amount" label="Số tiền (₫)" rules={[{ required: true }]}>

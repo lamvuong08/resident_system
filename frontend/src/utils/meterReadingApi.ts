@@ -1,6 +1,17 @@
 import api from './api'
 
 export interface ApartmentMeterReadingItem {
+  readingId: number | null
+  version: number | null
+  approvalStatus: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ISSUED' | 'LEGACY_ISSUED' | 'LEGACY_REVIEW' | null
+  recordedBy: string | null
+  approvedBy: string | null
+  approvedAt: string | null
+  rejectionReason: string | null
+  tariffSnapshot: string | null
+  issuedBillDetailId: number | null
+  eligibleForIssue: boolean
+  issueBlockedReason: string | null
   apartmentId: number
   apartmentCode: string
   buildingId: number
@@ -44,10 +55,31 @@ export const recordMeterReading = async (data: {
   meterTypeId?: number
   billingMonth: string
   newReading: number
+  expectedVersion?: number
 }): Promise<string> => {
   const res = await api.post('/admin/meter-readings/record', data)
   return res.data
 }
+
+export interface ReadingActionItem { id: number; version: number }
+export interface ReadingBatchResult {
+  succeeded: number
+  failed: number
+  results: { id: number; success: boolean; alreadyIssued: boolean; billId: number | null; message: string }[]
+}
+export const approveMeterReadings = async (items: ReadingActionItem[]): Promise<ReadingBatchResult> =>
+  (await api.post('/admin/meter-readings/bulk-approve', { items })).data
+export const issueMeterReadings = async (items: ReadingActionItem[], dueDate: string): Promise<ReadingBatchResult> =>
+  (await api.post('/admin/meter-readings/bulk-issue', { items, dueDate })).data
+export const rejectMeterReading = async (id: number, version: number, reason: string): Promise<void> => {
+  await api.post(`/admin/meter-readings/${id}/reject`, { version, reason })
+}
+export interface ReadingAudit {
+  id: number; action: string; actor: string; reason: string | null; oldReading: number; newReading: number
+  estimatedAmount: number; tariffSnapshot: string | null; billDetailId: number | null; createdAt: string
+}
+export const fetchReadingHistory = async (id: number): Promise<ReadingAudit[]> =>
+  (await api.get(`/admin/meter-readings/${id}/history`)).data
 
 export const previewMeterReading = async (data: {
   apartmentId: number

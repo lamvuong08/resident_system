@@ -11,6 +11,9 @@ import com.dancu.qlydancu.model.status.ApartmentStatus;
 
 @Repository
 public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select a from Apartment a where a.id=:id")
+    java.util.Optional<Apartment> findLockedById(@org.springframework.data.repository.query.Param("id") Long id);
     long countByStatus(ApartmentStatus status);
 
     List<Apartment> findByBuilding_Id(Long buildingId);

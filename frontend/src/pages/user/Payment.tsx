@@ -105,6 +105,10 @@ const Payment = () => {
                   <div className="bill-item" key={fee.id}>
                     <div className="bill-item-info">
                       <span className="fee-name">{fee.feeName}</span>
+                      {fee.feeCode === 'ELECTRIC' && fee.oldReading != null && fee.newReading != null && <small className="fee-calc">
+                        Chỉ số cũ: {fee.oldReading.toLocaleString('vi-VN')} → Chỉ số mới: {fee.newReading.toLocaleString('vi-VN')} · Tiêu thụ: {(fee.newReading - fee.oldReading).toLocaleString('vi-VN')} kWh
+                      </small>}
+                      {fee.dueDate && <small className="fee-calc">Hạn thanh toán: {dayjs(fee.dueDate).format('DD/MM/YYYY')}</small>}
                       {fee.note && <small className="fee-calc" style={{ fontStyle: 'normal', color: '#64748b' }}>Ghi chú: {fee.note}</small>}
                     </div>
                     <div className="bill-item-amount">

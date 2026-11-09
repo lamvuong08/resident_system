@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import {
   Card,
   Row,
@@ -31,9 +31,11 @@ import {
   fetchMeterReadingApartments,
   recordMeterReading,
   fetchBuildings,
+  previewMeterReading,
 } from '../../utils/meterReadingApi'
 import type { ApartmentMeterReadingItem, BuildingOption } from '../../utils/meterReadingApi'
 import { extractApiError } from '../../utils/api'
+import { readingStatus, readingMoney } from '../../utils/electricityWorkflow'
 
 const { Title, Text } = Typography
 
@@ -49,6 +51,8 @@ const StaffMeterReading: React.FC = () => {
   // Lưu chỉ số mới đang nhập cho từng căn hộ: apartmentId -> number
   const [inputReadings, setInputReadings] = useState<Record<number, number | undefined>>({})
   const [savingRows, setSavingRows] = useState<Record<number, boolean>>({})
+  const [estimates, setEstimates] = useState<Record<number, { input: number; amount: number; month: string }>>({})
+  const loadSequence = useRef(0)
 
   // Tải danh sách tòa nhà
   useEffect(() => {
@@ -63,6 +67,7 @@ const StaffMeterReading: React.FC = () => {
 
   // Tải danh sách căn hộ theo bộ lọc
   const loadApartments = async () => {
+    const sequence = ++loadSequence.current
     setLoading(true)
     try {
       const data = await fetchMeterReadingApartments({
@@ -70,7 +75,9 @@ const StaffMeterReading: React.FC = () => {
         floor: selectedFloor,
         billingMonth: billingMonthString,
       })
+      if (sequence !== loadSequence.current) return
       setApartments(data)
+      setEstimates({})
 
       // Khởi tạo giá trị nhập từ dữ liệu đã có
       const initialInputs: Record<number, number | undefined> = {}
@@ -81,9 +88,9 @@ const StaffMeterReading: React.FC = () => {
       })
       setInputReadings(initialInputs)
     } catch (err) {
-      message.error(extractApiError(err, 'Lỗi khi tải danh sách căn hộ ghi điện'))
+      if (sequence === loadSequence.current) message.error(extractApiError(err, 'Lỗi khi tải danh sách căn hộ ghi điện'))
     } finally {
-      setLoading(false)
+      if (sequence === loadSequence.current) setLoading(false)
     }
   }
 
@@ -141,8 +148,9 @@ const StaffMeterReading: React.FC = () => {
         meterTypeId: record.meterTypeId,
         billingMonth: billingMonthString,
         newReading: Number(newReading),
+        expectedVersion: record.version ?? undefined,
       })
-      message.success(`Đã ghi nhận chỉ số điện thành công cho căn hộ ${record.apartmentCode}`)
+      message.success(`Đã gửi chỉ số căn hộ ${record.apartmentCode} chờ ADMIN duyệt`)
       await loadApartments()
     } catch (err) {
       message.error(extractApiError(err, 'Lỗi khi lưu chỉ số điện'))
@@ -220,7 +228,7 @@ const StaffMeterReading: React.FC = () => {
             precision={2}
             placeholder="Nhập chỉ số..."
             value={val}
-            disabled={record.isLocked}
+            disabled={loading || record.isLocked}
             onChange={(v) => handleReadingChange(record.apartmentId, v)}
             status={val !== undefined && val < record.oldReading ? 'error' : ''}
           />
@@ -257,10 +265,35 @@ const StaffMeterReading: React.FC = () => {
       },
     },
     {
+      title: 'Tiền dự kiến',
+      key: 'estimate',
+      width: 160,
+      align: 'right',
+      render: (_, record) => {
+        const input = inputReadings[record.apartmentId]
+        if (input == null) return '—'
+        const cached = estimates[record.apartmentId]
+        if (cached?.input === input && cached.month === billingMonthString) return readingMoney(cached.amount)
+        if (input === record.newReading) return readingMoney(record.calculatedAmount)
+        return <Button type="link" disabled={input < record.oldReading} onClick={async () => {
+          try {
+            const amount = await previewMeterReading({ apartmentId: record.apartmentId, meterTypeId: record.meterTypeId, billingMonth: billingMonthString, newReading: input })
+            setEstimates(previous => ({ ...previous, [record.apartmentId]: { input, amount, month: billingMonthString } }))
+          } catch (error) { message.error(extractApiError(error, 'Không tính được tiền dự kiến')) }
+        }}>Xem dự tính</Button>
+      },
+    },
+    {
       title: 'Trạng thái',
       key: 'status',
       width: 150,
       render: (_, record) => {
+        if (record.approvalStatus) {
+          const status = readingStatus[record.approvalStatus]
+          return <Tooltip title={record.rejectionReason || (record.isLocked ? 'Bản ghi đã duyệt hoặc dữ liệu cũ được khóa; không được sửa trực tiếp' : '')}>
+            <div><Tag color={status?.color}>{status?.label}</Tag>{record.rejectionReason && <Text type="danger">{record.rejectionReason}</Text>}</div>
+          </Tooltip>
+        }
         if (record.isLocked) {
           return (
             <Tooltip title="Hóa đơn tháng này đã được thanh toán, không thể sửa">
@@ -301,10 +334,10 @@ const StaffMeterReading: React.FC = () => {
             size="small"
             icon={<SaveOutlined />}
             loading={isSaving}
-            disabled={record.isLocked || !hasInput || isInvalid}
+            disabled={loading || record.isLocked || !hasInput || isInvalid}
             onClick={() => handleSaveReading(record)}
           >
-            {record.recordedStatus === 'RECORDED' ? 'Cập nhật' : 'Lưu'}
+            {record.recordedStatus === 'RECORDED' ? 'Gửi lại' : 'Gửi duyệt'}
           </Button>
         )
       },
@@ -328,7 +361,7 @@ const StaffMeterReading: React.FC = () => {
             Ghi nhận chỉ số điện
           </Title>
           <Text type="secondary" style={{ display: 'block', textAlign: 'left' }}>
-            Nhập và chốt chỉ số công tơ điện định kỳ hàng tháng cho từng căn hộ
+            Nhập chỉ số để gửi ADMIN duyệt. Tiền dự kiến chưa phải khoản cư dân cần thanh toán.
           </Text>
         </div>
         <Button className="fix-height-32" icon={<SyncOutlined />} onClick={loadApartments} loading={loading}>

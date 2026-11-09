@@ -76,6 +76,8 @@ public class BillController {
     public ResponseEntity<com.dancu.qlydancu.dto.AdminBillFullResponse> getMyBillDetail(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(billService.getUserBillFull(id));
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

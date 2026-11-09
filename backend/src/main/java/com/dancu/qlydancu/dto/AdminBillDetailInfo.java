@@ -8,5 +8,7 @@ public record AdminBillDetailInfo(
     java.math.BigDecimal oldReading,
     java.math.BigDecimal newReading,
     Long unitPrice,
-    java.math.BigDecimal quantity
+    java.math.BigDecimal quantity,
+    String feeCode,
+    java.time.LocalDateTime dueDate
 ) {}

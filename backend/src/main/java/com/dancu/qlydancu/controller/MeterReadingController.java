@@ -21,6 +21,20 @@ public class MeterReadingController {
 
     @Autowired
     private MeterReadingService meterReadingService;
+    @Autowired private com.dancu.qlydancu.service.ElectricityWorkflowService workflow;
+
+    @GetMapping("/{id}/history")
+    public Object history(@org.springframework.web.bind.annotation.PathVariable long id) { return workflow.history(id); }
+
+    @PostMapping("/bulk-approve")
+    public Object approve(@jakarta.validation.Valid @RequestBody com.dancu.qlydancu.dto.ElectricityWorkflowRequest.Batch request) {return workflow.approve(request);}
+
+    @PostMapping("/bulk-issue")
+    public Object issue(@jakarta.validation.Valid @RequestBody com.dancu.qlydancu.dto.ElectricityWorkflowRequest.Batch request) {return workflow.issue(request);}
+
+    @PostMapping("/{id}/reject")
+    public void reject(@org.springframework.web.bind.annotation.PathVariable long id,
+        @jakarta.validation.Valid @RequestBody com.dancu.qlydancu.dto.ElectricityWorkflowRequest.Rejection request) {workflow.reject(id,request);}
 
     @GetMapping("/apartments")
     @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
@@ -51,7 +65,7 @@ public class MeterReadingController {
     public ResponseEntity<?> recordMeterReading(@RequestBody MeterReadingRequest request) {
         try {
             meterReadingService.recordAndCalculateBill(request);
-            return ResponseEntity.ok("Đã nhập chỉ số và cập nhật hóa đơn thành công!");
+            return ResponseEntity.ok("Đã gửi chỉ số chờ duyệt; chưa tạo khoản phải thanh toán.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

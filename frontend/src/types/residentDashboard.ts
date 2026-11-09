@@ -56,6 +56,8 @@ export type UserAggregatedBill = {
 };
 
 export type UserBillDetailInfo = {
+  feeCode?: string;
+  dueDate?: string | null;
   id: number;
   feeName: string;
   amount: number;

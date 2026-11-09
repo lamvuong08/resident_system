@@ -45,6 +45,14 @@ public class Bill {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "issued_at")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.LOCAL_DATE_TIME)
+    private LocalDateTime issuedAt;
+
+    @Column(name = "payment_confirmed_at")
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.LOCAL_DATE_TIME)
+    private LocalDateTime paymentConfirmedAt;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
@@ -62,4 +70,8 @@ public class Bill {
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getIssuedAt() { return issuedAt; }
+    public void setIssuedAt(LocalDateTime issuedAt) { this.issuedAt = issuedAt; }
+    public LocalDateTime getPaymentConfirmedAt() { return paymentConfirmedAt; }
+    public void setPaymentConfirmedAt(LocalDateTime paymentConfirmedAt) { this.paymentConfirmedAt = paymentConfirmedAt; }
 }

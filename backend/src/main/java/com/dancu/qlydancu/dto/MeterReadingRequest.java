@@ -7,6 +7,9 @@ public class MeterReadingRequest {
     private Long meterTypeId;
     private String billingMonth; // Định dạng "MM/YYYY" hoặc "YYYY-MM"
     private BigDecimal newReading;
+    private Long expectedVersion;
+    public Long getExpectedVersion() { return expectedVersion; }
+    public void setExpectedVersion(Long expectedVersion) { this.expectedVersion=expectedVersion; }
 
     // Getters and Setters
     public Long getApartmentId() { return apartmentId; }

@@ -19,6 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -67,9 +68,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/requests/assignable-staff", "/api/admin/requests/*/assign",
                                 "/api/admin/requests/*/reassign", "/api/admin/requests/*/assignment-history").hasRole("ADMIN")
                         .requestMatchers("/api/admin/requests/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers("/api/admin/meter-readings/bulk-approve", "/api/admin/meter-readings/bulk-issue",
+                                "/api/admin/meter-readings/*/reject").hasRole("ADMIN")
                         .requestMatchers("/api/admin/meter-readings/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers("/api/payments/submit").hasRole("USER")
                         .requestMatchers(HttpMethod.GET, "/api/apartments/**", "/api/dashboard/buildings/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/bills/admin/**", "/api/payments/pending", "/api/payments/*/approve", "/api/payments/*/reject").hasRole("ADMIN")
+                        .requestMatchers("/api/dev/billing-reminders/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/notifications").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/notifications").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/notifications/*").hasRole("ADMIN")

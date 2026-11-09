@@ -33,6 +33,8 @@ public class PaymentController {
         try {
             Payment payment = paymentService.submitPaymentVerification(request);
             return ResponseEntity.ok(PaymentResponseDTO.fromEntity(payment));
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            throw e;
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -40,6 +40,7 @@ import com.dancu.qlydancu.repo.ResidentRepository;
 
 @Service
 public class MeterReadingService {
+    @Autowired private com.dancu.qlydancu.billing.BillEmailEventPublisher billEmailEvents;
 
     @Autowired private MeterReadingRepository meterReadingRepository;
     @Autowired private MeterTariffRepository meterTariffRepository;
@@ -111,25 +112,23 @@ public class MeterReadingService {
     }
 
     public MeterType resolveElectricMeterType(Long meterTypeId) {
-        if (meterTypeId != null) {
-            return meterTypeRepository.findById(meterTypeId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy loại đồng hồ ID: " + meterTypeId));
-        }
         return meterTypeRepository.findAll().stream()
-            .filter(m -> (m.getName() != null && m.getName().toLowerCase().contains("điện")) || "kwh".equalsIgnoreCase(m.getUnit()))
-            .findFirst()
-            .orElseGet(() -> {
-                List<MeterType> all = meterTypeRepository.findAll();
-                if (all.isEmpty()) {
-                    throw new RuntimeException("Chưa cấu hình loại đồng hồ điện trong hệ thống.");
-                }
-                return all.get(0);
-            });
+            .filter(m -> meterTypeId == null || meterTypeId.equals(m.getId()))
+            .filter(m -> "kwh".equalsIgnoreCase(m.getUnit()) || m.getName()!=null && m.getName().toLowerCase(java.util.Locale.ROOT).contains("điện"))
+            .findFirst().orElseThrow(() -> new IllegalArgumentException("Chưa cấu hình đúng loại đồng hồ điện"));
+    }
+    private MeterReading findCurrentReading(long apartment,long meter,String month) {
+        var target=ElectricityCalculation.period(month);
+        var found=meterReadingRepository.findByApartmentIdAndMeterTypeId(apartment,meter).stream()
+            .filter(r -> parseBillingMonth(r.getBillingMonth()).filter(target::equals).isPresent()).toList();
+        if(found.size()>1)throw new IllegalArgumentException("Kỳ điện cũ bị trùng; cần đối soát");
+        return found.isEmpty()?null:found.getFirst();
     }
 
+    @Transactional(readOnly=true)
     public List<ApartmentMeterReadingResponse> getApartmentsForMeterReading(Long buildingId, Integer floor, String billingMonth) {
         String targetMonth = (billingMonth != null && !billingMonth.trim().isEmpty())
-            ? billingMonth.trim()
+            ? ElectricityCalculation.month(billingMonth)
             : LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy"));
 
         List<Apartment> apartments;
@@ -193,9 +192,7 @@ public class MeterReadingService {
             }
 
             // Kiểm tra xem kỳ này đã ghi chưa
-            MeterReading currentReading = meterReadingRepository
-                .findFirstByApartmentIdAndMeterTypeIdAndBillingMonth(apt.getId(), electricType.getId(), targetMonth)
-                .orElse(null);
+            MeterReading currentReading = findCurrentReading(apt.getId(),electricType.getId(),targetMonth);
 
             // Tìm tháng liền trước theo thứ tự thời gian thực (không phải createdAt)
             MeterReading lastReading = findPreviousMonthReading(apt.getId(), electricType.getId(), targetMonth);
@@ -216,7 +213,7 @@ public class MeterReadingService {
                 res.setOldReading(effectiveOldReading);
                 res.setNewReading(currentReading.getNewReading());
                 res.setUsageAmount(effectiveUsage);
-                res.setCalculatedAmount(calculateTieredAmount(effectiveUsage, tariffs));
+                res.setCalculatedAmount(currentReading.getEstimatedAmount()==null?0L:currentReading.getEstimatedAmount());
                 res.setRecordedStatus("RECORDED");
                 res.setRecordedAt(currentReading.getCreatedAt());
             } else {
@@ -229,6 +226,7 @@ public class MeterReadingService {
                 res.setRecordedAt(null);
             }
 
+            workflow.enrich(res,currentReading);
             result.add(res);
         }
 
@@ -249,9 +247,7 @@ public class MeterReadingService {
             ? request.getBillingMonth().trim()
             : LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy"));
 
-        MeterReading currentReading = meterReadingRepository
-            .findFirstByApartmentIdAndMeterTypeIdAndBillingMonth(apartment.getId(), meterType.getId(), targetMonth)
-            .orElse(null);
+        MeterReading currentReading = findCurrentReading(apartment.getId(),meterType.getId(),targetMonth);
 
         MeterReading lastReading = findPreviousMonthReading(apartment.getId(), meterType.getId(), targetMonth);
         BigDecimal oldReading = (lastReading != null && lastReading.getNewReading() != null)
@@ -277,152 +273,13 @@ public class MeterReadingService {
         return calculateTieredAmount(usageAmount, tariffs);
     }
 
-    @Transactional
+    @Autowired private ElectricityWorkflowService workflow;
+
     public void recordAndCalculateBill(MeterReadingRequest request) {
-        if (request.getApartmentId() == null) {
-            throw new RuntimeException("Thiếu thông tin căn hộ.");
-        }
-        if (request.getNewReading() == null) {
-            throw new RuntimeException("Vui lòng nhập chỉ số điện mới.");
-        }
-        if (request.getBillingMonth() == null || request.getBillingMonth().trim().isEmpty()) {
-            throw new RuntimeException("Vui lòng chọn kỳ ghi điện (tháng/năm).");
-        }
-
-        String billingMonth = request.getBillingMonth().trim();
-
-        Apartment apartment = apartmentRepository.findById(request.getApartmentId())
-            .orElseThrow(() -> new RuntimeException("Không tìm thấy căn hộ"));
-            
-        MeterType meterType = resolveElectricMeterType(request.getMeterTypeId());
-
-        Bill bill = billService.getOrCreateBill(apartment, billingMonth);
-        if (bill.getStatus() == BillDetailStatus.PAID) {
-            throw new RuntimeException("Hóa đơn tháng " + billingMonth + " của căn hộ " + apartment.getCode() + " đã được thanh toán, không thể thay đổi chỉ số.");
-        }
-
-        // Lấy chỉ số cũ từ kỳ liền trước (nếu có), hoặc từ bản ghi hiện tại
-        MeterReading currentReading = meterReadingRepository
-            .findFirstByApartmentIdAndMeterTypeIdAndBillingMonth(apartment.getId(), meterType.getId(), billingMonth)
-            .orElse(null);
-
-        MeterReading lastReading = findPreviousMonthReading(apartment.getId(), meterType.getId(), billingMonth);
-        BigDecimal oldReading = (lastReading != null && lastReading.getNewReading() != null)
-            ? lastReading.getNewReading()
-            : ((currentReading != null && currentReading.getOldReading() != null) ? currentReading.getOldReading() : BigDecimal.ZERO);
-
-        BigDecimal newReading = request.getNewReading();
-        if (newReading.compareTo(oldReading) < 0) {
-            throw new RuntimeException("Chỉ số mới (" + newReading + ") không được nhỏ hơn chỉ số cũ (" + oldReading + ")");
-        }
-
-        // Kiểm tra tính nhất quán với tháng liền sau
-        MeterReading nextReading = findNextMonthReading(apartment.getId(), meterType.getId(), billingMonth);
-        if (nextReading != null && nextReading.getNewReading() != null && newReading.compareTo(nextReading.getNewReading()) > 0) {
-            throw new RuntimeException("Chỉ số mới (" + newReading + ") không được lớn hơn chỉ số của tháng sau (" 
-                + nextReading.getBillingMonth() + ": " + nextReading.getNewReading() + ")");
-        }
-
-        BigDecimal usageAmount = newReading.subtract(oldReading);
-
-        // Lưu / cập nhật MeterReading
-        MeterReading reading = (currentReading != null) ? currentReading : new MeterReading();
-        reading.setApartment(apartment);
-        reading.setMeterType(meterType);
-        reading.setBillingMonth(billingMonth);
-        reading.setOldReading(oldReading);
-        reading.setNewReading(newReading);
-        reading.setUsageAmount(usageAmount);
-        meterReadingRepository.save(reading);
-
-        List<MeterTariff> tariffs = meterTariffRepository.findByMeterTypeIdOrderByMinUsageAsc(meterType.getId());
-        long calculatedAmount = calculateTieredAmount(usageAmount, tariffs);
-
-        FeeTypeCode feeCode = FeeTypeCode.ELECTRIC;
-        FeeType feeType = feeTypeRepository.findByCode(feeCode)
-            .orElseThrow(() -> new RuntimeException("Chưa cấu hình loại phí cho: " + feeCode));
-
-        BillDetail detail = billDetailRepository.findByBillIdAndFeeTypeId(bill.getId(), feeType.getId())
-            .orElseGet(() -> {
-                BillDetail newDetail = new BillDetail();
-                newDetail.setBill(bill);
-                newDetail.setFeeType(feeType);
-                newDetail.setStatus(BillDetailStatus.UNPAID);
-                newDetail.setDueDate(LocalDateTime.now().plusDays(15)); 
-                return newDetail;
-            });
-
-        long oldDetailAmount = (detail.getAmount() != null) ? detail.getAmount() : 0L;
-        
-        detail.setOldReading(oldReading);
-        detail.setNewReading(newReading);
-        detail.setQuantity(usageAmount);
-        detail.setAmount(calculatedAmount);
-        detail.setUnitPrice(usageAmount.compareTo(BigDecimal.ZERO) == 0 ? 0L : calculatedAmount / (usageAmount.longValue() == 0 ? 1 : usageAmount.longValue())); 
-        detail.setNote("Tiền điện tiêu thụ " + usageAmount + " kWh (kỳ " + billingMonth + ")");
-        billDetailRepository.save(detail);
-
-        long currentTotal = (bill.getTotalAmount() != null) ? bill.getTotalAmount() : 0L;
-        bill.setTotalAmount(Math.max(0L, currentTotal - oldDetailAmount + calculatedAmount));
-        billRepository.save(bill);
-
-        // Tự động đồng bộ lại chỉ số cũ của tháng liền sau nếu tháng sau chưa thanh toán
-        if (nextReading != null && nextReading.getNewReading() != null) {
-            Bill nextBill = billRepository.findByApartmentIdAndBillingMonth(apartment.getId(), nextReading.getBillingMonth()).orElse(null);
-            if (nextBill == null || nextBill.getStatus() != BillDetailStatus.PAID) {
-                nextReading.setOldReading(newReading);
-                BigDecimal nextUsage = nextReading.getNewReading().subtract(newReading);
-                nextReading.setUsageAmount(nextUsage);
-                meterReadingRepository.save(nextReading);
-
-                if (nextBill != null) {
-                    BillDetail nextDetail = billDetailRepository.findByBillIdAndFeeTypeId(nextBill.getId(), feeType.getId()).orElse(null);
-                    if (nextDetail != null) {
-                        long oldNextAmount = (nextDetail.getAmount() != null) ? nextDetail.getAmount() : 0L;
-                        long newNextAmount = calculateTieredAmount(nextUsage, tariffs);
-                        nextDetail.setOldReading(newReading);
-                        nextDetail.setQuantity(nextUsage);
-                        nextDetail.setAmount(newNextAmount);
-                        nextDetail.setNote("Tiền điện tiêu thụ " + nextUsage + " kWh (kỳ " + nextReading.getBillingMonth() + ")");
-                        billDetailRepository.save(nextDetail);
-
-                        long nextCurrentTotal = (nextBill.getTotalAmount() != null) ? nextBill.getTotalAmount() : 0L;
-                        nextBill.setTotalAmount(Math.max(0L, nextCurrentTotal - oldNextAmount + newNextAmount));
-                        billRepository.save(nextBill);
-                    }
-                }
-            }
-        }
+        workflow.record(request);
     }
 
     private long calculateTieredAmount(BigDecimal usage, List<MeterTariff> tariffs) {
-        if (usage == null || usage.compareTo(BigDecimal.ZERO) <= 0) {
-            return 0L;
-        }
-        long totalAmount = 0L;
-        BigDecimal remainingUsage = usage;
-
-        for (MeterTariff tariff : tariffs) {
-            if (remainingUsage.compareTo(BigDecimal.ZERO) <= 0) break;
-
-            Integer min = tariff.getMinUsage();
-            Integer max = tariff.getMaxUsage();
-
-            BigDecimal tierCapacity = (max != null) 
-                ? new BigDecimal(max - min + 1) 
-                : new BigDecimal(Integer.MAX_VALUE);
-
-            BigDecimal usageInTier;
-            if (remainingUsage.compareTo(tierCapacity) > 0) {
-                usageInTier = tierCapacity;
-            } else {
-                usageInTier = remainingUsage;
-            }
-
-            totalAmount += usageInTier.multiply(new BigDecimal(tariff.getUnitPrice())).longValue();
-            remainingUsage = remainingUsage.subtract(usageInTier);
-        }
-
-        return totalAmount;
+        return ElectricityCalculation.amount(usage, tariffs);
     }
 }
