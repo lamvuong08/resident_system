@@ -21,6 +21,10 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "payments")
 public class Payment {
+    @Column(name="confirmed_by")
+    private String confirmedBy;
+    public String getConfirmedBy() { return confirmedBy; }
+    public void setConfirmedBy(String value) { confirmedBy=value; }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

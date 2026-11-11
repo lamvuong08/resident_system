@@ -19,9 +19,34 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "bills")
+@Table(name = "bills", uniqueConstraints=@jakarta.persistence.UniqueConstraint(name="uk_bill_apartment_period",columnNames={"apartment_id","period_key"}))
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Bill {
+    @Column(name="period_key",length=7,nullable=false)
+    private String periodKey;
+    @jakarta.persistence.Version
+    private Long version;
+    @Column(name="issued_by")
+    private String issuedBy;
+    @Column(name="legacy_issued",nullable=false)
+    private boolean legacyIssued;
+    public boolean isLegacyIssued() { return legacyIssued; }
+    public void setLegacyIssued(boolean value) { legacyIssued=value; }
+    public String getPeriodKey() { return periodKey; }
+    public void setPeriodKey(String value) { periodKey=value; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long value) { version=value; }
+    public String getIssuedBy() { return issuedBy; }
+    public void setIssuedBy(String value) { issuedBy=value; }
+    public boolean isDraft() { return !legacyIssued && issuedAt==null && status!=BillDetailStatus.PAID; }
+    public String getIssuanceStatus() { return isDraft()?"DRAFT":"ISSUED"; }
+    @jakarta.persistence.PrePersist
+    @jakarta.persistence.PreUpdate
+    private void canonicalPeriod() {
+        if(billingMonth==null)throw new IllegalArgumentException("Thiếu kỳ hóa đơn");
+        var format=billingMonth.contains("/")?java.time.format.DateTimeFormatter.ofPattern("MM/uuuu"):java.time.format.DateTimeFormatter.ofPattern("uuuu-MM");
+        periodKey=java.time.YearMonth.parse(billingMonth,format).toString();
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

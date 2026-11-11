@@ -8,7 +8,6 @@ import {
   Table,
   Tag,
   message,
-  Descriptions,
   Card,
   Row,
   Col,
@@ -16,10 +15,13 @@ import {
   Alert
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import StatCard from "../../components/StatCard";
+import InvoiceDetailContent from "../../components/InvoiceDetailContent";
+import MeterReadingDetailModal from "../../components/MeterReadingDetailModal";
+import type { ReadingDetail } from "../../components/MeterReadingDetailModal";
 import "../../styles/admin-payment.css";
-import axiosInstance from "../../utils/api";
+import axiosInstance, { extractApiError } from "../../utils/api";
 import dayjs from "dayjs";
 import {
   CheckCircleOutlined,
@@ -46,7 +48,7 @@ interface AdminAggregatedBillResponse {
   status: string;
 }
 
-interface AdminBillDetailInfo {
+export interface AdminBillDetailInfo {
   feeCode: string;
   id: number;
   feeName: string;
@@ -58,7 +60,15 @@ interface AdminBillDetailInfo {
   quantity: number;
 }
 
-interface AdminBillFullResponse {
+export interface AdminBillFullResponse {
+  issuanceStatus: 'DRAFT' | 'ISSUED';
+  issuedAt: string | null;
+  issuedBy: string | null;
+  version: number;
+  publicationBlockers: string[];
+  paidAmount: number;
+  outstanding: number;
+  meterReadings: { readingId: number; detailId: number; oldReading: number | null; newReading: number | null; usageAmount: number | null; amount: number | null; feeCode: string; tariffSnapshot: string; recordedBy: string; recordedAt: string; approvedBy: string; approvedAt: string }[];
   id: number;
   apartmentCode: string;
   ownerName: string;
@@ -113,17 +123,12 @@ const formatDate = (isoString: string | null) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
-const getPaymentMethodName = (method: string | null) => {
-  if (!method) return "Không xác định";
-  const upper = method.toUpperCase();
-  if (upper === "CASH" || upper === "TIEN_MAT") return "Tiền mặt";
-  if (upper === "BANK_TRANSFER" || upper === "TRANSFER" || upper === "CHUYEN_KHOAN") return "Chuyển khoản";
-  return method;
-};
-
-
-
-const AdminPaymentManagement: React.FC = () => {
+interface Props { billingMonth?: string; initialBillId?: number; onChanged?: () => void }
+const AdminPaymentManagement: React.FC<Props> = ({ billingMonth, initialBillId, onChanged }) => {
+  const [sourceReading, setSourceReading] = useState<ReadingDetail | null>(null);
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [issueDue, setIssueDue] = useState(dayjs().add(15, 'day'));
+  const requestSequence = useRef(0);
   const [data, setData] = useState<AdminAggregatedBillResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -168,7 +173,7 @@ const AdminPaymentManagement: React.FC = () => {
     try {
       await axiosInstance.post(`/admin/payments/initialize-month?billingMonth=${billingMonth}`);
       message.success(`Đã khởi tạo hóa đơn cố định cho toàn bộ căn hộ tháng ${billingMonth}`);
-      setIsInitModalVisible(false);
+      setIsInitModalVisible(false); onChanged?.();
       fetchBills();
       fetchStats();
     } catch (error) {
@@ -255,6 +260,7 @@ const AdminPaymentManagement: React.FC = () => {
   };
 
   const fetchBills = async () => {
+    const sequence = ++requestSequence.current;
     setLoading(true);
     try {
       const params: any = {
@@ -263,16 +269,16 @@ const AdminPaymentManagement: React.FC = () => {
       };
       if (filterMonth) params.month = filterMonth;
       if (filterYear) params.year = filterYear;
+      if (billingMonth) { const [month, year] = billingMonth.split('/').map(Number); params.month = month; params.year = year; }
       if (filterStatus) params.status = filterStatus;
       if (filterApt) params.apartmentCode = filterApt;
 
       const res = await axiosInstance.get("/admin/payments", { params });
-      setData(res.data.content || []);
-      setTotalElements(res.data.totalElements || 0);
+      if (sequence === requestSequence.current) { setData(res.data.content || []); setTotalElements(res.data.totalElements || 0); }
     } catch (error) {
       message.error("Lỗi khi tải danh sách hóa đơn!");
     } finally {
-      setLoading(false);
+      if (sequence === requestSequence.current) setLoading(false);
     }
   };
 
@@ -291,7 +297,9 @@ const AdminPaymentManagement: React.FC = () => {
   useEffect(() => {
     fetchBills();
     fetchStats();
-  }, [currentPage]);
+  }, [currentPage, billingMonth, filterMonth, filterYear, filterStatus, filterApt]);
+
+  useEffect(() => { if (initialBillId) void showDetailModal(initialBillId); }, [initialBillId]);
 
   useEffect(() => {
     fetchMetadata();
@@ -308,11 +316,23 @@ const AdminPaymentManagement: React.FC = () => {
     setFilterStatus(undefined);
     setFilterApt("");
     setCurrentPage(1);
-    setTimeout(() => fetchBills(), 0);
+
+  };
+
+  const issueInvoice = async () => {
+    if (!detailData) return;
+    setSubmitting(true);
+    try {
+      const response = await axiosInstance.post(`/admin/payments/${detailData.id}/issue`, { dueDate: issueDue.format('YYYY-MM-DD'), version: detailData.version });
+      setDetailData(response.data); setIssueOpen(false); void fetchBills(); onChanged?.();
+      message.success('Đã phát hành toàn bộ hóa đơn');
+    } catch (error) { message.error(extractApiError(error, 'Không thể phát hành hóa đơn')); }
+    finally { setSubmitting(false); }
   };
 
   const showDetailModal = async (id: number) => {
     setIsDetailModalVisible(true);
+    setDetailData(null);
     setDetailLoading(true);
     try {
       const res = await axiosInstance.get(`/admin/payments/${id}`);
@@ -338,11 +358,11 @@ const AdminPaymentManagement: React.FC = () => {
       };
       await axiosInstance.post("/admin/payments", payload);
       message.success("Tạo hóa đơn thành công!");
-      setIsModalVisible(false);
+      setIsModalVisible(false); onChanged?.();
       fetchBills();
       fetchStats();
     } catch (error: any) {
-      message.error(error.response?.data || "Lỗi khi tạo hóa đơn");
+      message.error(extractApiError(error, "Lỗi khi tạo hóa đơn"));
     } finally {
       setSubmitting(false);
     }
@@ -350,6 +370,7 @@ const AdminPaymentManagement: React.FC = () => {
 
   const openCreateFeeBill = () => {
     form.resetFields();
+    if (billingMonth) form.setFieldsValue({billingMonth: dayjs(billingMonth.split('/').reverse().join('-') + '-01')});
     setIsModalVisible(true);
   };
 
@@ -363,7 +384,7 @@ const AdminPaymentManagement: React.FC = () => {
         note: values.note
       });
       message.success("Xác nhận thanh toán thành công!");
-      setIsConfirmModalVisible(false);
+      setIsConfirmModalVisible(false); onChanged?.();
       showDetailModal(detailData!.id); 
       fetchBills();
       fetchStats();
@@ -401,12 +422,12 @@ const AdminPaymentManagement: React.FC = () => {
         billingMonth: detailData.billingMonth
       });
       message.success("Cập nhật thành công!");
-      setIsEditModalVisible(false);
+      setIsEditModalVisible(false); onChanged?.();
       showDetailModal(detailData.id);
       fetchBills();
       fetchStats();
     } catch (error: any) {
-      message.error(error.response?.data || "Lỗi khi cập nhật");
+      message.error(extractApiError(error, "Lỗi khi cập nhật"));
     } finally {
       setSubmitting(false);
     }
@@ -437,7 +458,7 @@ const AdminPaymentManagement: React.FC = () => {
           </Button>
         </div>
       </div>
-      <div className="stats-row" style={{ marginBottom: 24 }}>
+      <div className="stats-row" style={{ marginBottom: 24, display: billingMonth ? 'none' : undefined }}>
         <StatCard
           title="Tổng đã thu"
           value={formatCurrency(stats?.totalCollected || 0)}
@@ -469,6 +490,7 @@ const AdminPaymentManagement: React.FC = () => {
             style={{ width: 160 }}
             className="filter-control"
           />
+          {!billingMonth && <>
           <Select
             placeholder="Tháng"
             value={filterMonth}
@@ -488,6 +510,7 @@ const AdminPaymentManagement: React.FC = () => {
             style={{ width: 100 }}
             className="filter-control"
           />
+          </>}
           <Select
             placeholder="Trạng thái"
             value={filterStatus}
@@ -497,6 +520,8 @@ const AdminPaymentManagement: React.FC = () => {
             className="filter-control"
           >
             <Option value="PAID">Đã thanh toán</Option>
+            <Option value="DRAFT">Nháp</Option>
+            <Option value="ISSUED">Đã phát hành</Option>
             <Option value="UNPAID">Chưa thanh toán</Option>
           </Select>
           <Button type="primary" onClick={handleFilter} className="btn-filter">Lọc</Button>
@@ -519,11 +544,11 @@ const AdminPaymentManagement: React.FC = () => {
       />
 
       <Modal title="Tạo khoản phí khác" open={isModalVisible} onCancel={() => setIsModalVisible(false)} footer={null} destroyOnClose wrapClassName="payment-admin-modal">
-        <Alert type="info" showIcon message="Tiền điện được phát hành tại mục Quản lý điện từ chỉ số đã duyệt." style={{ marginBottom: 16 }} />
+        <Alert type="info" showIcon message="Khoản phí được lưu vào hóa đơn nháp. Điện, nước tự cập nhật khi duyệt chỉ số; phát hành toàn bộ trong chi tiết hóa đơn." style={{ marginBottom: 16 }} />
         <Form form={form} layout="vertical" onFinish={handleCreateBill}>
           <Form.Item name="feeTypeId" label="Loại phí" rules={[{ required: true }]}>
             <Select onChange={id => { const fee = feeTypes.find(item => item.id === id); form.setFieldsValue({ amount: fee?.defaultAmount }); }}>
-              {feeTypes.filter(fee => fee.code !== 'ELECTRIC').map(fee => <Option key={fee.id} value={fee.id}>{fee.name}</Option>)}
+              {feeTypes.filter(fee => !['ELECTRIC', 'WATER'].includes(fee.code)).map(fee => <Option key={fee.id} value={fee.id}>{fee.name}</Option>)}
             </Select>
           </Form.Item>
           <Form.Item name="apartmentId" label="Căn hộ" rules={[{ required: true }]}>
@@ -550,106 +575,43 @@ const AdminPaymentManagement: React.FC = () => {
         <div style={{ marginBottom: 16 }}>
           <Alert
             message="Thông tin"
-            description="Hệ thống sẽ tự động tạo hóa đơn cho toàn bộ căn hộ với các khoản phí cố định (Tiền nước, Phí quản lý...) đã được cấu hình. Chức năng này chỉ tạo các khoản phí cố định, không tạo tiền điện."
+            description="Tổng hợp phí đã cấu hình vào hóa đơn nháp; phí xe chỉ áp dụng khi có xe đang hoạt động. Chưa gửi thông báo hay yêu cầu thanh toán."
             type="info"
             showIcon
           />
         </div>
         <Form form={initForm} layout="vertical" onFinish={handleInitializeMonth}>
           <Form.Item name="month" label="Chọn tháng/năm cần khởi tạo" rules={[{ required: true }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+            <DatePicker picker="month" format="MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
           <Button type="primary" htmlType="submit" block loading={submitting}>Khởi tạo ngay</Button>
         </Form>
       </Modal>
 
       <Modal
-        title="Chi tiết hóa đơn"
+        title={<div className="detail-heading"><div><span className="detail-title">Chi tiết hóa đơn{detailData ? ` #${detailData.id}` : ''}</span>{detailData && <p>Căn hộ {detailData.apartmentCode} · Kỳ {detailData.billingMonth}</p>}</div>{detailData && <Tag color={detailData.issuanceStatus === 'DRAFT' ? 'default' : 'blue'}>{detailData.issuanceStatus === 'DRAFT' ? 'Bản nháp' : 'Đã phát hành'}</Tag>}</div>}
         open={isDetailModalVisible}
-        onCancel={() => setIsDetailModalVisible(false)}
-        width={800}
-        wrapClassName="payment-admin-modal"
+        onCancel={() => {setSourceReading(null);setIsDetailModalVisible(false);}}
+        keyboard={!sourceReading}
+        maskClosable={!sourceReading}
+        width={920}
+        wrapClassName="billing-detail-modal invoice-detail-modal"
         footer={[
-          detailData?.status !== "Đã thanh toán" && (
-            <Button key="confirm" type="primary" danger onClick={() => setIsConfirmModalVisible(true)} style={{ height: '32px' }}>
-              Xác Nhận Thanh Toán
-            </Button>
+          <Button key="close" onClick={() => setIsDetailModalVisible(false)}>Đóng</Button>,
+          detailData?.issuanceStatus === 'ISSUED' && detailData?.status !== "Đã thanh toán" && (
+            <Button key="confirm" type="primary" onClick={() => setIsConfirmModalVisible(true)}>Xác Nhận Thanh Toán</Button>
           ),
-          <Button key="close" onClick={() => setIsDetailModalVisible(false)} style={{ height: '32px' }}>Đóng</Button>
+          detailData?.issuanceStatus === 'DRAFT' && <Button key="issue" type="primary" disabled={detailLoading || !!detailData.publicationBlockers?.length} onClick={() => setIssueOpen(true)}>Phát hành hóa đơn</Button>,
         ]}
       >
-        {detailLoading ? <p>Đang tải...</p> : detailData && (
-          <div className="premium-details">
-            <Descriptions bordered column={2} size="small">
-              <Descriptions.Item label="Căn hộ">{detailData.apartmentCode}</Descriptions.Item>
-              <Descriptions.Item label="Chủ hộ">{detailData.ownerName}</Descriptions.Item>
-              <Descriptions.Item label="Kỳ thanh toán">{detailData.billingMonth}</Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
-                <Tag color={detailData.status === "Đã thanh toán" ? "green" : "red"}>{detailData.status}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Hạn đóng" span={2}>
-                <span style={{ color: 'red', fontWeight: 'bold' }}>{formatDate(detailData.dueDate)}</span>
-              </Descriptions.Item>
-            </Descriptions>
-
-            <h4 style={{ margin: '20px 0 10px' }}>Chi tiết các khoản phí:</h4>
-            <Table
-              dataSource={detailData.details}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              columns={[
-                { title: 'Tên phí', dataIndex: 'feeName', key: 'feeName' },
-                {
-                  title: 'Chi tiết',
-                  key: 'details',
-                  render: (_, r) => r.oldReading !== null ? (
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>
-                      {r.oldReading} → {r.newReading} ({r.quantity} kWh){r.feeCode !== 'ELECTRIC' && <> x {formatCurrency(r.unitPrice)}</>}
-                    </div>
-                  ) : null
-                },
-                { title: 'Số tiền', dataIndex: 'amount', key: 'amount', render: v => <b style={{ color: '#1e293b' }}>{formatCurrency(v)}</b> },
-                { title: 'Ghi chú', dataIndex: 'note', key: 'note' },
-                {
-                  title: 'Thao tác',
-                  key: 'action',
-                  render: (_, record) => (
-                    detailData.status !== "Đã thanh toán" && record.feeCode !== 'ELECTRIC' && (
-                      <Button type="link" onClick={() => showEditModal(record)} style={{ height: '32px', padding: 0 }}>
-                        Sửa
-                      </Button>
-                    )
-                  )
-                }
-              ]}
-              summary={pageData => {
-                let total = 0;
-                pageData.forEach(p => total += p.amount);
-                return (
-                  <Table.Summary.Row style={{ background: '#f5f5f5' }}>
-                    <Table.Summary.Cell index={0}><b>Tổng cộng</b></Table.Summary.Cell>
-                    <Table.Summary.Cell index={1}></Table.Summary.Cell>
-                    <Table.Summary.Cell index={2}><b style={{ color: 'red' }}>{formatCurrency(total)}</b></Table.Summary.Cell>
-                    <Table.Summary.Cell index={3}></Table.Summary.Cell>
-                    <Table.Summary.Cell index={4}></Table.Summary.Cell>
-                  </Table.Summary.Row>
-                );
-              }}
-            />
-
-            {detailData.status === "Đã thanh toán" && (
-              <Card title="Thông tin giao dịch" size="small" style={{ marginTop: 20 }}>
-                <Descriptions column={2}>
-                  <Descriptions.Item label="Ngày trả">{formatDate(detailData.paidAt)}</Descriptions.Item>
-                  <Descriptions.Item label="Phương thức">{getPaymentMethodName(detailData.paymentMethod)}</Descriptions.Item>
-                </Descriptions>
-              </Card>
-            )}
-          </div>
-        )}
+        {detailLoading ? <p role="status">Đang tải hóa đơn...</p> : detailData && <InvoiceDetailContent bill={detailData} onEdit={showEditModal} onViewReading={setSourceReading} />}
       </Modal>
+      <MeterReadingDetailModal reading={sourceReading} onClose={() => setSourceReading(null)} />
 
+      <Modal title="Xác nhận phát hành toàn bộ hóa đơn" open={issueOpen} onCancel={() => { if (!submitting) setIssueOpen(false); }} onOk={() => void issueInvoice()} confirmLoading={submitting} okText="Phát hành và thông báo" cancelText="Quay lại">
+        <p>Căn hộ {detailData?.apartmentCode} · {detailData?.billingMonth} · {formatCurrency(detailData?.totalAmount || 0)}. Sau khi phát hành, các khoản phí sẽ được khóa.</p>
+        <DatePicker aria-label="Hạn thanh toán hóa đơn" allowClear={false} value={issueDue} onChange={value => { if(value) setIssueDue(value); }} disabledDate={value => value.isBefore(dayjs(), 'day')} format="DD/MM/YYYY" />
+      </Modal>
       <Modal
         title="Xác Nhận Thanh Toán"
         open={isConfirmModalVisible}
@@ -665,7 +627,7 @@ const AdminPaymentManagement: React.FC = () => {
           <Form.Item name="paymentMethod" label="Phương thức" rules={[{ required: true }]}>
             <Select>
               <Option value="CASH">Tiền mặt</Option>
-              <Option value="TRANSFER">Chuyển khoản</Option>
+              <Option value="BANK_TRANSFER">Chuyển khoản</Option>
             </Select>
           </Form.Item>
           <Form.Item name="note" label="Ghi chú">

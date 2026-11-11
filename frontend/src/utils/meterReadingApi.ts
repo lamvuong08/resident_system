@@ -1,6 +1,10 @@
 import api from './api'
+export type MeterService = 'ELECTRICITY' | 'WATER'
 
 export interface ApartmentMeterReadingItem {
+  meterService?: MeterService
+  linkedBillId?: number | null
+  linkedBillStatus?: string | null
   readingId: number | null
   version: number | null
   approvalStatus: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ISSUED' | 'LEGACY_ISSUED' | 'LEGACY_REVIEW' | null
@@ -40,6 +44,7 @@ export interface BuildingOption {
 }
 
 export const fetchMeterReadingApartments = async (params: {
+  service?: MeterService
   buildingId?: number
   floor?: number
   billingMonth?: string
@@ -47,10 +52,11 @@ export const fetchMeterReadingApartments = async (params: {
   const res = await api.get<ApartmentMeterReadingItem[]>('/admin/meter-readings/apartments', {
     params,
   })
-  return res.data || []
+  return (res.data || []).map(row => ({ ...row, meterService: params.service || 'ELECTRICITY' }))
 }
 
 export const recordMeterReading = async (data: {
+  service?: MeterService
   apartmentId: number
   meterTypeId?: number
   billingMonth: string
@@ -82,6 +88,7 @@ export const fetchReadingHistory = async (id: number): Promise<ReadingAudit[]> =
   (await api.get(`/admin/meter-readings/${id}/history`)).data
 
 export const previewMeterReading = async (data: {
+  service?: MeterService
   apartmentId: number
   meterTypeId?: number
   billingMonth?: string

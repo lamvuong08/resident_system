@@ -41,9 +41,10 @@ public class MeterReadingController {
     public ResponseEntity<?> getApartmentsForMeterReading(
             @RequestParam(required = false) Long buildingId,
             @RequestParam(required = false) Integer floor,
-            @RequestParam(required = false) String billingMonth) {
+            @RequestParam(required = false) String billingMonth,
+            @RequestParam(required = false) com.dancu.qlydancu.service.MeterKind service) {
         try {
-            return ResponseEntity.ok(meterReadingService.getApartmentsForMeterReading(buildingId, floor, billingMonth));
+            return ResponseEntity.ok(meterReadingService.getApartmentsForMeterReading(buildingId, floor, billingMonth, service));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

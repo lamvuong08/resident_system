@@ -62,13 +62,13 @@ public class EmailOutboxService {
         return Boolean.TRUE.equals(lifecycleTx.execute(status -> {
             bills.lockBill(billId);
             var loaded=bills.load(billId).flatMap(b->bills.electricity(b,readingId)).filter(b->b.eligible(BillingReminderType.BILL_CREATED,today()));
-            if(loaded.isEmpty())throw new IllegalArgumentException("Không tìm thấy dữ liệu/người nhận hợp lệ cho email phát hành điện");
+            if(loaded.isEmpty())throw new IllegalArgumentException("Không tìm thấy dữ liệu/người nhận hợp lệ cho email phát hành chỉ số");
             var bill=loaded.get();String key=EmailOutboxRepository.electricityKey(readingId,bill.userId());
             if(outbox.exists(key))return false;
             var template=render(bill,BillingReminderType.BILL_CREATED,null);
             outbox.insert(bill,BillingReminderType.BILL_CREATED,template,now(),null,readingId);
             notifications.sendNotificationToUser(users.findById(bill.userId()).orElseThrow(),template.subject(),
-                "Hóa đơn tiền điện kỳ "+bill.billingMonth()+" đã phát hành. Số tiền: "+bill.total()+" VNĐ.",NotificationType.PAYMENT,"/user/payment","BILL_CREATED");
+                "Hóa đơn kỳ "+bill.billingMonth()+" đã phát hành. Số tiền: "+bill.total()+" VNĐ.",NotificationType.PAYMENT,"/user/payment","BILL_CREATED");
             outbox.notificationCreated(key,now());return true;
         }));
     }

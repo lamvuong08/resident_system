@@ -158,23 +158,15 @@ const StaffDashboard: React.FC = () => {
   ]
 
   return (
-    <div style={{ padding: '0 24px 24px', textAlign: 'left' }}>
+    <div className="workspace-page">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 24,
-          textAlign: 'left',
-        }}
-      >
+      <div className="workspace-heading">
         <div style={{ textAlign: 'left' }}>
-          <Title level={3} style={{ margin: 0, color: '#1f1f1f', textAlign: 'left' }}>
+          <Title level={3} style={{ textAlign: 'left' }}>
             Bàn làm việc Nhân viên
           </Title>
           <Text type="secondary" style={{ display: 'block', textAlign: 'left' }}>
-            Tổng quan các công việc cần xử lý hôm nay: Tiếp nhận phản ánh & Ghi chỉ số điện
+            Tổng quan các công việc cần xử lý hôm nay: Tiếp nhận phản ánh & Ghi chỉ số điện, nước
           </Text>
         </div>
         <Button className="fix-height-32" icon={<SyncOutlined />} onClick={loadDashboardData} loading={loading}>
@@ -188,7 +180,7 @@ const StaffDashboard: React.FC = () => {
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer' }}
+            style={{ cursor: 'pointer' }}
             onClick={() => navigate('/staff/requests')}
           >
             <Statistic
@@ -204,7 +196,7 @@ const StaffDashboard: React.FC = () => {
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer' }}
+            style={{ cursor: 'pointer' }}
             onClick={() => navigate('/staff/requests')}
           >
             <Statistic
@@ -220,7 +212,7 @@ const StaffDashboard: React.FC = () => {
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', cursor: 'pointer' }}
+            style={{ cursor: 'pointer' }}
             onClick={() => navigate('/staff/meter-readings')}
           >
             <Statistic
@@ -236,7 +228,6 @@ const StaffDashboard: React.FC = () => {
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           >
             <Statistic
               title="Tổng số căn hộ chung cư"
@@ -282,7 +273,6 @@ const StaffDashboard: React.FC = () => {
       {/* Danh sách yêu cầu chờ xử lý */}
       <Card
         variant="borderless"
-        style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
         title="Danh sách phản ánh / yêu cầu cư dân mới cần tiếp nhận"
         extra={
           <Button type="link" onClick={() => navigate('/staff/requests')}>

@@ -36,13 +36,13 @@ public class BillingReminderRepository {
                 r.getString("status"),r.getObject("issued_at",LocalDateTime.class),r.getObject("payment_confirmed_at",LocalDateTime.class)),id);
         if(headers.size()!=1||!validEmail(headers.getFirst().email))return Optional.empty();
         var details=jdbc.query("""
-            SELECT d.id,d.old_reading,d.new_reading,d.quantity,d.unit_price,d.due_date,d.amount,d.status,ft.name fee_name,ft.code fee_code,
+            SELECT d.note,d.id,d.old_reading,d.new_reading,d.quantity,d.unit_price,d.due_date,d.amount,d.status,ft.name fee_name,ft.code fee_code,
               EXISTS (SELECT 1 FROM payment_details pd JOIN payments p ON p.id=pd.payment_id WHERE pd.bill_detail_id=d.id AND p.status='SUCCESS') paid,
               EXISTS (SELECT 1 FROM payment_details pd JOIN payments p ON p.id=pd.payment_id WHERE pd.bill_detail_id=d.id AND p.status='PENDING') pending
             FROM bill_details d LEFT JOIN fee_types ft ON ft.id=d.fee_type_id WHERE d.bill_id=? ORDER BY d.id
             """,(r,n)->new Detail(r.getObject("due_date",LocalDateTime.class),r.getLong("amount"),r.getString("status"),
                 r.getString("fee_name"),r.getBoolean("paid"),r.getBoolean("pending"),r.getString("fee_code"),r.getBigDecimal("old_reading"),
-                r.getBigDecimal("new_reading"),r.getBigDecimal("quantity"),r.getObject("unit_price",Long.class),r.getLong("id")),id);
+                r.getBigDecimal("new_reading"),r.getBigDecimal("quantity"),r.getObject("unit_price",Long.class),r.getLong("id"),r.getString("note")),id);
         long total=0,outstanding=0,paid=0;boolean pending=false;
         List<BillingReminderData.FeeLine> fees=new ArrayList<>();
         for(var d:details) {
@@ -51,7 +51,7 @@ public class BillingReminderRepository {
             boolean settled=d.paid||"PAID".equals(d.status);
             if(settled)paid=Math.addExact(paid,d.amount);else outstanding=Math.addExact(outstanding,d.amount);
             if(!settled&&(d.pending||"PENDING".equals(d.status)))pending=true;
-            fees.add(new BillingReminderData.FeeLine(d.name==null?"Khoản phí":d.name,d.amount,d.due==null?null:d.due.toLocalDate(),settled,d.code,d.old,d.current,d.quantity,d.unitPrice,d.id));
+            fees.add(new BillingReminderData.FeeLine(d.name==null?"Khoản phí":d.name,d.amount,d.due==null?null:d.due.toLocalDate(),settled,d.code,d.old,d.current,d.quantity,d.unitPrice,d.id,d.note));
         }
         var payment=jdbc.query("""
             SELECT p.payment_method,p.transaction_code FROM payments p JOIN payment_details pd ON pd.payment_id=p.id
@@ -76,11 +76,16 @@ public class BillingReminderRepository {
         if(linked.size()!=1)return Optional.empty();
         var row=linked.getFirst();var selected=bill.fees().stream().filter(f->java.util.Objects.equals(f.detailId(),row[0])).toList();
         if(selected.size()!=1||row[1]==null)return Optional.empty();
-        var fee=selected.getFirst();long paid=fee.paid()?fee.amount():0;
+        var fee=selected.getFirst();
+        // Once metered water is included, either utility issuance announces the
+        // aggregate bill, regardless of whether admin issues water or electricity first.
+        if (bill.fees().stream().anyMatch(f -> "WATER".equals(f.code()) && f.oldReading()!=null && f.newReading()!=null))
+            return Optional.of(bill);
+        long paid=fee.paid()?fee.amount():0;
         return Optional.of(new BillingReminderData(bill.billId(),bill.householdId(),bill.userId(),bill.email(),bill.residentName(),
             bill.apartment(),bill.building(),bill.billingMonth(),fee.amount(),fee.amount()-paid,paid,(LocalDateTime)row[1],bill.confirmedAt(),
             fee.paid()?"PAID":"UNPAID",bill.pending(),bill.paymentMethod(),bill.transactionCode(),selected));
     }
     private record Detail(LocalDateTime due,long amount,String status,String name,boolean paid,boolean pending,String code,
-        java.math.BigDecimal old,java.math.BigDecimal current,java.math.BigDecimal quantity,Long unitPrice,long id){}
+        java.math.BigDecimal old,java.math.BigDecimal current,java.math.BigDecimal quantity,Long unitPrice,long id,String note){}
 }

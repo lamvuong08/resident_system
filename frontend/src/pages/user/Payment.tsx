@@ -82,8 +82,8 @@ const Payment = () => {
         <p className="ph-page-intro__sub">Xem các khoản phí và trạng thái thanh toán của căn hộ.</p>
       </header>
 
-      <Row gutter={24}>
-        <Col span={16}>
+      <Row gutter={[24, 24]}>
+        <Col xs={24} lg={16}>
           <div className="section-title"><FileTextOutlined /> Nội dung hóa đơn</div>
           {detailLoading ? <Card loading /> : currentBillDetail ? (
             <div className="current-bill-section">
@@ -92,6 +92,7 @@ const Payment = () => {
                   <h3>Hóa đơn tháng {currentBillDetail.billingMonth}</h3>
                   <div className="bill-meta">
                     <span>Căn hộ: <strong>{currentBillDetail.apartmentCode}</strong></span>
+                    {currentBillDetail.issuedAt && <span>Phát hành: {dayjs(currentBillDetail.issuedAt).format('DD/MM/YYYY')}</span>}
                     <span>Hạn thanh toán: <strong style={{ color: '#ef4444' }}>{dayjs(currentBillDetail.dueDate).format('DD/MM/YYYY')}</strong></span>
                   </div>
                 </div>
@@ -105,8 +106,8 @@ const Payment = () => {
                   <div className="bill-item" key={fee.id}>
                     <div className="bill-item-info">
                       <span className="fee-name">{fee.feeName}</span>
-                      {fee.feeCode === 'ELECTRIC' && fee.oldReading != null && fee.newReading != null && <small className="fee-calc">
-                        Chỉ số cũ: {fee.oldReading.toLocaleString('vi-VN')} → Chỉ số mới: {fee.newReading.toLocaleString('vi-VN')} · Tiêu thụ: {(fee.newReading - fee.oldReading).toLocaleString('vi-VN')} kWh
+                      {['ELECTRIC', 'WATER'].includes(fee.feeCode || '') && fee.oldReading != null && fee.newReading != null && <small className="fee-calc">
+                        Chỉ số cũ: {fee.oldReading.toLocaleString('vi-VN')} → Chỉ số mới: {fee.newReading.toLocaleString('vi-VN')} · Tiêu thụ: {(fee.newReading - fee.oldReading).toLocaleString('vi-VN')} {fee.feeCode === 'WATER' ? 'm³' : 'kWh'}
                       </small>}
                       {fee.dueDate && <small className="fee-calc">Hạn thanh toán: {dayjs(fee.dueDate).format('DD/MM/YYYY')}</small>}
                       {fee.note && <small className="fee-calc" style={{ fontStyle: 'normal', color: '#64748b' }}>Ghi chú: {fee.note}</small>}
@@ -119,6 +120,8 @@ const Payment = () => {
               </div>
 
               <div className="bill-footer">
+                {currentBillDetail.meterReadings?.map(reading => <p key={reading.readingId} style={{overflowWrap:'anywhere',whiteSpace:'pre-wrap'}}>{reading.feeCode === 'WATER' ? 'Biểu giá nước' : 'Biểu giá điện'}: {reading.tariffSnapshot}</p>)}
+                {currentBillDetail.paidAmount != null && <p>Đã thanh toán: {formatCurrency(currentBillDetail.paidAmount)} · Còn lại: {formatCurrency(currentBillDetail.outstanding || 0)}</p>}
                 <div className="total-row">
                   <span className="total-label">TỔNG CỘNG</span>
                   <span className="total-value">{formatCurrency(currentBillDetail.totalAmount)}</span>
@@ -146,7 +149,7 @@ const Payment = () => {
           )}
         </Col>
 
-        <Col span={8}>
+        <Col xs={24} lg={8}>
           <div className="section-title"><HistoryOutlined /> Lịch sử thanh toán</div>
           <div className="history-list">
             {bills.length === 0 ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} /> : bills.map(bill => (

@@ -50,7 +50,7 @@ const Sidebar: React.FC = () => {
       if (path.startsWith('/admin/requests')) return 'requests'
       if (path.startsWith('/admin/vehicles')) return 'vehicles'
       if (path.startsWith('/admin/quan-ly-thanh-toan')) return 'quan-ly-thanh-toan'
-      if (path.startsWith('/admin/quan-ly-dien')) return 'quan-ly-dien'
+      if (path.startsWith('/admin/quan-ly-dien')) return 'quan-ly-thanh-toan'
       if (path.startsWith('/admin/thong-ke')) return 'thong-ke'
       if (path.startsWith('/admin/quan-ly-tai-khoan')) return 'quan-ly-tai-khoan'
       if (path.startsWith('/admin/thong-bao')) return 'thong-bao'
@@ -116,8 +116,7 @@ const Sidebar: React.FC = () => {
     { key: 'quan-ly-cu-dan', icon: <TeamOutlined />, label: 'Quản lý cư dân' },
     { key: 'requests', icon: <FileTextOutlined />, label: 'Yêu cầu cư dân' },
     { key: 'vehicles', icon: <CarOutlined />, label: 'Quản lý phương tiện' },
-    { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán' },
-    { key: 'quan-ly-dien', icon: <ThunderboltOutlined />, label: 'Quản lý điện' },
+    { key: 'quan-ly-thanh-toan', icon: <CreditCardOutlined />, label: 'Quản lý thanh toán & Hóa đơn' },
     { key: 'thong-bao', icon: <NotificationOutlined />, label: 'Thông báo' },
     { key: 'quan-ly-tai-khoan', icon: <UserOutlined />, label: 'Quản lý tài khoản' },
     { key: 'cai-dat', icon: <SettingOutlined />, label: 'Cài đặt' },
@@ -126,7 +125,7 @@ const Sidebar: React.FC = () => {
   const staffItems = [
     { key: 'dashboard', icon: <DashboardOutlined />, label: 'Tổng quan công việc' },
     { key: 'requests', icon: <FileTextOutlined />, label: 'Xử lý yêu cầu cư dân' },
-    { key: 'meter-readings', icon: <ThunderboltOutlined />, label: 'Ghi chỉ số điện' },
+    { key: 'meter-readings', icon: <ThunderboltOutlined />, label: 'Ghi chỉ số điện, nước' },
     { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
   ]
 

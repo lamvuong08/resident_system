@@ -1,0 +1,161 @@
+/* Local application of Astryx's consistent theme/convention principles.
+   These rules style existing markup; component behavior stays in Ant Design. */
+.workspace-page {
+  min-width: 0;
+  text-align: left;
+}
+
+.workspace-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.workspace-heading h3.ant-typography {
+  margin: 0 0 var(--space-2);
+}
+
+.workspace-heading > .ant-btn {
+  flex-shrink: 0;
+}
+
+.admin-main .ant-card {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Keep custom dashboard cards from altering the layout of Ant Design cards. */
+.admin-main .ant-card.stat-card {
+  display: block;
+  padding: 0;
+  height: 100%;
+  min-height: 112px;
+}
+
+.admin-main .ant-card.stat-card:hover {
+  transform: none;
+}
+
+.admin-main .ant-table-content {
+  overflow-x: auto;
+}
+
+.admin-main .ant-statistic-content,
+.stat-value,
+.price-text {
+  font-variant-numeric: tabular-nums;
+}
+
+.app-header .header-left,
+.app-header .brand-name {
+  min-width: 0;
+}
+
+.app-header .brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.app-sidebar :where(button, a, [tabindex]):focus-visible,
+.app-header :where(button, a, [tabindex]):focus-visible {
+  outline-color: #93c5fd;
+  outline-offset: -2px;
+}
+
+@media (max-width: 640px) {
+  /* A horizontal menu preserves every existing label and collapse action. */
+  .admin-root {
+    flex-direction: column;
+    padding-top: 64px;
+  }
+
+  .admin-root .app-sidebar,
+  .resident-user-shell .app-sidebar.resident-sidebar {
+    position: sticky;
+    top: 64px;
+    width: 100%;
+    height: auto;
+    max-height: 45svh;
+    padding: var(--space-2);
+    border-right: 0;
+  }
+
+  .admin-root .app-sidebar .sidebar-menu {
+    flex: 1 1 auto;
+    overflow: auto;
+  }
+
+  .admin-root .app-sidebar .ant-menu-root {
+    display: flex;
+    width: max-content;
+  }
+
+  .admin-root .app-sidebar .ant-menu-item {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 44px;
+    margin: 0 4px;
+  }
+
+  .admin-root .app-sidebar.collapsed,
+  .resident-user-shell .app-sidebar.resident-sidebar.collapsed {
+    width: 100%;
+  }
+
+  .admin-root .app-sidebar.collapsed .ant-menu-inline-collapsed {
+    flex-direction: row;
+  }
+
+  .admin-root .app-sidebar .sidebar-footer {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+  }
+
+  .admin-root .admin-main,
+  .admin-root .app-sidebar.collapsed + .admin-main {
+    width: 100%;
+    margin: 0;
+    padding: var(--space-4);
+  }
+
+  .app-header {
+    padding-inline: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .app-header .avatar-name {
+    display: none;
+  }
+
+  .header-notifications-popover {
+    width: min(340px, calc(100vw - 32px));
+  }
+
+  .workspace-heading > .ant-space {
+    flex-wrap: wrap;
+  }
+
+  .payment-admin-page .page-header,
+  .payment-admin-page .header-actions {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

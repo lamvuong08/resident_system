@@ -1,9 +1,10 @@
 .account-filter-panel {
   margin-bottom: 24px;
-  padding: 24px;
+  padding: var(--space-6);
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-panel);
   overflow: visible; 
 }
 

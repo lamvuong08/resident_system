@@ -14,6 +14,10 @@ import {
   message,
   Statistic,
   Tooltip,
+  Tabs,
+  Alert,
+  Modal,
+  Descriptions,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -33,13 +37,18 @@ import {
   fetchBuildings,
   previewMeterReading,
 } from '../../utils/meterReadingApi'
-import type { ApartmentMeterReadingItem, BuildingOption } from '../../utils/meterReadingApi'
+import type { ApartmentMeterReadingItem, BuildingOption, MeterService } from '../../utils/meterReadingApi'
 import { extractApiError } from '../../utils/api'
 import { readingStatus, readingMoney } from '../../utils/electricityWorkflow'
+import '../../styles/staff-meter-reading.css'
 
 const { Title, Text } = Typography
 
 const StaffMeterReading: React.FC = () => {
+  const [service, setService] = useState<MeterService>('ELECTRICITY')
+  const [detail, setDetail] = useState<ApartmentMeterReadingItem | null>(null)
+  const serviceLabel = service === 'WATER' ? 'nước' : 'điện'
+  const unit = service === 'WATER' ? 'm³' : 'kWh'
   const [loading, setLoading] = useState(false)
   const [buildings, setBuildings] = useState<BuildingOption[]>([])
   const [selectedBuildingId, setSelectedBuildingId] = useState<number | undefined>(undefined)
@@ -71,6 +80,7 @@ const StaffMeterReading: React.FC = () => {
     setLoading(true)
     try {
       const data = await fetchMeterReadingApartments({
+        service,
         buildingId: selectedBuildingId,
         floor: selectedFloor,
         billingMonth: billingMonthString,
@@ -88,7 +98,7 @@ const StaffMeterReading: React.FC = () => {
       })
       setInputReadings(initialInputs)
     } catch (err) {
-      if (sequence === loadSequence.current) message.error(extractApiError(err, 'Lỗi khi tải danh sách căn hộ ghi điện'))
+      if (sequence === loadSequence.current) message.error(extractApiError(err, `Lỗi khi tải danh sách căn hộ ghi ${serviceLabel}`))
     } finally {
       if (sequence === loadSequence.current) setLoading(false)
     }
@@ -96,7 +106,8 @@ const StaffMeterReading: React.FC = () => {
 
   useEffect(() => {
     loadApartments()
-  }, [selectedBuildingId, selectedFloor, billingMonthString])
+    return () => { loadSequence.current++ }
+  }, [selectedBuildingId, selectedFloor, billingMonthString, service])
 
   // Lọc theo từ khóa tìm kiếm (mã phòng, tên chủ hộ)
   const filteredApartments = useMemo(() => {
@@ -130,7 +141,7 @@ const StaffMeterReading: React.FC = () => {
   const handleSaveReading = async (record: ApartmentMeterReadingItem) => {
     const newReading = inputReadings[record.apartmentId]
     if (newReading === undefined || newReading === null) {
-      message.warning(`Vui lòng nhập chỉ số điện mới cho căn hộ ${record.apartmentCode}`)
+      message.warning(`Vui lòng nhập chỉ số ${serviceLabel} mới cho căn hộ ${record.apartmentCode}`)
       return
     }
 
@@ -144,6 +155,7 @@ const StaffMeterReading: React.FC = () => {
     setSavingRows((prev) => ({ ...prev, [record.apartmentId]: true }))
     try {
       await recordMeterReading({
+        service,
         apartmentId: record.apartmentId,
         meterTypeId: record.meterTypeId,
         billingMonth: billingMonthString,
@@ -153,7 +165,7 @@ const StaffMeterReading: React.FC = () => {
       message.success(`Đã gửi chỉ số căn hộ ${record.apartmentCode} chờ ADMIN duyệt`)
       await loadApartments()
     } catch (err) {
-      message.error(extractApiError(err, 'Lỗi khi lưu chỉ số điện'))
+      message.error(extractApiError(err, `Lỗi khi lưu chỉ số ${serviceLabel}`))
     } finally {
       setSavingRows((prev) => ({ ...prev, [record.apartmentId]: false }))
     }
@@ -173,7 +185,8 @@ const StaffMeterReading: React.FC = () => {
   const columns: ColumnsType<ApartmentMeterReadingItem> = [
     {
       title: 'STT',
-      width: 60,
+      width: '4%',
+      className: 'staff-meter-sequence',
       align: 'center',
       render: (_, __, index) => index + 1,
     },
@@ -181,32 +194,28 @@ const StaffMeterReading: React.FC = () => {
       title: 'Căn hộ',
       dataIndex: 'apartmentCode',
       key: 'apartmentCode',
-      width: 110,
-      render: (code) => <strong>{code}</strong>,
+      width: '7%',
+      render: (code, record) => <Tooltip title="Xem chi tiết biểu giá">
+        <Button type="link" className="staff-meter-apartment-link" aria-label={`Chi tiết căn hộ ${code}`} onClick={() => setDetail(record)}>{code}</Button>
+      </Tooltip>,
     },
     {
       title: 'Tòa / Tầng',
       key: 'buildingFloor',
-      width: 120,
-      render: (_, r) => `${r.buildingName || r.buildingCode} - Tầng ${r.floorNumber}`,
+      width: '7%',
+      render: (_, record) => <><div>{record.buildingName || record.buildingCode}</div><Text type="secondary">Tầng {record.floorNumber}</Text></>,
     },
     {
       title: 'Chủ hộ',
       dataIndex: 'ownerName',
-      key: 'ownerName',
-      width: 160,
-      render: (owner) =>
-        owner && owner !== 'Chưa có chủ hộ' ? (
-          <span style={{ fontWeight: 500 }}>{owner}</span>
-        ) : (
-          <span style={{ color: '#bfbfbf' }}>Chưa có</span>
-        ),
+      width: '10%',
+      render: value => value || <Text type="secondary">Chưa có</Text>,
     },
     {
-      title: 'Chỉ số cũ (kWh)',
+      title: `Chỉ số cũ (${unit})`,
       dataIndex: 'oldReading',
       key: 'oldReading',
-      width: 130,
+      width: '7%',
       align: 'right',
       render: (val) => (
         <Tag color="default" style={{ fontSize: 13, fontWeight: 'bold' }}>
@@ -215,20 +224,22 @@ const StaffMeterReading: React.FC = () => {
       ),
     },
     {
-      title: 'Chỉ số mới (kWh)',
+      title: `Chỉ số mới (${unit})`,
       key: 'newReading',
-      width: 170,
+      width: '10%',
       render: (_, record) => {
         const val = inputReadings[record.apartmentId]
         return (
           <InputNumber
+            size="small"
+            aria-label={`Chỉ số mới căn hộ ${record.apartmentCode}`}
             style={{ width: '100%' }}
             min={0}
             step={1}
             precision={2}
-            placeholder="Nhập chỉ số..."
+            placeholder="Chỉ số mới"
             value={val}
-            disabled={loading || record.isLocked}
+            disabled={loading || record.isLocked || !!savingRows[record.apartmentId]}
             onChange={(v) => handleReadingChange(record.apartmentId, v)}
             status={val !== undefined && val < record.oldReading ? 'error' : ''}
           />
@@ -236,9 +247,9 @@ const StaffMeterReading: React.FC = () => {
       },
     },
     {
-      title: 'Tiêu thụ (kWh)',
+      title: `Tiêu thụ (${unit})`,
       key: 'usage',
-      width: 130,
+      width: '7%',
       align: 'right',
       render: (_, record) => {
         const currentInput = inputReadings[record.apartmentId]
@@ -246,7 +257,7 @@ const StaffMeterReading: React.FC = () => {
           if (record.usageAmount !== null) {
             return (
               <Tag color="blue" style={{ fontWeight: 'bold' }}>
-                {record.usageAmount} kWh
+                {record.usageAmount} {unit}
               </Tag>
             )
           }
@@ -259,7 +270,7 @@ const StaffMeterReading: React.FC = () => {
         }
         return (
           <Tag color="green" style={{ fontWeight: 'bold' }}>
-            {diff} kWh
+            {diff} {unit}
           </Tag>
         )
       },
@@ -267,7 +278,7 @@ const StaffMeterReading: React.FC = () => {
     {
       title: 'Tiền dự kiến',
       key: 'estimate',
-      width: 160,
+      width: '10%',
       align: 'right',
       render: (_, record) => {
         const input = inputReadings[record.apartmentId]
@@ -275,19 +286,42 @@ const StaffMeterReading: React.FC = () => {
         const cached = estimates[record.apartmentId]
         if (cached?.input === input && cached.month === billingMonthString) return readingMoney(cached.amount)
         if (input === record.newReading) return readingMoney(record.calculatedAmount)
-        return <Button type="link" disabled={input < record.oldReading} onClick={async () => {
+        return <Button type="link" size="small" className="staff-meter-estimate" disabled={input < record.oldReading} onClick={async () => {
+          const sequence = loadSequence.current
           try {
-            const amount = await previewMeterReading({ apartmentId: record.apartmentId, meterTypeId: record.meterTypeId, billingMonth: billingMonthString, newReading: input })
+            const amount = await previewMeterReading({ service, apartmentId: record.apartmentId, meterTypeId: record.meterTypeId, billingMonth: billingMonthString, newReading: input })
+            if (sequence !== loadSequence.current) return
             setEstimates(previous => ({ ...previous, [record.apartmentId]: { input, amount, month: billingMonthString } }))
           } catch (error) { message.error(extractApiError(error, 'Không tính được tiền dự kiến')) }
         }}>Xem dự tính</Button>
       },
     },
     {
+      title: 'Kỳ ghi',
+      dataIndex: 'billingMonth',
+      width: '7%',
+    },
+    {
+      title: 'Người ghi',
+      dataIndex: 'recordedBy',
+      width: '8%',
+      render: value => value || '—',
+    },
+    {
+      title: 'Ngày ghi',
+      dataIndex: 'recordedAt',
+      width: '9%',
+      render: value => value ? <><div>{dayjs(value).format('DD/MM/YYYY')}</div><Text type="secondary">{dayjs(value).format('HH:mm')}</Text></> : '—',
+    },
+    {
       title: 'Trạng thái',
       key: 'status',
-      width: 150,
+      width: '9%',
       render: (_, record) => {
+        const input = inputReadings[record.apartmentId]
+        if (!record.isLocked && input != null && input !== record.newReading) {
+          return <Tag color="processing">Chưa lưu</Tag>
+        }
         if (record.approvalStatus) {
           const status = readingStatus[record.approvalStatus]
           return <Tooltip title={record.rejectionReason || (record.isLocked ? 'Bản ghi đã duyệt hoặc dữ liệu cũ được khóa; không được sửa trực tiếp' : '')}>
@@ -320,7 +354,7 @@ const StaffMeterReading: React.FC = () => {
     {
       title: 'Thao tác',
       key: 'action',
-      width: 120,
+      width: '5%',
       align: 'center',
       render: (_, record) => {
         const isSaving = !!savingRows[record.apartmentId]
@@ -328,37 +362,31 @@ const StaffMeterReading: React.FC = () => {
         const isInvalid =
           hasInput && Number(inputReadings[record.apartmentId]) < record.oldReading
 
+        const actionLabel = record.recordedStatus === 'RECORDED' ? 'Lưu và gửi lại' : 'Lưu và gửi duyệt'
         return (
-          <Button
-            type="primary"
-            size="small"
-            icon={<SaveOutlined />}
-            loading={isSaving}
-            disabled={loading || record.isLocked || !hasInput || isInvalid}
-            onClick={() => handleSaveReading(record)}
-          >
-            {record.recordedStatus === 'RECORDED' ? 'Gửi lại' : 'Gửi duyệt'}
-          </Button>
+          <Tooltip title={actionLabel}>
+            <span><Button
+              type="primary"
+              size="small"
+              aria-label={`${actionLabel} căn hộ ${record.apartmentCode}`}
+              icon={<SaveOutlined />}
+              loading={isSaving}
+              disabled={loading || record.isLocked || !hasInput || isInvalid}
+              onClick={() => handleSaveReading(record)}
+            /></span>
+          </Tooltip>
         )
       },
     },
   ]
 
   return (
-    <div style={{ padding: '0 24px 24px', textAlign: 'left' }}>
+    <div className="workspace-page">
       {/* Tiêu đề trang */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 20,
-          textAlign: 'left',
-        }}
-      >
+      <div className="workspace-heading">
         <div style={{ textAlign: 'left' }}>
-          <Title level={3} style={{ margin: 0, color: '#1f1f1f', textAlign: 'left' }}>
-            Ghi nhận chỉ số điện
+          <Title level={3} style={{ textAlign: 'left' }}>
+            Ghi nhận chỉ số {serviceLabel}
           </Title>
           <Text type="secondary" style={{ display: 'block', textAlign: 'left' }}>
             Nhập chỉ số để gửi ADMIN duyệt. Tiền dự kiến chưa phải khoản cư dân cần thanh toán.
@@ -369,13 +397,28 @@ const StaffMeterReading: React.FC = () => {
         </Button>
       </div>
 
+      <Tabs activeKey={service} onChange={value => {
+        loadSequence.current++
+        setApartments([]); setInputReadings({}); setEstimates({}); setService(value as MeterService)
+      }} items={[
+        { key: 'ELECTRICITY', label: 'Chỉ số điện', disabled: Object.values(savingRows).some(Boolean) },
+        { key: 'WATER', label: 'Chỉ số nước', disabled: Object.values(savingRows).some(Boolean) },
+      ]} />
+
+      <Alert
+        type="info"
+        showIcon
+        title="Nhập chỉ số → Lưu và gửi duyệt → Admin xét duyệt"
+        description="Nhập chỉ số mới rồi bấm biểu tượng lưu ở cột Thao tác để gửi admin. Nhập số hoặc Xem dự tính chưa lưu dữ liệu. Bấm mã căn hộ để xem chi tiết biểu giá."
+        style={{ marginBottom: 20 }}
+      />
+
       {/* Thẻ thống kê */}
       <Row gutter={16} style={{ marginBottom: 20 }}>
         <Col xs={24} sm={12} md={6} style={{ marginBottom: 12 }}>
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           >
             <Statistic
               title="Tổng số căn hộ"
@@ -389,7 +432,6 @@ const StaffMeterReading: React.FC = () => {
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           >
             <Statistic
               title="Đã ghi chỉ số"
@@ -403,7 +445,6 @@ const StaffMeterReading: React.FC = () => {
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           >
             <Statistic
               title="Chưa ghi chỉ số"
@@ -417,12 +458,11 @@ const StaffMeterReading: React.FC = () => {
           <Card
             variant="borderless"
             className="stat-card"
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
           >
             <Statistic
-              title="Tổng điện tiêu thụ"
+              title={`Tổng ${serviceLabel} tiêu thụ`}
               value={stats.totalKwh}
-              suffix="kWh"
+              suffix={unit}
               styles={{ content: { color: '#722ed1', fontWeight: 'bold' } }}
             />
           </Card>
@@ -437,7 +477,7 @@ const StaffMeterReading: React.FC = () => {
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={6}>
             <Text strong style={{ display: 'block', marginBottom: 4 }}>
-              Kỳ ghi điện (Tháng/Năm):
+              Kỳ ghi {serviceLabel} (Tháng/Năm):
             </Text>
             <DatePicker
               className="fix-height-32"
@@ -506,17 +546,32 @@ const StaffMeterReading: React.FC = () => {
       {/* Bảng danh sách căn hộ */}
       <Card
         variant="borderless"
-        style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+        className="staff-meter-table-card"
       >
-        <Table
-          rowKey="apartmentId"
-          columns={columns}
-          dataSource={filteredApartments}
-          loading={loading}
-          pagination={{ pageSize: 12, showSizeChanger: true, showTotal: (t) => `Tổng cộng ${t} căn hộ` }}
-          scroll={{ x: 1000 }}
-        />
+        <div className="staff-meter-table">
+          <Table
+            rowKey="apartmentId"
+            columns={columns.map(column => ({
+              ...column,
+              onCell: () => ({ className: column.className || '', 'data-label': typeof column.title === 'string' ? column.title : '' }),
+            }))}
+            dataSource={filteredApartments}
+            loading={loading}
+            pagination={{ pageSize: 12, showSizeChanger: true, showTotal: (t) => `Tổng cộng ${t} căn hộ` }}
+            size="small"
+            tableLayout="fixed"
+          />
+        </div>
       </Card>
+      <Modal title={`Chi tiết ghi chỉ số · ${detail?.apartmentCode || ''}`} open={!!detail} onCancel={() => setDetail(null)} footer={<Button onClick={() => setDetail(null)}>Đóng</Button>}>
+        {detail && <Descriptions column={1} bordered items={[
+          { key: 'period', label: 'Kỳ ghi', children: detail.billingMonth },
+          { key: 'staff', label: 'Người ghi', children: detail.recordedBy || 'Chưa ghi' },
+          { key: 'time', label: 'Ngày ghi', children: detail.recordedAt ? dayjs(detail.recordedAt).format('DD/MM/YYYY HH:mm') : '—' },
+          { key: 'price', label: 'Biểu giá', children: detail.tariffSnapshot || 'Chưa có dữ liệu' },
+          { key: 'reason', label: 'Lý do từ chối', children: detail.rejectionReason || '—' },
+        ]} />}
+      </Modal>
     </div>
   )
 }

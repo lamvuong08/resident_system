@@ -39,6 +39,7 @@ public class PaymentService {
         if(user.getRoles()!=com.dancu.qlydancu.model.enums.UserRole.ROLE_USER)throw new org.springframework.security.access.AccessDeniedException("Chỉ cư dân được gửi giao dịch");
         if(request.getBillDetailIds()==null||request.getBillDetailIds().isEmpty()||new java.util.HashSet<>(request.getBillDetailIds()).size()!=request.getBillDetailIds().size())
             throw new IllegalArgumentException("Danh sách khoản phí không hợp lệ hoặc bị trùng");
+        billDetailRepository.findBillIdsForDetails(request.getBillDetailIds()).forEach(id->billRepository.findLockedById(id).orElseThrow());
         List<BillDetail> details = billDetailRepository.findAllById(request.getBillDetailIds());
         
         if (details.isEmpty() || details.size() != request.getBillDetailIds().size()) {
@@ -51,7 +52,7 @@ public class PaymentService {
         for (BillDetail bd : details) {
             if(!bd.getBill().getApartment().getId().equals(household.getApartment().getId()))
                 throw new org.springframework.security.access.AccessDeniedException("Không được thanh toán khoản phí căn hộ khác");
-            if(bd.getBill().getIssuedAt()==null)throw new IllegalArgumentException("Không thanh toán hóa đơn chưa phát hành");
+            if(bd.getBill().isDraft())throw new IllegalArgumentException("Không thanh toán hóa đơn chưa phát hành");
             if (bd.getStatus() != BillDetailStatus.UNPAID) {
                 throw new RuntimeException("Khoản phí ID " + bd.getId() + " đã thanh toán hoặc đang chờ duyệt!");
             }
@@ -85,6 +86,7 @@ public class PaymentService {
         paymentRepository.findBillIdsForPayment(paymentId).stream()
             .forEach(id -> {
                 Bill locked = billRepository.findLockedById(id).orElseThrow();
+                if(locked.isDraft())throw new IllegalStateException("Không thanh toán hóa đơn nháp");
                 if (locked.getStatus() == BillDetailStatus.PAID) throw new IllegalStateException("Hóa đơn đã được thanh toán đầy đủ");
             });
         if (payment.getPaymentDetails().isEmpty() || payment.getPaymentDetails().stream().anyMatch(pd -> pd.getBillDetail().getStatus() == BillDetailStatus.PAID))
@@ -94,6 +96,7 @@ public class PaymentService {
             throw new IllegalStateException("Số tiền hóa đơn đã thay đổi; cần đối soát lại giao dịch trước khi xác nhận");
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setPaidAt(billEmailEvents.now());
+        payment.setConfirmedBy(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName());
 
         Set<Bill> parentBillsToUpdate = new HashSet<>();
 

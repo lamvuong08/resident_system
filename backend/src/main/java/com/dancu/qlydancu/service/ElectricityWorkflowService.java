@@ -20,6 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ElectricityWorkflowService {
+    private final MeteringPolicy policy;
+    private final MeterPricingService pricing;
     private final MeterReadingRepository readings;
     private final MeterReadingAuditRepository audits;
     private final MeterTariffRepository tariffs;
@@ -38,27 +40,26 @@ public class ElectricityWorkflowService {
     public ElectricityWorkflowService(MeterReadingRepository readings,MeterReadingAuditRepository audits,MeterTariffRepository tariffs,
         MeterTypeRepository meters,ApartmentRepository apartments,HouseholdRepository households,ResidentRepository residents,
         BillRepository bills,BillDetailRepository details,FeeTypeRepository fees,BillService billing,BillEmailEventPublisher events,
-        JdbcTemplate jdbc,PlatformTransactionManager manager,com.dancu.qlydancu.billing.BillingReminderProperties emailSettings) {
+        JdbcTemplate jdbc,PlatformTransactionManager manager,com.dancu.qlydancu.billing.BillingReminderProperties emailSettings,
+        MeteringPolicy policy,MeterPricingService pricing) {
+        this.policy=policy;this.pricing=pricing;
         this.readings=readings;this.audits=audits;this.tariffs=tariffs;this.meters=meters;this.apartments=apartments;
         this.households=households;this.residents=residents;this.bills=bills;this.details=details;this.fees=fees;
         this.billing=billing;this.events=events;this.jdbc=jdbc;this.emailSettings=emailSettings;
         tx=new TransactionTemplate(manager);tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         tx.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
     }
+    @org.springframework.beans.factory.annotation.Autowired private org.springframework.context.ApplicationEventPublisher decisionEvents;
     private String actor() {
         var auth=SecurityContextHolder.getContext().getAuthentication();
         if(auth==null||!auth.isAuthenticated())throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Cần đăng nhập");
         return auth.getName();
     }
-    private MeterType electric(Long id) {
-        var candidates=id==null?meters.findAll():List.of(meters.findById(id).orElseThrow());
-        return candidates.stream().filter(m->"kwh".equalsIgnoreCase(m.getUnit()) || m.getName()!=null&&m.getName().toLowerCase(Locale.ROOT).contains("điện"))
-            .findFirst().orElseThrow(()->new IllegalArgumentException("Chưa cấu hình đúng đồng hồ điện"));
-    }
     private List<MeterReading> sameMeter(long apartment,long type) { return readings.findByApartmentIdAndMeterTypeId(apartment,type); }
     private MeterReading previous(MeterReading reading) {
         var target=ElectricityCalculation.period(reading.getBillingMonth());
         return sameMeter(reading.getApartment().getId(),reading.getMeterType().getId()).stream()
+            .filter(r->MeterKind.of(reading.getMeterType())!=MeterKind.WATER || r.getApprovalStatus()!=MeterReadingStatus.REJECTED)
             .filter(r->ElectricityCalculation.period(r.getBillingMonth()).isBefore(target))
             .max(Comparator.comparing(r->ElectricityCalculation.period(r.getBillingMonth()))).orElse(null);
     }
@@ -70,15 +71,16 @@ public class ElectricityWorkflowService {
         if(reading.getOldReading().compareTo(old)!=0)throw new IllegalArgumentException("Chỉ số kỳ trước đã thay đổi; cần STAFF kiểm tra và gửi lại");
         var target=ElectricityCalculation.period(reading.getBillingMonth());
         for(var later:sameMeter(reading.getApartment().getId(),reading.getMeterType().getId())) {
+            if(MeterKind.of(reading.getMeterType())==MeterKind.WATER && later.getApprovalStatus()==MeterReadingStatus.REJECTED)continue;
             if(ElectricityCalculation.period(later.getBillingMonth()).isAfter(target) && reading.getNewReading().compareTo(later.getNewReading())>0)
                 throw new IllegalArgumentException("Chỉ số mới vượt quá chỉ số của kỳ sau");
         }
     }
-    private List<MeterTariff> prices(MeterReading reading) {return tariffs.findByMeterTypeIdOrderByMinUsageAsc(reading.getMeterType().getId());}
+    private List<MeterTariff> prices(MeterReading reading) {return pricing.prices(reading.getMeterType(),reading.getBillingMonth());}
     private void estimate(MeterReading reading) {
         validate(reading);var price=prices(reading);reading.setUsageAmount(reading.getNewReading().subtract(reading.getOldReading()));
-        reading.setEstimatedAmount(ElectricityCalculation.amount(reading.getUsageAmount(),price));
-        reading.setTariffSnapshot(ElectricityCalculation.snapshot(price));
+        reading.setEstimatedAmount(pricing.amount(reading.getUsageAmount(),price));
+        reading.setTariffSnapshot(pricing.snapshot(reading.getMeterType(),price));
     }
     private void version(MeterReading reading,Long expected) {
         if(expected==null||!expected.equals(reading.getVersion()))throw new ResponseStatusException(HttpStatus.CONFLICT,"Dữ liệu đã thay đổi; vui lòng tải lại trước khi thao tác");
@@ -96,7 +98,7 @@ public class ElectricityWorkflowService {
         if(request.getApartmentId()==null||request.getNewReading()==null)throw new IllegalArgumentException("Thiếu căn hộ hoặc chỉ số mới");
         if(request.getNewReading().scale()>2||request.getNewReading().precision()>19)throw new IllegalArgumentException("Chỉ số tối đa 2 chữ số thập phân");
         var apartment=apartments.findLockedById(request.getApartmentId()).orElseThrow(()->new IllegalArgumentException("Không tìm thấy căn hộ"));
-        String month=ElectricityCalculation.month(request.getBillingMonth());var type=electric(request.getMeterTypeId());
+        String month=ElectricityCalculation.month(request.getBillingMonth());var type=policy.resolve(request.getMeterTypeId(),request.getService());policy.validatePeriod(type,month);
         var found=sameMeter(apartment.getId(),type.getId()).stream().filter(r->ElectricityCalculation.month(r.getBillingMonth()).equals(month)).toList();
         if(found.size()>1)throw new IllegalArgumentException("Dữ liệu kỳ điện cũ bị trùng; cần đối soát trước khi ghi");
         var reading=found.isEmpty()?new MeterReading():found.getFirst();
@@ -121,6 +123,7 @@ public class ElectricityWorkflowService {
         // Read scalar identifiers before locks; hydrate the entity only after acquiring the apartment lock.
         var owner=jdbc.queryForList("SELECT apartment_id FROM meter_readings WHERE id=?",Long.class,item.id());
         if(owner.isEmpty())throw new IllegalArgumentException("Không tìm thấy bản ghi");
+        billing.lockApartmentBilling(owner.getFirst());
         apartments.findLockedById(owner.getFirst()).orElseThrow();
         return readings.findById(item.id()).orElseThrow();
     }
@@ -157,10 +160,11 @@ public class ElectricityWorkflowService {
                     if(reading.getApprovalStatus()!=MeterReadingStatus.PENDING_APPROVAL)throw new IllegalArgumentException("Chỉ duyệt bản ghi đang chờ kiểm tra");
                     estimate(reading);reading.setApprovalStatus(MeterReadingStatus.APPROVED);reading.setApprovedBy(actor());reading.setApprovedAt(events.now());
                     reading.setRejectionReason(null);audit(reading,"APPROVED",null);
-                    return new Result(item.id(),true,false,null,"Đã duyệt; chưa tạo khoản phải thanh toán");
+                    var draft=billing.attachApprovedReading(reading);
+                    return new Result(item.id(),true,false,draft==null?null:draft.getId(),"Đã duyệt và cập nhật hóa đơn nháp; chưa phát hành");
                 }));
             } catch(RuntimeException error) {
-                String message=error instanceof ResponseStatusException response?response.getReason():error instanceof IllegalArgumentException?error.getMessage():
+                String message=error instanceof ResponseStatusException response?response.getReason():error instanceof IllegalArgumentException||error instanceof IllegalStateException?error.getMessage():
                     "Không xử lý được bản ghi; dữ liệu đã được giữ nguyên, vui lòng tải lại hoặc kiểm tra cấu hình/database";
                 result.add(new Result(item.id(),false,false,null,message));
             }
@@ -174,45 +178,40 @@ public class ElectricityWorkflowService {
         if(reading.getApprovalStatus()!=MeterReadingStatus.PENDING_APPROVAL && reading.getApprovalStatus()!=MeterReadingStatus.APPROVED)
             throw new IllegalArgumentException("Chỉ từ chối bản ghi chưa phát hành đang chờ duyệt/đã duyệt");
         reading.setApprovalStatus(MeterReadingStatus.REJECTED);reading.setRejectionReason(request.reason().trim());
-        reading.setApprovedAt(null);reading.setApprovedBy(null);audit(reading,"REJECTED",request.reason().trim());
+        reading.setApprovedAt(null);reading.setApprovedBy(null);
+        billing.detachRejectedReading(reading);audit(reading,"REJECTED",request.reason().trim());
+        if(decisionEvents!=null && reading.getRecordedBy()!=null)decisionEvents.publishEvent(new MeterDecisionNotification.Event(
+            reading.getRecordedBy(),reading.getApartment().getCode(),reading.getBillingMonth(),MeterKind.of(reading.getMeterType()).label,request.reason().trim()));
     }
     public String blockedReason(MeterReading reading) {
         try {
             if(reading.getApprovalStatus()!=MeterReadingStatus.APPROVED)return "Chỉ số chưa ở trạng thái đã duyệt";
-            if(!emailSettings.isEnabled())return "Chưa bật email hóa đơn; cần cấu hình trước khi phát hành để không mất thông báo cư dân";
             validate(reading);var price=prices(reading);
-            if(!Objects.equals(reading.getTariffSnapshot(),ElectricityCalculation.snapshot(price)) ||
-                !Objects.equals(reading.getEstimatedAmount(),ElectricityCalculation.amount(reading.getNewReading().subtract(reading.getOldReading()),price)))
+            if(!Objects.equals(reading.getTariffSnapshot(),pricing.snapshot(reading.getMeterType(),price)) ||
+                !Objects.equals(reading.getEstimatedAmount(),pricing.amount(reading.getNewReading().subtract(reading.getOldReading()),price)))
                 return "Biểu giá/số liệu đã thay đổi; cần từ chối và gửi duyệt lại";
-            if(reading.getEstimatedAmount()==null||reading.getEstimatedAmount()<=0)return "Không có số tiền dương để phát hành";
             var household=households.findByApartment_Code(reading.getApartment().getCode()).orElse(null);
             if(household==null||residents.findByHouseholdId(household.getId()).isEmpty())return "Căn hộ chưa có hộ gia đình/cư dân hợp lệ";
             var user=household.getUser();
             if(user==null||user.getStatus()!=UserStatus.ACTIVE||user.getRoles()!=UserRole.ROLE_USER ||
                 !com.dancu.qlydancu.billing.BillingReminderRepository.validEmail(user.getEmail()))return "Tài khoản/email cư dân không hợp lệ";
-            var fee=fees.findByCode(FeeTypeCode.ELECTRIC).orElse(null);if(fee==null)return "Chưa cấu hình loại phí điện";
+            var fee=fees.findByCode(MeterKind.of(reading.getMeterType()).feeCode).orElse(null);if(fee==null)return "Chưa cấu hình loại phí " + MeterKind.of(reading.getMeterType()).label;
             for(var bill:bills.findByApartment_Id(reading.getApartment().getId())) {
                 if(ElectricityCalculation.period(bill.getBillingMonth()).equals(ElectricityCalculation.period(reading.getBillingMonth()))) {
-                    if(bill.getStatus()==BillDetailStatus.PAID)return "Hóa đơn tổng kỳ này đã thanh toán; chưa hỗ trợ mở lại";
-                    if(details.findByBillIdAndFeeTypeId(bill.getId(),fee.getId()).isPresent())return "Đã có khoản điện của căn hộ trong kỳ này";
+                    if(!bill.isDraft())return "Hóa đơn tổng kỳ này đã thanh toán; chưa hỗ trợ mở lại";
+                    if(details.findByBillIdAndFeeTypeId(bill.getId(),fee.getId()).filter(d->!Objects.equals(d.getMeterReadingId(),reading.getId())).isPresent())return "Đã có khoản " + MeterKind.of(reading.getMeterType()).label + " của căn hộ trong kỳ này; cần đối soát, không cộng trùng";
                 }
             }
             return null;
         } catch(RuntimeException error) {return error instanceof IllegalArgumentException?error.getMessage():"Dữ liệu chưa hợp lệ; cần kiểm tra lại";}
     }
     private Result publish(MeterReading reading,LocalDate due) {
-        String blocked=blockedReason(reading);if(blocked!=null)throw new IllegalArgumentException(blocked);
-        var bill=billing.getOrCreateBill(reading.getApartment(),reading.getBillingMonth());
-        var fee=fees.findByCode(FeeTypeCode.ELECTRIC).orElseThrow();
-        var detail=new BillDetail();detail.setBill(bill);detail.setFeeType(fee);detail.setOldReading(reading.getOldReading());detail.setNewReading(reading.getNewReading());
-        detail.setQuantity(reading.getUsageAmount());detail.setAmount(reading.getEstimatedAmount());
-        // Effective unit price is informational for a tiered tariff; exact tier snapshot is retained on the reading.
-        detail.setUnitPrice(reading.getUsageAmount().signum()==0?0:BigDecimal.valueOf(reading.getEstimatedAmount()).divide(reading.getUsageAmount(),0,java.math.RoundingMode.DOWN).longValueExact());
-        detail.setDueDate(due.atTime(23,59,59));detail.setStatus(BillDetailStatus.UNPAID);detail.setNote("Tiền điện kỳ "+reading.getBillingMonth()+"; "+reading.getTariffSnapshot());
-        details.saveAndFlush(detail);bill.setTotalAmount(Math.addExact(Objects.requireNonNullElse(bill.getTotalAmount(),0L),detail.getAmount()));bills.save(bill);
-        reading.setApprovalStatus(MeterReadingStatus.ISSUED);reading.setIssuedBillDetailId(detail.getId());reading.setIssuedAt(events.now());audit(reading,"ISSUED",null);
-        events.electricityIssued(bill,reading.getId());
-        return new Result(reading.getId(),true,false,bill.getId(),"Đã phát hành khoản điện và tạo sự kiện thông báo");
+        // Compatibility endpoint now issues the entire aggregate, never a single fee.
+        if(reading.getApprovalStatus()!=MeterReadingStatus.APPROVED)throw new IllegalArgumentException("Chỉ số chưa được duyệt");
+        var linked=details.findByMeterReadingId(reading.getId()).orElseThrow(
+            ()->new IllegalArgumentException("Chỉ số đã duyệt chưa gắn vào hóa đơn nháp; cần khởi tạo lại kỳ để tổng hợp"));
+        var bill=billing.issueBill(linked.getBill().getId(),due,null);
+        return new Result(reading.getId(),true,false,bill.getId(),"Đã phát hành toàn bộ hóa đơn tổng");
     }
     public void enrich(ApartmentMeterReadingResponse response,MeterReading reading) {
         if(reading==null) {response.setBillStatus(null);return;}
@@ -223,6 +222,7 @@ public class ElectricityWorkflowService {
         response.setRecordedBy(reading.getRecordedBy());response.setApprovedBy(reading.getApprovedBy());response.setApprovedAt(reading.getApprovedAt());
         response.setRecordedAt(reading.getUpdatedAt()==null?reading.getCreatedAt():reading.getUpdatedAt());response.setRejectionReason(reading.getRejectionReason());
         response.setTariffSnapshot(reading.getTariffSnapshot());response.setIssuedBillDetailId(reading.getIssuedBillDetailId());
+        details.findByMeterReadingId(reading.getId()).ifPresent(d->{response.setLinkedBillId(d.getBill().getId());response.setLinkedBillStatus(d.getBill().getIssuanceStatus());});
         response.setIsLocked(reading.getApprovalStatus()!=MeterReadingStatus.PENDING_APPROVAL && reading.getApprovalStatus()!=MeterReadingStatus.REJECTED);
         String reason=blockedReason(reading);response.setEligibleForIssue(reason==null);response.setIssueBlockedReason(reason);
     }

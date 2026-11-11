@@ -1,0 +1,84 @@
+.staff-meter-table-card > .ant-card-body {
+  padding: 12px;
+}
+
+.staff-meter-table {
+  container: staff-meter / inline-size;
+}
+
+.staff-meter-table .ant-table-cell {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.staff-meter-table .staff-meter-sequence {
+  white-space: nowrap;
+}
+
+.staff-meter-table .ant-table-thead > tr > .ant-table-cell,
+.staff-meter-table .ant-table-tbody > tr > .ant-table-cell {
+  padding: 8px 4px;
+}
+
+.staff-meter-apartment-link.ant-btn,
+.staff-meter-estimate.ant-btn {
+  padding-inline: 0;
+  height: auto;
+  font-size: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.staff-meter-apartment-link.ant-btn {
+  font-weight: 600;
+}
+
+.staff-meter-table .ant-tag {
+  margin-inline-end: 0;
+  white-space: normal;
+}
+
+/* Stack each apartment on narrow content areas instead of scrolling sideways. */
+@container staff-meter (max-width: 720px) {
+  .staff-meter-table table,
+  .staff-meter-table .ant-table-tbody {
+    display: block;
+    width: 100% !important;
+  }
+
+  .staff-meter-table colgroup,
+  .staff-meter-table .ant-table-thead,
+  .staff-meter-table .ant-table-measure-row {
+    display: none;
+  }
+
+  .staff-meter-table .ant-table-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .staff-meter-table .ant-table-row > .ant-table-cell {
+    display: block;
+    width: auto !important;
+    min-width: 0;
+    padding: 8px;
+    text-align: left !important;
+    border: 0;
+  }
+
+  .staff-meter-table .ant-table-row > .ant-table-cell::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .staff-meter-table .ant-pagination {
+    flex-wrap: wrap;
+  }
+}

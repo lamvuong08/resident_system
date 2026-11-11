@@ -13,6 +13,14 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "meter_tariffs")
 public class MeterTariff {
+    @Column(name = "effective_from")
+    private java.time.LocalDate effectiveFrom;
+    @Column(name = "effective_to")
+    private java.time.LocalDate effectiveTo;
+    public java.time.LocalDate getEffectiveFrom() { return effectiveFrom; }
+    public void setEffectiveFrom(java.time.LocalDate value) { effectiveFrom = value; }
+    public java.time.LocalDate getEffectiveTo() { return effectiveTo; }
+    public void setEffectiveTo(java.time.LocalDate value) { effectiveTo = value; }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

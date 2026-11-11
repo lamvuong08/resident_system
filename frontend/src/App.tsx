@@ -25,14 +25,14 @@ import SupportPage from './pages/user/support/SupportPage'
 import Vehicle from './pages/user/Vehicle'
 import Notifications from './pages/user/Notifications'
 import TemporaryResidence from './pages/user/TemporaryResidence'
-import AdminPaymentManagement from './pages/admin/AdminPaymentManagement'
-import ElectricityManagement from './pages/admin/ElectricityManagement'
+import BillingWorkspace, { LegacyBillingRedirect } from './pages/admin/BillingWorkspace'
 import Settings from './pages/user/Settings'
 import { getStoredRole, hasToken } from './utils/authStorage'
 import StaffLayout from './pages/staff/StaffLayout'
 import StaffDashboard from './pages/staff/StaffDashboard'
 import StaffMeterReading from './pages/staff/StaffMeterReading'
 import { NotificationProvider } from './context/NotificationContext'
+import './styles/ui-foundations.css'
 
 type RoleKey = 'ADMIN' | 'USER' | 'STAFF'
 
@@ -105,8 +105,8 @@ function App() {
           <Route path="thong-bao" element={<NotificationManagement />} />
           <Route path="requests" element={<RequestManagement />} />
           <Route path="vehicles" element={<VehicleManagement />} />
-          <Route path="quan-ly-thanh-toan" element={<AdminPaymentManagement />} />
-          <Route path="quan-ly-dien" element={<ElectricityManagement />} />
+          <Route path="quan-ly-thanh-toan" element={<BillingWorkspace />} />
+          <Route path="quan-ly-dien" element={<LegacyBillingRedirect />} />
           <Route path="cai-dat" element={<Settings />} />
           <Route path="settings" element={<Navigate to="/admin/cai-dat" replace />} />
         </Route>

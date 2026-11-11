@@ -17,8 +17,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "bill_details")
+@Table(name = "bill_details",uniqueConstraints=@jakarta.persistence.UniqueConstraint(name="uk_bill_fee",columnNames={"bill_id","fee_type_id"}))
 public class BillDetail {
+    @Column(name="meter_reading_id",unique=true)
+    private Long meterReadingId;
+    public Long getMeterReadingId() { return meterReadingId; }
+    public void setMeterReadingId(Long value) { meterReadingId=value; }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,7 +58,7 @@ public class BillDetail {
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
-    @Column(name = "note", length = 500)
+    @Column(name = "note", columnDefinition = "TEXT")
     private String note;
 
     public BillDetailStatus getStatus() { return status; }

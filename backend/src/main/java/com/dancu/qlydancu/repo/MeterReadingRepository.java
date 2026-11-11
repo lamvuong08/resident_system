@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.dancu.qlydancu.model.MeterReading;
 
 public interface MeterReadingRepository extends JpaRepository<MeterReading, Long> {
+    List<MeterReading> findByApartment_Id(Long apartmentId);
+    Optional<MeterReading> findByIssuedBillDetailId(Long billDetailId);
     MeterReading findFirstByApartmentIdAndMeterTypeIdOrderByCreatedAtDesc(Long apartmentId, Long meterTypeId);
 
     Optional<MeterReading> findFirstByApartmentIdAndMeterTypeIdAndBillingMonth(Long apartmentId, Long meterTypeId, String billingMonth);

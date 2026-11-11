@@ -8,7 +8,11 @@ public record BillingReminderData(long billId,long householdId,long userId,Strin
         LocalDateTime issuedAt,LocalDateTime confirmedAt,String status,boolean pending,
         String paymentMethod,String transactionCode,List<FeeLine> fees) {
     public record FeeLine(String name,long amount,LocalDate dueDate,boolean paid,String code,java.math.BigDecimal oldReading,
-            java.math.BigDecimal newReading,java.math.BigDecimal quantity,Long unitPrice,Long detailId) {
+            java.math.BigDecimal newReading,java.math.BigDecimal quantity,Long unitPrice,Long detailId,String note) {
+        public FeeLine(String name,long amount,LocalDate dueDate,boolean paid,String code,java.math.BigDecimal oldReading,
+                java.math.BigDecimal newReading,java.math.BigDecimal quantity,Long unitPrice,Long detailId) {
+            this(name,amount,dueDate,paid,code,oldReading,newReading,quantity,unitPrice,detailId,null);
+        }
         public FeeLine(String name,long amount,LocalDate dueDate,boolean paid) { this(name,amount,dueDate,paid,null); }
         public FeeLine(String name,long amount,LocalDate dueDate,boolean paid,String code) {this(name,amount,dueDate,paid,code,null,null,null,null,null);}
     }

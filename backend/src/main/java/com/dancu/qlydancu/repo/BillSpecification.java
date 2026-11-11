@@ -22,6 +22,8 @@ public class BillSpecification {
                 ));
             }
             if (status != null && !status.isEmpty()) {
+                if(status.equals("DRAFT"))predicates.add(cb.and(cb.isFalse(root.get("legacyIssued")),cb.isNull(root.get("issuedAt")),cb.notEqual(root.get("status"),com.dancu.qlydancu.model.enums.BillDetailStatus.PAID)));
+                else if(status.equals("ISSUED"))predicates.add(cb.or(cb.isTrue(root.get("legacyIssued")),cb.isNotNull(root.get("issuedAt")),cb.equal(root.get("status"),com.dancu.qlydancu.model.enums.BillDetailStatus.PAID)));
                 if (status.equals("PAID")) {
                     predicates.add(cb.equal(root.get("status"), com.dancu.qlydancu.model.enums.BillDetailStatus.PAID));
                 } else if (status.equals("UNPAID")) {
@@ -32,7 +34,7 @@ public class BillSpecification {
             if (year != null || month != null) {
                 String yearPart = year != null ? String.valueOf(year) : "%";
                 String monthPart = month != null ? String.format("%02d", month) : "%";
-                predicates.add(cb.like(root.get("billingMonth"), monthPart + "/" + yearPart));
+                predicates.add(cb.or(cb.like(root.get("billingMonth"), monthPart + "/" + yearPart),cb.like(root.get("billingMonth"),yearPart+"-"+monthPart)));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

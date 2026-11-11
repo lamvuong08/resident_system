@@ -18,6 +18,10 @@ import org.slf4j.LoggerFactory;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(IllegalStateException.class)
+    public org.springframework.http.ResponseEntity<?> billingConflict(IllegalStateException ex) {
+        return org.springframework.http.ResponseEntity.status(409).body(java.util.Map.of("message",ex.getMessage()==null?"Dữ liệu đã thay đổi, vui lòng tải lại":ex.getMessage()));
+    }
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(AuthenticationException.class)

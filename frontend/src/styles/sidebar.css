@@ -6,7 +6,7 @@
 
 .app-sidebar {
   width: 260px;
-  background: linear-gradient(180deg, #071523 0%, #071523 100%);
+  background: var(--nav-bg);
   color: #e6eef5;
 
   height: calc(100vh - 64px);
@@ -28,7 +28,7 @@
 
   transition: width 180ms ease, padding 180ms ease, top 180ms ease;
 
-  overflow: hidden; 
+  overflow: hidden;
 }
 
 .app-sidebar.collapsed {
@@ -81,7 +81,8 @@
 .sidebar-menu {
   margin-top: 0;
   flex: 1;
-  overflow-y: visible;
+  min-height: 0;
+  overflow-y: auto;
   overflow-x: hidden;
   display: block;
 }
@@ -98,36 +99,35 @@
 }
 
 .app-sidebar .ant-menu-item {
-  color: #cfe7f7 !important;
+  color: #cbd5e1 !important;
   margin: 2px 4px;
   border-radius: 8px;
   transition: background 160ms ease, color 160ms ease, transform 160ms ease;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 36px;
+  min-height: 40px;
   padding-left: 14px !important;
 }
 
 .app-sidebar .ant-menu-item .anticon {
-  color: #9fcad6 !important;
+  color: #94a3b8 !important;
   font-size: 18px;
 }
 
 .app-sidebar .ant-menu-item:hover {
-  background: rgba(14,165,161,0.08) !important;
-  transform: translateX(2px);
+  background: rgba(148,163,184,0.12) !important;
 }
 
 .app-sidebar .ant-menu-item-selected {
-  background: rgba(14,165,161,0.2) !important;
+  background: rgba(37,99,235,0.24) !important;
   color: #f4fdff !important;
-  border-left: 3px solid #0ea5a1;
+  border-left: 3px solid #60a5fa;
   padding-left: 11px !important;
 }
 
 .app-sidebar .ant-menu-item-selected .anticon {
-  color: #89f4ee !important;
+  color: #93c5fd !important;
 }
 
 .app-sidebar.collapsed .ant-menu-item {
@@ -246,8 +246,9 @@
 
 .admin-main {
   flex: 1 1 auto;
-  background: #f5f7fb;
-  padding: 24px;
+  min-width: 0;
+  background: var(--bg);
+  padding: var(--space-8);
   margin-left: 260px; 
   margin-top: 64px; 
   transition: margin-left 180ms ease, padding 180ms ease, margin-top 180ms ease;
@@ -285,7 +286,7 @@
   justify-content: flex-start; 
 
   padding: 12px 10px 14px;
-  background: #0b1220;
+  background: var(--nav-bg);
 
   border-right: 0.5px solid rgba(248, 250, 252, 0.1);
 
@@ -384,9 +385,9 @@
 }
 
 .resident-user-shell .resident-sidebar .ant-menu-item-selected {
-  background: rgba(24, 95, 165, 0.28) !important;
+  background: rgba(37,99,235,0.24) !important;
   color: #f8fafc !important;
-  border-left: 3px solid #185fa5;
+  border-left: 3px solid #60a5fa;
   padding-left: 11px !important;
 }
 
@@ -395,7 +396,7 @@
 }
 
 .resident-user-shell .resident-sidebar .ant-menu-item:hover {
-  background: rgba(24, 95, 165, 0.12) !important;
+  background: rgba(148,163,184,0.12) !important;
 }
 
 @media (max-width: 800px) {

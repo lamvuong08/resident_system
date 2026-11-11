@@ -202,10 +202,10 @@ const AccountManagement: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: '0 24px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+    <div className="workspace-page">
+      <div className="workspace-heading">
         <div>
-          <Title level={3} style={{ margin: 0, color: '#1f1f1f' }}>Quản lý tài khoản</Title>
+          <Title level={3}>Quản lý tài khoản</Title>
           <Text type="secondary">Theo dõi và quản trị người dùng toàn hệ thống</Text>
         </div>
         <Space>

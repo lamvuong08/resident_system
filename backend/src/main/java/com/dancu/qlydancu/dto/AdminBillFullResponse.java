@@ -17,5 +17,13 @@ public record AdminBillFullResponse(
     LocalDateTime paidAt,
     String paymentMethod,
     String transactionCode,
-    String confirmedBy
+    String confirmedBy,
+    String issuanceStatus,
+    LocalDateTime issuedAt,
+    String issuedBy,
+    Long version,
+    List<String> publicationBlockers,
+    Long paidAmount,
+    Long outstanding,
+    List<MeterChargeInfo> meterReadings
 ) {}

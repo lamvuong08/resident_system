@@ -81,6 +81,7 @@ public class MeterReadingService {
         List<MeterReading> allReadings = meterReadingRepository
             .findByApartmentIdAndMeterTypeId(apartmentId, meterTypeId);
         return allReadings.stream()
+            .filter(r -> MeterKind.of(r.getMeterType()) != MeterKind.WATER || r.getApprovalStatus() != com.dancu.qlydancu.model.enums.MeterReadingStatus.REJECTED)
             .filter(r -> {
                 Optional<YearMonth> ym = parseBillingMonth(r.getBillingMonth());
                 if (!ym.isPresent()) return false;
@@ -103,6 +104,7 @@ public class MeterReadingService {
         List<MeterReading> allReadings = meterReadingRepository
             .findByApartmentIdAndMeterTypeId(apartmentId, meterTypeId);
         return allReadings.stream()
+            .filter(r -> MeterKind.of(r.getMeterType()) != MeterKind.WATER || r.getApprovalStatus() != com.dancu.qlydancu.model.enums.MeterReadingStatus.REJECTED)
             .filter(r -> {
                 Optional<YearMonth> ym = parseBillingMonth(r.getBillingMonth());
                 return ym.isPresent() && ym.get().isAfter(targetYM.get());
@@ -111,11 +113,11 @@ public class MeterReadingService {
             .orElse(null);
     }
 
+    @Autowired private MeteringPolicy meteringPolicy;
+    @Autowired private MeterPricingService pricing;
+
     public MeterType resolveElectricMeterType(Long meterTypeId) {
-        return meterTypeRepository.findAll().stream()
-            .filter(m -> meterTypeId == null || meterTypeId.equals(m.getId()))
-            .filter(m -> "kwh".equalsIgnoreCase(m.getUnit()) || m.getName()!=null && m.getName().toLowerCase(java.util.Locale.ROOT).contains("điện"))
-            .findFirst().orElseThrow(() -> new IllegalArgumentException("Chưa cấu hình đúng loại đồng hồ điện"));
+        return meteringPolicy.resolve(meterTypeId, MeterKind.ELECTRICITY);
     }
     private MeterReading findCurrentReading(long apartment,long meter,String month) {
         var target=ElectricityCalculation.period(month);
@@ -127,6 +129,11 @@ public class MeterReadingService {
 
     @Transactional(readOnly=true)
     public List<ApartmentMeterReadingResponse> getApartmentsForMeterReading(Long buildingId, Integer floor, String billingMonth) {
+        return getApartmentsForMeterReading(buildingId, floor, billingMonth, null);
+    }
+
+    @Transactional(readOnly=true)
+    public List<ApartmentMeterReadingResponse> getApartmentsForMeterReading(Long buildingId, Integer floor, String billingMonth, MeterKind service) {
         String targetMonth = (billingMonth != null && !billingMonth.trim().isEmpty())
             ? ElectricityCalculation.month(billingMonth)
             : LocalDate.now().format(DateTimeFormatter.ofPattern("MM/yyyy"));
@@ -142,8 +149,8 @@ public class MeterReadingService {
             apartments = apartmentRepository.findAll();
         }
 
-        MeterType electricType = resolveElectricMeterType(null);
-        List<MeterTariff> tariffs = meterTariffRepository.findByMeterTypeIdOrderByMinUsageAsc(electricType.getId());
+        MeterType electricType = meteringPolicy.resolve(null, service);
+        meteringPolicy.validatePeriod(electricType, targetMonth);
 
         List<ApartmentMeterReadingResponse> result = new ArrayList<>();
 
@@ -241,7 +248,7 @@ public class MeterReadingService {
         Apartment apartment = apartmentRepository.findById(request.getApartmentId())
             .orElseThrow(() -> new RuntimeException("Không tìm thấy căn hộ"));
             
-        MeterType meterType = resolveElectricMeterType(request.getMeterTypeId());
+        MeterType meterType = meteringPolicy.resolve(request.getMeterTypeId(), request.getService());
 
         String targetMonth = (request.getBillingMonth() != null && !request.getBillingMonth().isBlank())
             ? request.getBillingMonth().trim()
@@ -269,8 +276,8 @@ public class MeterReadingService {
         }
 
         BigDecimal usageAmount = newReading.subtract(oldReading);
-        List<MeterTariff> tariffs = meterTariffRepository.findByMeterTypeIdOrderByMinUsageAsc(meterType.getId());
-        return calculateTieredAmount(usageAmount, tariffs);
+        List<MeterTariff> tariffs = pricing.prices(meterType, targetMonth);
+        return pricing.amount(usageAmount, tariffs);
     }
 
     @Autowired private ElectricityWorkflowService workflow;

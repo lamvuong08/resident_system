@@ -10,6 +10,10 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "meter_types")
 public class MeterType {
+    @Column(name = "code", columnDefinition = "enum('ELECTRIC','WATER')")
+    private String code;
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

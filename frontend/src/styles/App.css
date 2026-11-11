@@ -1,10 +1,10 @@
 :root {
   --bg: #f5f7fb;
   --card: #ffffff;
-  --primary: #1e6efc;
-  --primary-600: #1557d6;
-  --muted: #6b7280;
-  --success: #16a34a;
+  --primary: #2563eb;
+  --primary-600: #1d4ed8;
+  --muted: #526175;
+  --success: #15803d;
   --danger: #dc2626;
 }
 
@@ -16,23 +16,11 @@ body {
   margin: 0;
   color: #0f172a;
   background: var(--bg);
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    "Noto Sans",
-    sans-serif,
-    "Apple Color Emoji",
-    "Segoe UI Emoji",
-    "Segoe UI Symbol",
-    "Noto Color Emoji";
+  font-family: var(--sans);
 }
 
 .app-bg {
-  background: linear-gradient(180deg, #f7f9ff 0%, #f3f6ff 100%);
+  background: var(--bg);
 }
 
 .app-header {
@@ -50,7 +38,7 @@ body {
   gap: 12px;
 
   color: #e6eef5;
-  background: linear-gradient(180deg, #071523 0%, #071523 100%);
+  background: var(--nav-bg);
   box-shadow: 0 2px 8px rgba(2, 6, 23, 0.06);
 }
 

@@ -9,5 +9,11 @@ public record AdminAggregatedBillResponse(
     String billingMonth,
     Long totalAmount,
     LocalDateTime dueDate,
-    String status
-) {}
+    String status,
+    String issuanceStatus,
+    LocalDateTime issuedAt
+) {
+    public AdminAggregatedBillResponse(Long id,String apartmentCode,String ownerName,String billingMonth,Long totalAmount,LocalDateTime dueDate,String status) {
+        this(id,apartmentCode,ownerName,billingMonth,totalAmount,dueDate,status,null,null);
+    }
+}

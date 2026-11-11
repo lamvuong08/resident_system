@@ -1,0 +1,45 @@
+import type { ThemeConfig } from 'antd'
+
+// Local presentation tokens; Ant Design remains the component system.
+export const appTheme: ThemeConfig = {
+  token: {
+    colorPrimary: '#2563eb',
+    colorInfo: '#2563eb',
+    colorSuccess: '#15803d',
+    colorWarning: '#b45309',
+    colorError: '#dc2626',
+    colorText: '#172b4d',
+    colorTextHeading: '#0f172a',
+    colorTextSecondary: '#526175',
+    colorBorder: '#cbd5e1',
+    colorBorderSecondary: '#e2e8f0',
+    colorBgLayout: '#f5f7fb',
+    colorBgContainer: '#ffffff',
+    fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif",
+    fontSize: 14,
+    lineHeight: 1.5,
+    fontSizeHeading1: 32,
+    fontSizeHeading2: 28,
+    fontSizeHeading3: 24,
+    fontWeightStrong: 600,
+    borderRadius: 8,
+    borderRadiusLG: 12,
+    controlHeight: 36,
+    padding: 16,
+    paddingLG: 24,
+    boxShadowSecondary: '0 8px 24px rgba(15, 23, 42, 0.08)',
+  },
+  components: {
+    Button: { primaryShadow: 'none', defaultShadow: 'none' },
+    Card: { headerFontSize: 16, headerHeight: 56 },
+    Table: {
+      headerBg: '#f8fafc',
+      headerColor: '#334155',
+      rowHoverBg: '#f1f5ff',
+      cellPaddingBlock: 14,
+      cellPaddingInline: 16,
+    },
+    Tabs: { titleFontSize: 14, horizontalItemGutter: 24 },
+    Statistic: { titleFontSize: 14, contentFontSize: 28 },
+  },
+}

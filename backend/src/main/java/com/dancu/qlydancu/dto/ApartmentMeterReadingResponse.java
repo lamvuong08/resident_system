@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 @lombok.Getter @lombok.Setter
 public class ApartmentMeterReadingResponse {
+    private Long linkedBillId;
+    private String linkedBillStatus;
     private Long readingId;
     private Long version;
     private String approvalStatus;

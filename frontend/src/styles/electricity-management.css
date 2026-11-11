@@ -1,6 +1,6 @@
-.electricity-management { padding: 0 24px 24px; text-align: left; }
-.electricity-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.electricity-management { min-width: 0; text-align: left; }
+.electricity-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
 .electricity-heading h3 { margin: 0 0 6px; }
 .electricity-filters { margin-bottom: 20px; }
 .electricity-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 20px 0; flex-wrap: wrap; }
-@media (max-width: 640px) { .electricity-management { padding: 0 12px 16px; } .electricity-heading { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 640px) { .electricity-heading { flex-direction: column; } .electricity-actions > .ant-space { flex-wrap: wrap; } }

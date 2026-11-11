@@ -23,6 +23,15 @@ public class AdminBillController {
 
     @Autowired
     private BillService billService;
+    @Autowired private com.dancu.qlydancu.service.BillingReportingService reporting;
+
+    @GetMapping("/overview")
+    public Object overview(@RequestParam(required=false) String billingMonth) {return reporting.overview(billingMonth);}
+    @GetMapping("/history")
+    public Object history(@RequestParam(required=false) String billingMonth,@RequestParam(required=false) String apartmentCode,
+        @RequestParam(required=false) String status,@RequestParam(defaultValue="0") int page,@RequestParam(defaultValue="10") int size) {
+        return reporting.history(billingMonth,apartmentCode,status,PageRequest.of(Math.max(0,page),Math.max(1,Math.min(size,100))));
+    }
 
     @GetMapping
     public ResponseEntity<Page<AdminAggregatedBillResponse>> getAggregatedBills(
@@ -63,6 +72,13 @@ public class AdminBillController {
     public ResponseEntity<?> initializeMonth(@RequestParam String billingMonth) {
         billService.initializeAllBillsForMonth(billingMonth);
         return ResponseEntity.ok("Đã khởi tạo hóa đơn tháng " + billingMonth + " cho toàn bộ căn hộ");
+    }
+
+    @PostMapping("/{id}/issue")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminBillFullResponse> issue(@PathVariable Long id,@jakarta.validation.Valid @RequestBody com.dancu.qlydancu.dto.InvoiceIssueRequest request) {
+        billService.issueBill(id,request.dueDate(),request.version());
+        return ResponseEntity.ok(billService.getAdminBillDetailFull(id));
     }
 
     @PutMapping("/{id}")

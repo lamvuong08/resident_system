@@ -1,8 +1,7 @@
 
 .payment-admin-page {
-  padding: 24px;
-  background: #f8fafc;
-  min-height: 100vh;
+  padding: 0;
+  background: transparent;
 }
 
 .payment-admin-page .page-header {
@@ -13,8 +12,8 @@
 }
 
 .payment-admin-page .admin-payment-title {
-  font-size: 26px;
-  font-weight: 800;
+  font-size: 24px;
+  font-weight: 600;
   color: #1e293b;
   margin: 0;
 }

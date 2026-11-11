@@ -3,6 +3,9 @@ package com.dancu.qlydancu.dto;
 import java.math.BigDecimal;
 
 public class MeterReadingRequest {
+    private com.dancu.qlydancu.service.MeterKind service;
+    public com.dancu.qlydancu.service.MeterKind getService() { return service; }
+    public void setService(com.dancu.qlydancu.service.MeterKind value) { service = value; }
     private Long apartmentId;
     private Long meterTypeId;
     private String billingMonth; // Định dạng "MM/YYYY" hoặc "YYYY-MM"

@@ -1,5 +1,5 @@
 .user-payment-page {
-    padding: 24px;
+    padding: 0;
     background-color: #f8fafc;
     min-height: 100vh;
 }
@@ -32,6 +32,26 @@
 }
 
 @media (max-width: 640px) {
+    .user-payment-page .current-bill-section {
+        padding: 16px;
+    }
+
+    .user-payment-page .bill-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .user-payment-page .bill-item-amount {
+        min-width: 0;
+        text-align: left;
+    }
+
+    .user-payment-page .total-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
     .user-payment-page .ph-page-intro {
         align-items: flex-start;
     }
@@ -58,6 +78,8 @@
     margin-bottom: 24px;
     border-bottom: 1px dashed #cbd5e1;
     padding-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .bill-title-area {
@@ -92,6 +114,7 @@
     padding: 16px 0;
     border-bottom: 1px solid #f1f5f9;
     align-items: center;
+    gap: 16px;
 }
 
 .bill-item:last-child {
@@ -101,6 +124,8 @@
 .bill-item-info {
     text-align: left;
     flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .bill-item-info .fee-name {
