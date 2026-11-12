@@ -44,6 +44,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(errors -> errors.authenticationEntryPoint((request, response, exception) -> {
+                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"message\":\"Authentication required\"}");
+                }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/h2-console/**", "/ws/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -71,6 +76,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/meter-readings/bulk-approve", "/api/admin/meter-readings/bulk-issue",
                                 "/api/admin/meter-readings/*/reject").hasRole("ADMIN")
                         .requestMatchers("/api/admin/meter-readings/**").hasAnyRole("ADMIN", "STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/payments/sepay/webhook").permitAll()
+                        .requestMatchers("/api/payments/sepay/bills/*/qr").hasRole("USER")
                         .requestMatchers("/api/payments/submit").hasRole("USER")
                         .requestMatchers(HttpMethod.GET, "/api/apartments/**", "/api/dashboard/buildings/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -90,9 +97,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource(
+            @org.springframework.beans.factory.annotation.Value("${app.sepay.frontend-url:http://localhost:5173}") String frontendUrl) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(frontendUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

@@ -235,22 +235,12 @@ export const getResidentDashboardData = async (): Promise<ResidentDashboardData>
   }
 }
 
-export const getMyAggregatedBills = async (): Promise<UserAggregatedBill[]> => {
-  try {
-    const response = await api.get('/bills/user/bills');
-    return toArray(response.data) as UserAggregatedBill[];
-  } catch (error) {
-    console.error("Lỗi khi tải lịch sử hóa đơn:", error);
-    return [];
-  }
+export const getMyAggregatedBills = async (signal?: AbortSignal): Promise<UserAggregatedBill[]> => {
+  const response = await api.get('/bills/user/bills', { signal });
+  return toArray(response.data) as UserAggregatedBill[];
 }
 
-export const getMyBillDetail = async (id: number): Promise<UserBillFull | null> => {
-  try {
-    const response = await api.get(`/bills/user/bills/${id}`);
-    return response.data as UserBillFull;
-  } catch (error) {
-    console.error("Lỗi khi tải chi tiết hóa đơn:", error);
-    return null;
-  }
+export const getMyBillDetail = async (id: number, signal?: AbortSignal): Promise<UserBillFull> => {
+  const response = await api.get(`/bills/user/bills/${id}`, { signal });
+  return response.data as UserBillFull;
 }

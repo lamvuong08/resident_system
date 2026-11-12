@@ -72,7 +72,11 @@ export type UserBillFull = {
   issuedAt?: string | null;
   paidAmount?: number;
   outstanding?: number;
-  meterReadings?: { readingId: number; feeCode: string; tariffSnapshot: string }[];
+  meterReadings?: {
+    readingId: number; detailId?: number; feeCode: string; tariffSnapshot: string;
+    oldReading?: number | null; newReading?: number | null; usageAmount?: number | null;
+    amount?: number | null;
+  }[];
   id: number;
   apartmentCode: string;
   ownerName: string;

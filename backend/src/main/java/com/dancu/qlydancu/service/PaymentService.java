@@ -94,9 +94,29 @@ public class PaymentService {
         long currentAmount = payment.getPaymentDetails().stream().mapToLong(pd -> pd.getBillDetail().getAmount()).sum();
         if (payment.getAmount() == null || payment.getAmount() != currentAmount)
             throw new IllegalStateException("Số tiền hóa đơn đã thay đổi; cần đối soát lại giao dịch trước khi xác nhận");
+        return completePayment(payment, org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName());
+    }
+
+    /** Caller holds the parent bill lock; bank amount was checked against the entire remaining balance. */
+    @Transactional
+    public Payment recordBankPayment(Bill bill, List<BillDetail> remaining, long amount, String transactionCode) {
+        if (bill.isDraft() || bill.getStatus() == BillDetailStatus.PAID || remaining.isEmpty()
+                || remaining.stream().anyMatch(d -> !d.getBill().getId().equals(bill.getId()) || d.getStatus()!=BillDetailStatus.UNPAID)
+                || amount<=0 || remaining.stream().mapToLong(BillDetail::getAmount).reduce(0L,Math::addExact)!=amount)
+            throw new IllegalStateException("Invalid bank settlement");
+        Payment payment=new Payment();
+        payment.setAmount(amount);
+        payment.setPaymentMethod(com.dancu.qlydancu.model.enums.PaymentMethod.BANK_TRANSFER);
+        payment.setTransactionCode(transactionCode);
+        payment=paymentRepository.save(payment);
+        for (BillDetail detail:remaining) payment.addPaymentDetail(detail);
+        return completePayment(payment,"SYSTEM:SEPAY");
+    }
+
+    private Payment completePayment(Payment payment, String confirmedBy) {
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setPaidAt(billEmailEvents.now());
-        payment.setConfirmedBy(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName());
+        payment.setConfirmedBy(confirmedBy);
 
         Set<Bill> parentBillsToUpdate = new HashSet<>();
 

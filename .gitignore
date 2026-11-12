@@ -1,0 +1,8 @@
+# Local environment secrets; Spring reads process environment, not these files automatically.
+.env
+.env.*
+!.env.example
+!.env.sepay.example
+
+# Private settings automatically imported by the backend.
+/backend/backend-local.properties

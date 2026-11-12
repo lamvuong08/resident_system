@@ -41,13 +41,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String email = jwtUtil.getEmailFromToken(token);
-        if (email == null || SecurityContextHolder.getContext().getAuthentication() != null) {
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        UserDetails userDetails;
+        try {
+            String email = jwtUtil.getEmailFromToken(token);
+            userDetails = email == null ? null : userDetailsService.loadUserByUsername(email);
+        } catch (org.springframework.security.core.userdetails.UsernameNotFoundException | io.jsonwebtoken.JwtException ex) {
+            // A token from another database, or one that expired during this request, is unauthenticated.
+            // Continue so public login/webhook routes still work; protected routes use the 401 entry point.
+            userDetails = null;
+        }
+        if (userDetails == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         if (!userDetails.isEnabled() || !userDetails.isAccountNonLocked()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
