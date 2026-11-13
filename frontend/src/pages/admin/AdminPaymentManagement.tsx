@@ -531,6 +531,7 @@ const AdminPaymentManagement: React.FC<Props> = ({ billingMonth, initialBillId, 
 
       <Table
         columns={columns}
+        scroll={{ x: 1000 }}
         dataSource={data}
         rowKey="id"
         loading={loading}

@@ -35,7 +35,7 @@ const AccountFilter: React.FC<AccountFilterProps> = ({ onFilter, onClear, loadin
         initialValues={{ search: '', role: 'ALL', status: 'ALL' }}
         className="account-filter-form"
       >
-        <Form.Item name="search" className="account-search-item" style={{ flex: 1, minWidth: 250, marginBottom: 0 }}>
+        <Form.Item name="search" className="account-search-item" style={{ flex: '1 1 250px', minWidth: 0, marginBottom: 0 }}>
           <Input
             className="account-control"
             placeholder="Tìm theo tên, email, sđt..."

@@ -1,6 +1,8 @@
 .support-page {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 1rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
   box-sizing: border-box;
 }

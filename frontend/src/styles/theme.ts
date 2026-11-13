@@ -25,6 +25,8 @@ export const appTheme: ThemeConfig = {
     borderRadius: 8,
     borderRadiusLG: 12,
     controlHeight: 36,
+    controlHeightSM: 32,
+    controlHeightLG: 44,
     padding: 16,
     paddingLG: 24,
     boxShadowSecondary: '0 8px 24px rgba(15, 23, 42, 0.08)',
@@ -32,6 +34,7 @@ export const appTheme: ThemeConfig = {
   components: {
     Button: { primaryShadow: 'none', defaultShadow: 'none' },
     Card: { headerFontSize: 16, headerHeight: 56 },
+    Form: { labelFontSize: 14, itemMarginBottom: 24 },
     Table: {
       headerBg: '#f8fafc',
       headerColor: '#334155',

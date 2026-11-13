@@ -213,6 +213,10 @@ const VehicleManagement: React.FC = () => {
 
     return (
         <div className="vehicle-management-page">
+            <header className="page-intro">
+                <h1 className="page-intro__title">Quản lý phương tiện</h1>
+                <p className="page-intro__description">Tra cứu phương tiện và xử lý các đăng ký chờ duyệt.</p>
+            </header>
             <Card className="vehicle-filter-card" style={{ marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
                 <Row gutter={[12, 12]} align="middle">
                     <Col xs={24} md={10} lg={8}>
@@ -253,6 +257,7 @@ const VehicleManagement: React.FC = () => {
                     loading={loading}
                     size="small"
                     columns={columns}
+                    scroll={{ x: 1000 }}
                     dataSource={rows}
                     pagination={false}
                     onRow={(row) => ({
@@ -278,7 +283,7 @@ const VehicleManagement: React.FC = () => {
             >
                 {selectedVehicle && (
                     <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                        <Descriptions bordered column={2} size="small">
+                        <Descriptions bordered column={{ xs: 1, sm: 2 }} size="small">
                             <Descriptions.Item label="Biển số">{selectedVehicle.licensePlate}</Descriptions.Item>
                             <Descriptions.Item label="Loại">{getVehicleTypeLabel(selectedVehicle.type)}</Descriptions.Item>
                             <Descriptions.Item label="Trạng thái">

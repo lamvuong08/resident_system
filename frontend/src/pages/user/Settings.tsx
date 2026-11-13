@@ -284,7 +284,7 @@ const Settings = () => {
   }
 
   return (
-    <div className="resident-page">
+    <div className="resident-page resident-settings-page">
       <div className="resident-settings-header">
         <div>
           <Typography.Title level={3} className="resident-settings-title">
@@ -327,8 +327,9 @@ const Settings = () => {
             <div className="resident-settings-form">
               <div className="resident-settings-grid">
                 <div className="resident-settings-field">
-                  <label>Họ</label>
+                  <label htmlFor="settings-last-name">Họ</label>
                   <Input
+                    id="settings-last-name"
                     value={profileForm.lastName}
                     onChange={handleProfileChange('lastName')}
                     placeholder="Nhập họ"
@@ -336,8 +337,9 @@ const Settings = () => {
                   />
                 </div>
                 <div className="resident-settings-field">
-                  <label>Tên</label>
+                  <label htmlFor="settings-first-name">Tên</label>
                   <Input
+                    id="settings-first-name"
                     value={profileForm.firstName}
                     onChange={handleProfileChange('firstName')}
                     placeholder="Nhập tên"
@@ -346,8 +348,9 @@ const Settings = () => {
                 </div>
               </div>
               <div className="resident-settings-field full">
-                <label>Số điện thoại</label>
+                <label htmlFor="settings-phone">Số điện thoại</label>
                 <Input
+                  id="settings-phone"
                   value={profileForm.phone}
                   onChange={handleProfileChange('phone')}
                   placeholder="Nhập số điện thoại"

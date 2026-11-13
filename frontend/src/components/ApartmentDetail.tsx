@@ -342,7 +342,7 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
         <Col span={24}>
           <Card style={{ borderRadius: 12, marginBottom: 16, textAlign: 'left' }}>
             <Title level={4} style={{ textAlign: 'left', marginBottom: 16 }}>Thông tin căn hộ</Title>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, textAlign: 'left' }}>
+            <div className="apartment-detail-summary">
               <div>Mã căn hộ: <strong>{normalizedApartment.code ?? '-'}</strong></div>
               <div>Tòa nhà: <strong>{normalizedApartment.buildingName || '-'}</strong></div>
               <div>Tầng: <strong>{normalizedApartment.floorNumber ?? '-'}</strong></div>
@@ -354,7 +354,7 @@ const ApartmentDetail: React.FC<{ apartment?: Partial<Apartment> | null; onApart
           </Card>
 
           <Card style={{ borderRadius: 12, marginBottom: 16, textAlign: 'left' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+            <div className="workspace-shortcuts" style={{ marginBottom: 16 }}>
               <div>
                 <Title level={5} style={{ textAlign: 'left', margin: 0 }}>Thông tin cư dân</Title>
                 <div style={{ color: 'rgba(0,0,0,0.45)', fontSize: 13, marginTop: 4 }}>Danh sách cư dân trong căn hộ</div>

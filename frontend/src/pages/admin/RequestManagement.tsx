@@ -315,6 +315,10 @@ const RequestManagement: React.FC = () => {
 
     return (
         <div className="request-management-page">
+            <header className="page-intro">
+                <h1 className="page-intro__title">{isStaff ? 'Công việc và yêu cầu cư dân' : 'Quản lý yêu cầu cư dân'}</h1>
+                <p className="page-intro__description">{isStaff ? 'Tiếp nhận yêu cầu và cập nhật tiến độ công việc được giao.' : 'Theo dõi yêu cầu, phân công nhân viên và kiểm tra tiến độ xử lý.'}</p>
+            </header>
             <Card className="request-filter-card" style={{ marginBottom: 16 }} styles={{ body: { padding: 16 } }}>
                 <Row gutter={[12, 12]} align="middle">
                     <Col xs={24} md={10} lg={8}>

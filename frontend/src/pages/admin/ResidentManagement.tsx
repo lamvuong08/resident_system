@@ -522,10 +522,10 @@ const ResidentManagement: React.FC = () => {
       align: 'center',
       render: (_, row) => (
         <Space size={6} className="resident-action-group">
-          <Button className="resident-action-btn view" type="text" icon={<EyeOutlined />} onClick={() => setDrawerResident(row)} />
-          <Button className="resident-action-btn edit" type="text" icon={<EditOutlined />} onClick={() => openEditModal(row)} />
+          <Button className="resident-action-btn view" type="text" aria-label="Xem chi tiết" icon={<EyeOutlined />} onClick={() => setDrawerResident(row)} />
+          <Button className="resident-action-btn edit" type="text" aria-label="Chỉnh sửa cư dân" icon={<EditOutlined />} onClick={() => openEditModal(row)} />
           <Popconfirm title="Xóa cư dân này?" okText="Xóa" cancelText="Hủy" onConfirm={() => void handleDelete(row)}>
-            <Button className="resident-action-btn delete" type="text" icon={<DeleteOutlined />} />
+            <Button className="resident-action-btn delete" type="text" aria-label="Xóa cư dân" icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       ),
@@ -536,6 +536,10 @@ const ResidentManagement: React.FC = () => {
 
   return (
     <div className="resident-management-page">
+      <header className="page-intro">
+        <h1 className="page-intro__title">Quản lý cư dân</h1>
+        <p className="page-intro__description">Tra cứu hồ sơ và cập nhật thông tin cư dân trong chung cư.</p>
+      </header>
       <Card className="resident-filter-card" style={{ marginBottom: 16 }}>
         <Row gutter={[12, 12]} align="middle">
           <Col xs={24} md={8} lg={7}>

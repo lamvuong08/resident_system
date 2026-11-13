@@ -182,12 +182,16 @@ const StaffDashboard: React.FC = () => {
             className="stat-card"
             style={{ cursor: 'pointer' }}
             onClick={() => navigate('/staff/requests')}
+            role="link"
+            tabIndex={0}
+            aria-label="Xem yêu cầu chờ tiếp nhận"
+            onKeyDown={(event) => { if (event.key === 'Enter') navigate('/staff/requests') }}
           >
             <Statistic
               title="Yêu cầu chờ tiếp nhận"
               value={totalPending}
-              prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
-              styles={{ content: { color: '#faad14', fontWeight: 'bold' } }}
+              prefix={<ClockCircleOutlined style={{ color: 'var(--warning)' }} />}
+              styles={{ content: { color: 'var(--warning)', fontWeight: 'bold' } }}
             />
           </Card>
         </Col>
@@ -198,12 +202,16 @@ const StaffDashboard: React.FC = () => {
             className="stat-card"
             style={{ cursor: 'pointer' }}
             onClick={() => navigate('/staff/requests')}
+            role="link"
+            tabIndex={0}
+            aria-label="Xem công việc chưa hoàn thành"
+            onKeyDown={(event) => { if (event.key === 'Enter') navigate('/staff/requests') }}
           >
             <Statistic
               title="Công việc chưa hoàn thành"
               value={totalInProgress}
-              prefix={<FileTextOutlined style={{ color: '#1890ff' }} />}
-              styles={{ content: { color: '#1890ff', fontWeight: 'bold' } }}
+              prefix={<FileTextOutlined style={{ color: 'var(--primary)' }} />}
+              styles={{ content: { color: 'var(--primary)', fontWeight: 'bold' } }}
             />
           </Card>
         </Col>
@@ -214,12 +222,16 @@ const StaffDashboard: React.FC = () => {
             className="stat-card"
             style={{ cursor: 'pointer' }}
             onClick={() => navigate('/staff/meter-readings')}
+            role="link"
+            tabIndex={0}
+            aria-label="Mở ghi chỉ số điện nước"
+            onKeyDown={(event) => { if (event.key === 'Enter') navigate('/staff/meter-readings') }}
           >
             <Statistic
               title={`Chưa ghi điện (T${currentMonthString})`}
               value={unrecordedMeters}
-              prefix={<ThunderboltOutlined style={{ color: '#ff4d4f' }} />}
-              styles={{ content: { color: '#ff4d4f', fontWeight: 'bold' } }}
+              prefix={<ThunderboltOutlined style={{ color: 'var(--danger)' }} />}
+              styles={{ content: { color: 'var(--danger)', fontWeight: 'bold' } }}
             />
           </Card>
         </Col>
@@ -232,7 +244,7 @@ const StaffDashboard: React.FC = () => {
             <Statistic
               title="Tổng số căn hộ chung cư"
               value={totalApartments}
-              styles={{ content: { color: '#52c41a', fontWeight: 'bold' } }}
+              styles={{ content: { color: 'var(--success)', fontWeight: 'bold' } }}
             />
           </Card>
         </Col>
@@ -243,14 +255,14 @@ const StaffDashboard: React.FC = () => {
         variant="borderless"
         style={{ borderRadius: 12, marginBottom: 24, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="workspace-shortcuts">
           <div>
             <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>
               Lối tắt tác vụ chính
             </div>
             <Text type="secondary">Truy cập nhanh vào nghiệp vụ được phân công</Text>
           </div>
-          <Space>
+          <Space wrap>
             <Button
               type="primary"
               className="fix-height-32"

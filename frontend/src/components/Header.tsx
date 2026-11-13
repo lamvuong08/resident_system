@@ -84,18 +84,18 @@ const Header: React.FC = () => {
             />
           }
         >
-          <button className="icon-btn" title="Thông báo" type="button">
+          <button className="icon-btn" title="Thông báo" aria-label={`Thông báo${unreadCount ? `, ${unreadCount} chưa đọc` : ''}`} aria-expanded={notificationsOpen} type="button">
             <Badge count={unreadCount} showZero={false} overflowCount={99} size="small">
               <NotificationOutlined style={{ fontSize: 18, color: '#ffffff' }} />
             </Badge>
           </button>
         </Popover>
 
-        <button className="icon-btn" onClick={goSettings} title="Cài đặt">
+        <button className="icon-btn" type="button" onClick={goSettings} title="Cài đặt" aria-label="Cài đặt">
           <SettingOutlined style={{ fontSize: 18, color: 'inherit' }} />
         </button>
 
-        <button className="icon-btn" onClick={handleLogout} title="Đăng xuất">
+        <button className="icon-btn" type="button" onClick={handleLogout} title="Đăng xuất" aria-label="Đăng xuất">
           <LogoutOutlined style={{ fontSize: 18, color: 'inherit' }} />
         </button>
       </div>

@@ -1,4 +1,5 @@
 .history-container {
+    min-width: 0;
     max-width: 1400px;
     margin: 0;
     padding: 0;
@@ -9,6 +10,8 @@
 
 .history-header {
     display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
@@ -31,7 +34,7 @@
 
 .history-container .stats-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
     gap: 16px;
     margin-bottom: 28px;
 }
@@ -824,3 +827,8 @@ button:disabled {
   color: #1677ff;
   background: #e6f4ff;
 }
+
+.history-container .filter-section > .ant-space,
+.history-container .filter-section .ant-space-item { min-width: 0; max-width: 100%; }
+.history-container .filter-section .ant-input-affix-wrapper { max-width: 100%; }
+.history-container .resident-requests-card { min-width: 0; }

@@ -6,7 +6,7 @@
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
   gap:16px;
-  margin-bottom:28px;
+  margin-bottom:var(--space-6);
 }
 
 .stat-card{
@@ -67,7 +67,7 @@
 
 .dashboard-content{
   display:grid;
-  grid-template-columns:1fr 360px;
+  grid-template-columns:minmax(0, 1fr);
   gap:20px;
   align-items:start;
 }

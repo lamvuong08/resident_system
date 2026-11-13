@@ -144,9 +144,10 @@ const Notifications = () => {
                   key={item.id}
                   className={`resident-notifications-item ${item.isRead ? 'read' : 'unread'}`}
                   type="button"
+                  aria-label={`${item.isRead ? 'Đã đọc' : 'Chưa đọc'}: ${item.title}`}
                   onClick={() => navigate(`/user/notifications/${item.id}`)}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                  <div className="resident-notifications-item__heading">
                     <Typography.Text className="resident-notifications-item__title" strong style={{ flex: 1, paddingRight: 8, wordBreak: 'break-word', textAlign: 'left' }}>
                       {item.title}
                     </Typography.Text>

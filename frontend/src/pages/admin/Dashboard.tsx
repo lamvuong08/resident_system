@@ -31,6 +31,10 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-root">
+      <header className="page-intro">
+        <h1 className="page-intro__title">Tổng quan chung cư</h1>
+        <p className="page-intro__description">Theo dõi tình hình căn hộ, cư dân và các tòa nhà.</p>
+      </header>
       <div className="stats-row">
         <StatCard title="Tổng số tòa nhà" value={stats?.totalBuildings ?? 0} icon={<ApartmentOutlined style={{ color: '#0f766e' }} />} />
         <StatCard title="Tổng số căn hộ" value={stats?.totalApartments ?? 0} icon={<HomeOutlined style={{ color: '#3b82f6' }} />} />

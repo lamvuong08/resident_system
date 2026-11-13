@@ -3,9 +3,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100svh;
+  padding: var(--space-6);
   background: linear-gradient(135deg, #e6eefc 0%, #f6f8fb 100%);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--sans);
 }
 
 .login-card {
@@ -35,49 +36,49 @@
   margin-bottom: 6px;
 }
 
-.ant-form-item-label > label {
+.login-container .ant-form-item-label > label {
   font-weight: 600;
   color: #223;
 }
 
-.ant-input,
-.ant-input-password .ant-input {
+.login-container .ant-input,
+.login-container .ant-input-password .ant-input {
   height: 42px;
   padding: 8px 12px;
   border-radius: 8px;
 }
 
-.ant-input,
-.ant-input-affix-wrapper,
-.ant-input-password .ant-input,
-.ant-input::placeholder {
+.login-container .ant-input,
+.login-container .ant-input-affix-wrapper,
+.login-container .ant-input-password .ant-input,
+.login-container .ant-input::placeholder {
   background: #fff !important;
   color: #0f172a !important;
 }
 
-.ant-input::placeholder { color: rgba(15,23,42,0.35) !important; }
+.login-container .ant-input::placeholder { color: rgba(15,23,42,0.35) !important; }
 
-.ant-input:focus,
-.ant-input-affix-wrapper-focused,
-.ant-input-focused,
-.ant-input:active {
+.login-container .ant-input:focus,
+.login-container .ant-input-affix-wrapper-focused,
+.login-container .ant-input-focused,
+.login-container .ant-input:active {
   background: #fff !important;
   box-shadow: 0 6px 18px rgba(30,110,252,0.08) !important;
   border-color: #1557d6 !important;
 }
 
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill,
-textarea:-webkit-autofill:hover,
-textarea:-webkit-autofill:focus {
+.login-container input:-webkit-autofill,
+.login-container input:-webkit-autofill:hover,
+.login-container input:-webkit-autofill:focus,
+.login-container textarea:-webkit-autofill,
+.login-container textarea:-webkit-autofill:hover,
+.login-container textarea:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0px 1000px #fff inset !important;
   box-shadow: 0 0 0px 1000px #fff inset !important;
   -webkit-text-fill-color: #0f172a !important;
 }
 
-.ant-btn-primary {
+.login-container .ant-btn-primary {
   height: 44px;
   font-weight: 600;
   border-radius: 8px;
@@ -119,5 +120,13 @@ textarea:-webkit-autofill:focus {
 
 @media (max-width: 480px) {
   .login-card { padding: 20px; max-width: 100%; border-radius: 10px }
-  .login-title { font-size: 20px }
+  .login-title { font-size: 14px }
+}
+
+.login-container .ant-input-affix-wrapper { min-height: 44px; }
+.login-container .ant-input-affix-wrapper > input.ant-input { height: auto; padding: 0; border-radius: 0; }
+@media (max-width: 375px) {
+  .login-container { padding: var(--space-4); }
+  .login-links { flex-wrap: wrap; gap: var(--space-2); }
+  .auth-brand { font-size: 26px; }
 }

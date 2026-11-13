@@ -78,7 +78,7 @@ export default function RequestAssignmentModal({ open, request, transfer, revisi
           value={selected?.id} onChange={setStaffId} disabled={saving || Boolean(error)}
           options={available.map((item) => ({ value: item.id, label: `${item.name} — ${item.unfinishedCount} công việc chưa hoàn thành` }))} />
         {staff.length === 0 && !error ? <Empty description="Chưa có STAFF đang hoạt động" /> : <Table<AssignableStaff>
-          size="small" rowKey="id" dataSource={staff} pagination={false} scroll={{ y: 240 }}
+          size="small" rowKey="id" dataSource={staff} pagination={false} scroll={{ x: 580, y: 240 }}
           rowSelection={{ type: 'radio', selectedRowKeys: selected ? [selected.id] : [],
             onChange: (keys) => setStaffId(Number(keys[0])),
             getCheckboxProps: (item) => ({ disabled: saving || Boolean(error) || (transfer && item.id === request.assignedStaff?.id) }) }}

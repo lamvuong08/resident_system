@@ -57,11 +57,15 @@ const Home = () => {
   }, [])
 
   if (loading && !dashboardData.summary) {
-    return <Spin className="resident-dashboard__loading" />
+    return <div className="resident-dashboard__loading" role="status" aria-label="Đang tải trang chủ cư dân"><Spin /></div>
   }
 
   return (
     <div className="resident-dashboard">
+      <header className="page-intro">
+        <h1 className="page-intro__title">Trang chủ cư dân</h1>
+        <p className="page-intro__description">Thông tin căn hộ, hóa đơn và các cập nhật dành cho bạn.</p>
+      </header>
       {error && <Alert type="warning" showIcon message={error} />}
 
       <section className="resident-dashboard__quick-actions">

@@ -62,7 +62,7 @@ const FinancePanel: React.FC<{ rows?: FinanceRow[] }> = ({ rows }) => {
 
   return (
     <Card style={{ borderRadius: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+      <div className="workspace-shortcuts" style={{ marginBottom: 16 }}>
         <div>
           <Title level={5} style={{ margin: 0 }}>Tài chính / Phí / Thanh toán</Title>
           <Text type="secondary">Giao diện chuẩn, sẽ nối dữ liệu thật ở bước tiếp theo.</Text>
@@ -73,6 +73,7 @@ const FinancePanel: React.FC<{ rows?: FinanceRow[] }> = ({ rows }) => {
       <Table
         rowKey="id"
         columns={columns}
+        scroll={{ x: 600 }}
         dataSource={data}
         pagination={false}
         locale={{ emptyText: <Empty description="Chưa có dữ liệu tài chính" /> }}

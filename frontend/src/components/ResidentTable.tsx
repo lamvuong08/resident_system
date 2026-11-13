@@ -72,7 +72,7 @@ const ResidentTable: React.FC<{
 
   const columns = showActions ? [...baseColumns, actionColumn] : baseColumns
 
-  return <Table rowKey={(record) => residentKey(record)} columns={columns} dataSource={residents} loading={loading} pagination={{ pageSize: 6 }} />
+  return <Table rowKey={(record) => residentKey(record)} columns={columns} dataSource={residents} loading={loading} scroll={{ x: 800 }} pagination={{ pageSize: 6 }} />
 }
 
 export default ResidentTable

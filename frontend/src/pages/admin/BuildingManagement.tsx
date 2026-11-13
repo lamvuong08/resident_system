@@ -51,8 +51,10 @@ const BuildingManagement: React.FC = () => {
 
   return (
     <div className="dashboard-root">
-      <div className="stats-row" style={{ marginBottom: 18 }}>
-      </div>
+      <header className="page-intro">
+        <h1 className="page-intro__title">Quản lý tòa nhà</h1>
+        <p className="page-intro__description">Chọn tòa nhà để xem thông tin và danh sách căn hộ.</p>
+      </header>
 
       <h3 className="section-title">Danh sách tòa nhà</h3>
       <div className="buildings-grid">

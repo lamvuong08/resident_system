@@ -413,7 +413,7 @@ const ResidenceManagement: React.FC = () => {
             </>
           )}
           <Tooltip title="Chi tiết">
-            <Button className="residence-action-btn view" type="text" icon={<EyeOutlined />} onClick={() => handleOpenDetail(record)} />
+            <Button className="residence-action-btn view" type="text" aria-label="Xem chi tiết" icon={<EyeOutlined />} onClick={() => handleOpenDetail(record)} />
           </Tooltip>
         </Space>
       ),
@@ -467,6 +467,10 @@ const ResidenceManagement: React.FC = () => {
 
   return (
     <div className="residence-page">
+      <header className="page-intro">
+        <h1 className="page-intro__title">Quản lý cư trú</h1>
+        <p className="page-intro__description">Theo dõi và xét duyệt hồ sơ tạm trú, tạm vắng của cư dân.</p>
+      </header>
       <Card className="residence-filter-card" style={{ marginBottom: 16 }}>
         <Row align="middle" gutter={[12, 12]}>
           <Col xs={24} md={10} lg={8}>

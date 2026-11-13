@@ -71,86 +71,6 @@
   outline-offset: -2px;
 }
 
-@media (max-width: 640px) {
-  /* A horizontal menu preserves every existing label and collapse action. */
-  .admin-root {
-    flex-direction: column;
-    padding-top: 64px;
-  }
-
-  .admin-root .app-sidebar,
-  .resident-user-shell .app-sidebar.resident-sidebar {
-    position: sticky;
-    top: 64px;
-    width: 100%;
-    height: auto;
-    max-height: 45svh;
-    padding: var(--space-2);
-    border-right: 0;
-  }
-
-  .admin-root .app-sidebar .sidebar-menu {
-    flex: 1 1 auto;
-    overflow: auto;
-  }
-
-  .admin-root .app-sidebar .ant-menu-root {
-    display: flex;
-    width: max-content;
-  }
-
-  .admin-root .app-sidebar .ant-menu-item {
-    flex: 0 0 auto;
-    width: auto;
-    min-height: 44px;
-    margin: 0 4px;
-  }
-
-  .admin-root .app-sidebar.collapsed,
-  .resident-user-shell .app-sidebar.resident-sidebar.collapsed {
-    width: 100%;
-  }
-
-  .admin-root .app-sidebar.collapsed .ant-menu-inline-collapsed {
-    flex-direction: row;
-  }
-
-  .admin-root .app-sidebar .sidebar-footer {
-    margin-top: var(--space-2);
-    padding-top: var(--space-2);
-  }
-
-  .admin-root .admin-main,
-  .admin-root .app-sidebar.collapsed + .admin-main {
-    width: 100%;
-    margin: 0;
-    padding: var(--space-4);
-  }
-
-  .app-header {
-    padding-inline: var(--space-3);
-    gap: var(--space-2);
-  }
-
-  .app-header .avatar-name {
-    display: none;
-  }
-
-  .header-notifications-popover {
-    width: min(340px, calc(100vw - 32px));
-  }
-
-  .workspace-heading > .ant-space {
-    flex-wrap: wrap;
-  }
-
-  .payment-admin-page .page-header,
-  .payment-admin-page .header-actions {
-    flex-wrap: wrap;
-    gap: var(--space-3);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -159,3 +79,40 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Shared page hierarchy; existing business components remain in place. */
+.workspace-heading > div { min-width: 0; }
+.workspace-heading h3.ant-typography,
+.admin-main .page-intro__title { font-size: var(--font-page-title); font-weight: 600; line-height: 1.35; margin: 0 0 var(--space-2); color: var(--text-h); }
+.admin-main .page-intro { margin: 0 0 var(--space-6); }
+.admin-main .page-intro__description { color: var(--muted); font-size: 14px; }
+.admin-main .ant-card-head-title { white-space: normal; overflow-wrap: anywhere; }
+.admin-main .ant-table-wrapper { min-width: 0; max-width: 100%; }
+.admin-main .ant-pagination { flex-wrap: wrap; gap: var(--space-2); }
+.app-header .icon-btn { min-width: 44px; min-height: 44px; flex-shrink: 0; }
+.app-header .brand-logo { flex-shrink: 0; }
+.app-header .header-right { flex-shrink: 0; margin-left: 0; gap: var(--space-1); }
+
+@media (max-width: 767px) {
+  :root { --font-page-title: 22px; }
+  .workspace-heading > .ant-space { flex-wrap: wrap; }
+  .app-header { padding-inline: var(--space-3); gap: var(--space-2); }
+  .app-header .brand-name { font-size: 14px; }
+  .app-header .header-left { gap: var(--space-2); }
+  .header-notifications-popover { width: min(340px, calc(100vw - 48px)); }
+}
+
+.apartment-management-page > .ant-card .ant-space-item { min-width: 0; max-width: 100%; }
+.apartment-management-page > .ant-card .ant-space { max-width: 100%; }
+.payment-admin-page .page-header,
+.payment-admin-page .header-actions { flex-wrap: wrap; gap: var(--space-3); }
+@media (max-width: 767px) {
+  .admin-main .ant-card > .ant-card-body { padding: var(--space-4); }
+}
+
+.workspace-shortcuts { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-4); }
+.workspace-shortcuts > *, .workspace-shortcuts .ant-space-item { min-width: 0; max-width: 100%; }
+.workspace-shortcuts .ant-btn { white-space: normal; height: auto !important; min-height: var(--control-height); padding-block: var(--space-2); }
+
+.apartment-detail-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: var(--space-3); text-align: left; }
+.apartment-detail-summary > * { min-width: 0; overflow-wrap: anywhere; }

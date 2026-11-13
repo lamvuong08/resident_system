@@ -10,6 +10,14 @@ import '../../styles/billing-workspace.css'
 type Overview = { totalCollected: number; totalUnpaid: number; unpaidHouseholds: number; overdueBills: number; pendingElectricity: number; pendingWater: number; draftBills: number }
 type Transaction = { id: number; transactionCode: string; amount: number; paymentMethod: string; status: string; paidAt: string; confirmedBy: string; invoices: { id: number; apartmentCode: string; billingMonth: string }[] }
 const money = (value: number) => `${new Intl.NumberFormat('vi-VN').format(value || 0)} ₫`
+const paymentMethodLabels: Record<string, string> = {
+  CASH: 'Tiền mặt', BANK_TRANSFER: 'Chuyển khoản', TRANSFER: 'Chuyển khoản', MOMO: 'MoMo', ZALOPAY: 'ZaloPay',
+}
+const paymentStatusLabels: Record<string, string> = {
+  PENDING: 'Chờ xác nhận', SUCCESS: 'Đã xác nhận', FAILED: 'Từ chối',
+}
+const paymentMethodLabel = (value?: string | null) => paymentMethodLabels[value || ''] || value || '—'
+const paymentStatusLabel = (value?: string | null) => paymentStatusLabels[value || ''] || value || '—'
 export function LegacyBillingRedirect() {
   const location = useLocation()
   const params = new URLSearchParams(location.search); params.set('tab', 'readings')
@@ -61,15 +69,15 @@ export default function BillingWorkspace() {
       {key:'overview',label:'Tổng quan',children:<>{overviewError && <Alert type="error" title={overviewError} />}<div className="billing-metrics">{labels.map(([key,label,count])=><Card key={key} size="small"><Typography.Text type="secondary">{label}</Typography.Text><Typography.Title level={3}>{overview ? count ? overview[key] : money(overview[key]) : '—'}</Typography.Title></Card>)}</div><Alert showIcon type="info" title="Duyệt chỉ số chỉ cập nhật hóa đơn nháp" description="Kiểm tra đủ điện, nước và phí trước khi phát hành. Cư dân chỉ nhận được hóa đơn sau bước phát hành toàn bộ." /></>},
       {key:'readings',label:'Duyệt chỉ số điện, nước',children:<ElectricityManagement billingMonth={month} onChanged={()=>setRevision(value=>value+1)} onOpenBill={openBill} />},
       {key:'invoices',label:'Quản lý hóa đơn',children:<AdminPaymentManagement billingMonth={month} initialBillId={invoice} onChanged={()=>setRevision(value=>value+1)} />},
-      {key:'history',label:'Lịch sử thanh toán',children:<><Space wrap style={{marginBottom:16}}><Input aria-label="Tìm căn hộ thanh toán" placeholder="Mã căn hộ" value={apartment} onChange={event=>{setApartment(event.target.value);setPage(1)}} /><Select placeholder="Trạng thái" allowClear value={status} onChange={value=>{setStatus(value);setPage(1)}} options={['PENDING','SUCCESS','FAILED'].map(value=>({value,label:value==='SUCCESS'?'Đã xác nhận':value==='PENDING'?'Chờ xác nhận':'Từ chối'}))} /><Button onClick={()=>setRevision(value=>value+1)}>Làm mới</Button></Space>
+      {key:'history',label:'Lịch sử thanh toán',children:<><Space wrap style={{marginBottom:16}}><Input aria-label="Tìm căn hộ thanh toán" placeholder="Mã căn hộ" value={apartment} onChange={event=>{setApartment(event.target.value);setPage(1)}} /><Select placeholder="Trạng thái" allowClear value={status} onChange={value=>{setStatus(value);setPage(1)}} options={['PENDING','SUCCESS','FAILED'].map(value=>({value,label:paymentStatusLabel(value)}))} /><Button onClick={()=>setRevision(value=>value+1)}>Làm mới</Button></Space>
         <Table<Transaction> rowKey="id" loading={historyLoading} dataSource={history} pagination={{current:page,total,pageSize:10,onChange:setPage}} scroll={{x:950}} columns={[
           {title:'Mã giao dịch',render:(_,row)=><Button type="link" onClick={()=>setReceipt(row)}>{row.transactionCode || `#${row.id}`}</Button>},
           {title:'Hóa đơn / căn hộ / kỳ',render:(_,row)=><Space wrap>{row.invoices.map(bill=><Button key={bill.id} type="link" onClick={()=>openBill(bill.id)}>#{bill.id} · {bill.apartmentCode} · {bill.billingMonth}</Button>)}</Space>},
-          {title:'Số tiền',dataIndex:'amount',render:money},{title:'Phương thức',dataIndex:'paymentMethod'}, {title:'Trạng thái',dataIndex:'status'},
+          {title:'Số tiền',dataIndex:'amount',render:money},{title:'Phương thức',dataIndex:'paymentMethod',render:paymentMethodLabel}, {title:'Trạng thái',dataIndex:'status',render:paymentStatusLabel},
           {title:'Ngày trả',dataIndex:'paidAt',render:value=>value?dayjs(value).format('DD/MM/YYYY HH:mm'):'—'}, {title:'Người xác nhận',dataIndex:'confirmedBy',render:value=>value||'—'},
           {title:'Thao tác',render:(_,row)=>row.status==='PENDING' && <Space><Button disabled={processing!=null} onClick={()=>void processPayment(row.id,'approve')}>Duyệt</Button><Button danger disabled={processing!=null} onClick={()=>void processPayment(row.id,'reject')}>Từ chối</Button></Space>}
         ]} />
-        {receipt && <Card title={`Giao dịch ${receipt.transactionCode || receipt.id}`} extra={<Button onClick={()=>setReceipt(undefined)}>Đóng</Button>}><Descriptions items={[{key:'amount',label:'Số tiền',children:money(receipt.amount)},{key:'method',label:'Phương thức',children:receipt.paymentMethod},{key:'status',label:'Trạng thái',children:receipt.status},{key:'actor',label:'Xác nhận bởi',children:receipt.confirmedBy||'Không có dữ liệu lịch sử'}]} /></Card>}
+        {receipt && <Card title={`Giao dịch ${receipt.transactionCode || receipt.id}`} extra={<Button onClick={()=>setReceipt(undefined)}>Đóng</Button>}><Descriptions items={[{key:'amount',label:'Số tiền',children:money(receipt.amount)},{key:'method',label:'Phương thức',children:paymentMethodLabel(receipt.paymentMethod)},{key:'status',label:'Trạng thái',children:paymentStatusLabel(receipt.status)},{key:'actor',label:'Xác nhận bởi',children:receipt.confirmedBy||'Không có dữ liệu lịch sử'}]} /></Card>}
       </>}
     ]} />
   </div>

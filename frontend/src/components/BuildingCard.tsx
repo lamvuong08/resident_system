@@ -8,7 +8,7 @@ const BuildingCard: React.FC<{ building: Partial<Building>; onView: () => void; 
   const vacantApartments = Number(building.vacant ?? Math.max(0, totalApartments - Number(building.occupied ?? 0)))
   const pct = Math.round((totalResidents / Math.max(1, totalApartments)) * 100)
   return (
-    <div className={`building-card ${selected ? 'selected' : ''}`} role="button">
+    <div className={`building-card ${selected ? 'selected' : ''}`}>
       <div className="building-top">
         <div className="building-icon-wrap"><ApartmentOutlined className="building-icon" /></div>
         <div style={{flex:1}}>
@@ -39,7 +39,7 @@ const BuildingCard: React.FC<{ building: Partial<Building>; onView: () => void; 
       </div>
 
       <div className="building-card-action">
-        <button onClick={onView} className={`btn-view-full ${selected ? 'active' : ''}`}>
+        <button type="button" aria-label={`Xem chi tiết tòa ${building.name || building.code}`} onClick={onView} className={`btn-view-full ${selected ? 'active' : ''}`}>
           {selected ? 'ĐANG XEM CHI TIẾT' : 'Xem chi tiết'}
         </button>
       </div>

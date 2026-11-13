@@ -13,6 +13,11 @@
   --space-4: 16px;
   --space-6: 24px;
   --space-8: 32px;
+  --font-page-title: 24px;
+  --font-section-title: 18px;
+  --font-helper: 12px;
+  --control-height: 36px;
+  --warning: #b45309;
   --radius-panel: 12px;
   --shadow-panel: 0 2px 8px rgba(15, 23, 42, 0.04);
   --nav-bg: #0b1220;

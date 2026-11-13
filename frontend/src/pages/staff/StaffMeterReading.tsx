@@ -423,8 +423,8 @@ const StaffMeterReading: React.FC = () => {
             <Statistic
               title="Tổng số căn hộ"
               value={stats.total}
-              prefix={<ThunderboltOutlined style={{ color: '#1890ff' }} />}
-              styles={{ content: { color: '#1890ff', fontWeight: 'bold' } }}
+              prefix={<ThunderboltOutlined style={{ color: 'var(--primary)' }} />}
+              styles={{ content: { color: 'var(--primary)', fontWeight: 'bold' } }}
             />
           </Card>
         </Col>
@@ -436,8 +436,8 @@ const StaffMeterReading: React.FC = () => {
             <Statistic
               title="Đã ghi chỉ số"
               value={stats.recorded}
-              prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-              styles={{ content: { color: '#52c41a', fontWeight: 'bold' } }}
+              prefix={<CheckCircleOutlined style={{ color: 'var(--success)' }} />}
+              styles={{ content: { color: 'var(--success)', fontWeight: 'bold' } }}
             />
           </Card>
         </Col>
@@ -449,8 +449,8 @@ const StaffMeterReading: React.FC = () => {
             <Statistic
               title="Chưa ghi chỉ số"
               value={stats.notRecorded}
-              prefix={<ClockCircleOutlined style={{ color: '#fa8c16' }} />}
-              styles={{ content: { color: '#fa8c16', fontWeight: 'bold' } }}
+              prefix={<ClockCircleOutlined style={{ color: 'var(--warning)' }} />}
+              styles={{ content: { color: 'var(--warning)', fontWeight: 'bold' } }}
             />
           </Card>
         </Col>

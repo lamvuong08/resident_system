@@ -78,7 +78,8 @@
 .resident-vehicle-metric-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 8px; color: var(--accent); background: var(--accent-bg); font-size: 20px; }
 .resident-vehicle-metric-approved .resident-vehicle-metric-icon { color: #15803d; background: #f0fdf4; }
 .resident-vehicle-metric-pending .resident-vehicle-metric-icon { color: #b45309; background: #fffbeb; }
-.resident-vehicle-metric .ant-skeleton-input { width: 44px; min-width: 44px; margin-top: var(--space-1); }
+.resident-vehicle-metric .ant-skeleton { width: 44px; max-width: 100%; }
+.resident-vehicle-metric .ant-skeleton.ant-skeleton-element .ant-skeleton-input { width: 100%; min-width: 0; margin-top: var(--space-1); }
 .resident-vehicle-muted { font-size: 14px; line-height: 1.6; color: #526175; }
 .resident-vehicle-error { margin-bottom: var(--space-4); }
 .resident-vehicle-page .user-vehicle-card { display: block; width: 100%; min-width: 0; border-radius: var(--radius-panel); }

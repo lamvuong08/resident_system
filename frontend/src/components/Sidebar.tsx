@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Menu, Avatar, Button, Tooltip } from 'antd'
+import { Menu, Avatar, Button, Tooltip, Grid } from 'antd'
 import {
   DashboardOutlined,
   TeamOutlined,
@@ -27,6 +27,8 @@ import '../styles/sidebar.css'
 
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false)
+  const screens = Grid.useBreakpoint()
+  const isMobile = screens.md === false
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -142,14 +144,15 @@ const Sidebar: React.FC = () => {
 
   const items = rawRole === 'ADMIN' ? adminItems : rawRole === 'STAFF' ? staffItems : userItems
   const isManagement = rawRole === 'ADMIN' || rawRole === 'STAFF'
-  const sidebarClassName = `app-sidebar ${collapsed ? 'collapsed' : ''} ${isManagement ? 'admin-sidebar' : 'resident-sidebar'}`
+  const sidebarClassName = `app-sidebar ${collapsed && !isMobile ? 'collapsed' : ''} ${isManagement ? 'admin-sidebar' : 'resident-sidebar'}`
 
   return (
     <aside className={sidebarClassName}>
-      <nav className="sidebar-menu">
+      <nav className="sidebar-menu" aria-label="Điều hướng chính">
         <Menu
-          mode="inline"
-          inlineCollapsed={collapsed}
+          mode={isMobile ? 'horizontal' : 'inline'}
+          disabledOverflow={isMobile}
+          {...(isMobile ? {} : { inlineCollapsed: collapsed })}
           selectedKeys={activeKey ? [activeKey] : []}
           onClick={(e) => navigateByKey(String(e.key))}
           className="sidebar-ant-menu"
@@ -175,10 +178,12 @@ const Sidebar: React.FC = () => {
         </div>
 
         <div className="footer-actions">
-          <Tooltip title="Thu gọn sidebar">
+          <Tooltip title={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}>
             <Button
               type="text"
               className="collapse-btn-bottom"
+              aria-label={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+              aria-expanded={!collapsed}
               onClick={() => setCollapsed((s) => !s)}
               icon={collapsed ? <MenuUnfoldOutlined style={{ fontSize: 18 }} /> : <MenuFoldOutlined style={{ fontSize: 18 }} />}
             />
@@ -189,6 +194,7 @@ const Sidebar: React.FC = () => {
               <Button
                 type="text"
                 className="logout-btn"
+                aria-label="Đăng xuất"
                 onClick={handleLogout}
                 icon={<LogoutOutlined style={{ fontSize: 18 }} />}
               />

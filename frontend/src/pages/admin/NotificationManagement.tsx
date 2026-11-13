@@ -305,14 +305,8 @@ const NotificationManagement: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 20,
-        }}
-      >
+    <div className="workspace-page">
+      <div className="workspace-heading">
         <Title level={3} style={{ margin: 0 }}>
           Quản lý thông báo
         </Title>
@@ -326,7 +320,7 @@ const NotificationManagement: React.FC = () => {
       </div>
 
       <Card style={{ borderRadius: 12 }}>
-        <Space style={{ marginBottom: 16 }}>
+        <Space wrap style={{ marginBottom: 16 }}>
           {["Tất cả", "GENERAL", "PAYMENT", "MAINTENANCE", "EMERGENCY"].map(
             (t) => (
               <Button
@@ -352,6 +346,7 @@ const NotificationManagement: React.FC = () => {
         <Table
           dataSource={data}
           columns={columns}
+          scroll={{ x: 800 }}
           rowKey="id"
           loading={loading}
           pagination={{ ...pagination, onChange: (page) => loadData(page) }}
@@ -392,7 +387,7 @@ const NotificationManagement: React.FC = () => {
           </Form.Item>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="type" label="Loại thông báo">
                 <Select
                   options={[
@@ -404,7 +399,7 @@ const NotificationManagement: React.FC = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="targetType" label="Đối tượng nhận">
                 <Select
                   options={[
@@ -434,7 +429,7 @@ const NotificationManagement: React.FC = () => {
               }}
             >
               <Row gutter={16}>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item
                     name="selectedBuildingId"
                     label="Chọn Tòa nhà"
@@ -454,7 +449,7 @@ const NotificationManagement: React.FC = () => {
                     />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
+                <Col xs={24} sm={12}>
                   <Form.Item label="Chọn Tầng">
                     <Select
                       disabled={!buildingIdParam}

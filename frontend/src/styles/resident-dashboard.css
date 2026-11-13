@@ -128,8 +128,8 @@
 }
 
 .resident-settings-title {
-  font-size: 26px !important;
-  font-weight: 700 !important;
+  font-size: var(--font-page-title) !important;
+  font-weight: 600 !important;
   margin: 0 !important;
 }
 
@@ -267,21 +267,6 @@
   align-items: center;
 }
 
-.resident-settings-actions.row .ant-btn {
-  height: 38px;
-  padding: 0 14px;
-  background: #1677ff;
-  border-color: #1677ff;
-  color: #fff;
-}
-
-.resident-settings-actions.row .ant-btn:disabled,
-.resident-settings-actions.row .ant-btn[disabled] {
-  background: #9ec5ff;
-  border-color: #9ec5ff;
-  color: #fff;
-}
-
 @media (max-width: 900px) {
   .resident-settings-grid--three {
     grid-template-columns: minmax(0, 1fr);
@@ -392,7 +377,7 @@
 .resident-dashboard__cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
+  gap: var(--space-4);
   align-items: stretch;
 }
 
@@ -480,6 +465,8 @@
 
 .resident-page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 12px;
 }
 
@@ -556,4 +543,89 @@
 
 .align-items-center {
   align-items: center !important;
+}
+
+.resident-dashboard > .page-intro { margin-bottom: 0; }
+.resident-settings-page {
+  width: 100%;
+  max-width: none;
+  gap: var(--space-6);
+  align-content: start;
+}
+
+.resident-settings-page .resident-settings-header {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: 0;
+}
+
+.resident-settings-page .resident-settings-card {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+}
+
+.resident-settings-page .resident-settings-card > .ant-card-body {
+  padding: var(--space-6);
+}
+
+.resident-settings-page .resident-settings-tabs .ant-tabs-nav {
+  margin-bottom: var(--space-6);
+}
+
+.resident-settings-page .resident-settings-section {
+  gap: var(--space-6);
+}
+
+.resident-settings-page .resident-settings-inline-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.resident-settings-page .resident-settings-inline-label {
+  flex: 0 0 auto;
+}
+
+.resident-settings-page .resident-settings-field,
+.resident-settings-page .resident-settings-inline-field {
+  min-width: 0;
+}
+
+.resident-settings-page .resident-settings-field > .ant-input-affix-wrapper,
+.resident-settings-page .resident-settings-inline-field > .ant-input-affix-wrapper,
+.resident-settings-page .resident-settings-inline-field > .ant-input {
+  width: 100%;
+  min-height: 40px;
+  height: auto;
+  padding: 7px 11px;
+}
+
+.resident-settings-page .resident-settings-inline-field .ant-input-affix-wrapper > input.ant-input {
+  height: auto;
+  line-height: inherit;
+}
+
+.resident-settings-page .resident-settings-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.resident-settings-page .resident-settings-actions .ant-btn {
+  min-height: 40px;
+  height: auto;
+  white-space: normal;
+}
+
+.resident-settings-inline-field { min-width: 0; }
+@media (max-width: 575px) {
+  .resident-settings-page .resident-settings-card > .ant-card-body { padding: var(--space-4); }
+  .resident-settings-page .resident-settings-actions { flex-direction: column; align-items: stretch; }
+  .resident-settings-grid { grid-template-columns: minmax(0, 1fr); }
+  .resident-settings-avatar { flex-wrap: wrap; }
+  .resident-settings-actions { justify-content: flex-start; }
 }

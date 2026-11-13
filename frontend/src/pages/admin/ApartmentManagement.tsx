@@ -171,13 +171,18 @@ const ApartmentManagement: React.FC = () => {
   }))
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="workspace-page apartment-management-page">
+      <header className="page-intro">
+        <h1 className="page-intro__title">Quản lý căn hộ</h1>
+        <p className="page-intro__description">Tra cứu thông tin căn hộ và các thành viên cư trú.</p>
+      </header>
       <Card style={{ marginBottom: 16, borderRadius: 12 }}>
         <Space orientation="vertical" size={10} style={{ width: '100%' }}>
           <Space wrap size={12} style={{ width: '100%', justifyContent: 'space-between' }}>
             <Space wrap size={12}>
               <Select
-                style={{ minWidth: 250 }}
+                style={{ width: 'min(250px, 100%)' }}
+                aria-label="Chọn tòa nhà"
                 placeholder="Chọn tòa nhà"
                 loading={loadingSelector}
                 value={selectedBuildingId || undefined}
@@ -186,7 +191,8 @@ const ApartmentManagement: React.FC = () => {
               />
 
               <Select
-                style={{ minWidth: 280 }}
+                style={{ width: 'min(280px, 100%)' }}
+                aria-label="Chọn căn hộ"
                 placeholder="Chọn căn hộ"
                 value={activeApartmentCode || undefined}
                 options={apartmentSelectOptions}
